@@ -3,11 +3,18 @@ var demo = {};
 (function(exports) {
   exports.run = function() {
     var m = wasm.Module({
+      externs: [
+	wasm.Extern({
+	  args: ["f32"],
+	  returnType: "void",
+	}),
+      ],
       funcs: [
 	wasm.Function({
 	  name: "bar",
 	  argCount: 1,
 	  returnType: "i32",
+	  exportFunc: false,
 	  locals: [
 	    "i32",
 	    "i32",
@@ -26,9 +33,16 @@ var demo = {};
 	  name: "foo",
 	  argCount: 0,
 	  returnType: "i32",
+	  exportFunc: true,
 	  locals: [
 	  ],
 	  body: [
+	    wasm.CallExternal({
+	      func: 0,
+	      args: [
+		wasm.ConstF32({value: 7.1}),
+	      ]
+	    }),
 	    wasm.Return({
 	      expr: wasm.BinaryOp({
 		left: wasm.BinaryOp({
@@ -52,7 +66,10 @@ var demo = {};
     var src = wasm.GenerateJS(m);
     console.log(src);
     var compiled = eval(src);
-    console.log(compiled.foo());
+    instance = compiled([
+      function(arg) { console.log("got external call:", arg); },
+    ]);
+    console.log(instance.foo());
 
     demo.m = compiled;
   };
