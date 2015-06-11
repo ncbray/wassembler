@@ -1,21 +1,23 @@
 <!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
 <html>
 <head>
-<title>WASM Prototype</title>
+<title>Interactive Wassembler</title>
 <script src="peg-0.8.0.js"></script>
 <script src="wasm.js"></script>
 <script src="main.js"></script>
 </head>
 <body>
-<h1>WASM Prototype</h1>
+<h1>Interactive Wassembler</h1>
+<div>
+<button id="eval">Eval</button>
+</div>
 <div>
 <textarea id="code" cols="80" rows="30"></textarea>
 <textarea id="ast" cols="80" rows="30" readonly="true"></textarea>
-<textarea id="generated" cols="80" rows="30" readonly="true"></textarea>
-<textarea id="terminal" cols="80" rows="30" readonly="true"></textarea>
 </div>
 <div>
-<button id="eval">Eval</button>
+<textarea id="generated" cols="80" rows="30" readonly="true"></textarea>
+<textarea id="terminal" cols="80" rows="30" readonly="true"></textarea>
 </div>
 </body>
 <script>
