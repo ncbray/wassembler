@@ -120,7 +120,6 @@ var wasm = {};
       expr.etype = "f32";
       return expr;
     case "getname":
-      console.log(expr.name);
       var ref = this.moduleScope[expr.name];
       if (ref !== undefined) {
 	switch(ref.type) {
@@ -145,9 +144,7 @@ var wasm = {};
       expr.etype = expr.left.etype;
       return expr;
     case "call":
-      console.log(expr.expr);
       expr.expr = this.processExpr(expr.expr);
-      console.log(expr.expr);
       switch (expr.expr.type) {
       case "getfunction":
 	expr = wasm.CallDirect({
@@ -158,7 +155,6 @@ var wasm = {};
       default:
 	throw expr.expr;
       }
-      console.log(expr)
       return this.processExpr(expr)
     case "calldirect":
       var target = this.module.funcs[expr.func];
