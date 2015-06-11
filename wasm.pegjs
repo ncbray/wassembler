@@ -10,6 +10,18 @@
     }
     return e;
   }
+
+  function buildCallExpr(first, rest) {
+    var e = first;
+    for (var i in rest) {
+      e = wasm.Call({
+        expr: e,
+	args: [],
+      });
+    }
+    return e;
+  }
+
 }
 
 start = module
@@ -20,9 +32,14 @@ EOT = ![a-zA-Z0-9_]
 
 ident "identifier" = $[a-zA-Z0-9_]+
 
-atom = digits:$[0-9]+ {return wasm.ConstI32({value: +digits})} / "(" S e:expr S ")" {return e;}
+atom
+  = digits:$[0-9]+ {return wasm.ConstI32({value: +digits})}
+  / "(" S e:expr S ")" {return e;}
+  / name:ident {return wasm.GetName({name: name})}
 
-mulOp = first:atom rest:(S $("*"/"/"/"%") S atom)* {return buildBinaryExpr(first, rest);}
+callOp = first:atom rest:(S "(" S ")")* {return buildCallExpr(first, rest);}
+
+mulOp = first:callOp rest:(S $("*"/"/"/"%") S callOp)* {return buildBinaryExpr(first, rest);}
 
 addOp = first:mulOp rest:(S $("+"/"-") S mulOp)* {return buildBinaryExpr(first, rest);}
 
