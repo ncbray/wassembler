@@ -1,3 +1,17 @@
+{
+  function buildBinaryExpr(first, rest) {
+    var e = first;
+    for (var i in rest) {
+      e = wasm.BinaryOp({
+        left: e,
+        op: rest[i][1],
+	right: rest[i][3],
+      });
+    }
+    return e;
+  }
+}
+
 start = module
 
 S "whitespace" = [ \t\r\n]*
@@ -8,7 +22,9 @@ ident "identifier" = $[a-zA-Z0-9_]+
 
 atom = digits:$[0-9]+ {return wasm.ConstI32({value: +digits})}
 
-expr = atom
+addOp = first:atom rest:(S $("+"/"-") S atom)*	     {return buildBinaryExpr(first, rest);}
+
+expr = addOp
 
 stmt = s:("return" EOT S e:(expr/{return null}) {
   return wasm.Return({

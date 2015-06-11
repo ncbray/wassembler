@@ -67,7 +67,7 @@ var demo = {};
 
   var setupUI = function(parse) {
     var code = document.getElementById("code");
-    code.value = "func bar() void {\n}\n\nexport func main() i32 {\n  return 1;\n}";
+    code.value = "func bar() void {\n}\n\nexport func main() i32 {\n  return 2 - 1;\n}";
 
     var button = document.getElementById("eval");
     button.onclick = function() {
