@@ -67,7 +67,7 @@ var demo = {};
 
   var setupUI = function(parse) {
     var code = document.getElementById("code");
-    code.value = "func main() i32 {\n  return 1;\n}";
+    code.value = "func bar() void {\n}\n\nexport func main() i32 {\n  return 1;\n}";
 
     var button = document.getElementById("eval");
     button.onclick = function() {
@@ -172,7 +172,12 @@ var demo = {};
 	  ]);
 
 	  // Run main.
-	  var result = instance.main();
+	  try {
+	    var result = instance.main();
+	  } catch (e) {
+	    appendTerminal("\nruntime error: " + e.message);
+	    return
+	  }
 	  appendTerminal("\nresult: " + result);
 	}, function(err) {
 	  setAST(err);
