@@ -20,11 +20,19 @@ EOT = ![a-zA-Z0-9_]
 
 ident "identifier" = $[a-zA-Z0-9_]+
 
-atom = digits:$[0-9]+ {return wasm.ConstI32({value: +digits})}
+atom = digits:$[0-9]+ {return wasm.ConstI32({value: +digits})} / "(" S e:expr S ")" {return e;}
 
-addOp = first:atom rest:(S $("+"/"-") S atom)*	     {return buildBinaryExpr(first, rest);}
+mulOp = first:atom rest:(S $("*"/"/"/"%") S atom)* {return buildBinaryExpr(first, rest);}
 
-expr = addOp
+addOp = first:mulOp rest:(S $("+"/"-") S mulOp)* {return buildBinaryExpr(first, rest);}
+
+shiftOp = first:addOp rest:(S $("<<"/">>"/">>>") S addOp)* {return buildBinaryExpr(first, rest);}
+
+compareOp = first:shiftOp rest:(S $("<="/"<"/">="/">") S shiftOp)* {return buildBinaryExpr(first, rest);}
+
+equalOp = first:compareOp rest:(S $("=="/"!=") S compareOp)* {return buildBinaryExpr(first, rest);}
+
+expr = equalOp
 
 stmt = s:("return" EOT S e:(expr/{return null}) {
   return wasm.Return({
