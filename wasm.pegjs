@@ -26,7 +26,11 @@
 
 start = module
 
-S "whitespace" = [ \t\r\n]*
+whitespace "whitespace" = [ \t\r\n]
+
+comment "comment" = "//" [^\n]*
+
+S = (whitespace / comment)*
 
 EOT = ![a-zA-Z0-9_]
 
@@ -51,11 +55,15 @@ equalOp = first:compareOp rest:(S $("=="/"!=") S compareOp)* {return buildBinary
 
 expr = equalOp
 
-stmt = s:("return" EOT S e:(expr/{return null}) {
-  return wasm.Return({
-    expr: e
-  });
-}) S ";" {return s}
+stmt
+  = s:(
+    ("return" EOT S e:(expr/{return null}) {
+      return wasm.Return({
+        expr: e
+      });
+    })
+    / expr
+  ) S ";" {return s}
 
 body = (S stmt:stmt {return stmt})*
 
@@ -74,9 +82,17 @@ funcdecl = e:optionalExport S "func" EOT S name:ident S "(" S ")" S returnType:r
   })
 }
 
-module = funcs:(S f:funcdecl {return f})* S {
+import = "import" S name:ident S "(" S ")" S r:returnType S ";" {
+  return wasm.Extern({
+    name: name,
+    args: [],
+    returnType: r,
+  });
+}
+
+module = imports:(S i:import {return i})* funcs:(S f:funcdecl {return f})* S {
   return wasm.Module({
-    externs: [],
+    externs: imports,
     funcs: funcs,
   })
 }

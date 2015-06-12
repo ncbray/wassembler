@@ -31,6 +31,13 @@ var wasm = {};
     };
   };
 
+  exports.GetExtern = function(args) {
+    return {
+      type: "getextern",
+      index: args.index
+    };
+  };
+
   exports.GetLocal = function(args) {
     return {
       type: "getlocal",
@@ -94,6 +101,7 @@ var wasm = {};
   exports.Extern = function(args) {
     return {
       type: "extern",
+      name: args.name,
       args: args.args,
       returnType: args.returnType
     };
@@ -125,8 +133,10 @@ var wasm = {};
 	switch(ref.type) {
 	case "function":
 	  return wasm.GetFunction({index: ref.index});
+        case "extern":
+	  return wasm.GetExtern({index: ref.index});
 	default:
-	  throw expr;
+	  throw ref;
 	}
       } else {
 	throw expr;
@@ -148,6 +158,12 @@ var wasm = {};
       switch (expr.expr.type) {
       case "getfunction":
 	expr = wasm.CallDirect({
+	  func: expr.expr.index,
+	  args: expr.args,
+	});
+	break;
+      case "getextern":
+	expr = wasm.CallExternal({
 	  func: expr.expr.index,
 	  args: expr.args,
 	});
@@ -208,12 +224,21 @@ var wasm = {};
 
   SemanticPass.prototype.processModule = function(module) {
     this.module = module;
+
+    // Index
     this.moduleScope = {};
+    for (var i in module.externs) {
+      var e = module.externs[i];
+      e.index = i;
+      this.moduleScope[e.name] = e;
+    }
     for (var i in module.funcs) {
       var func = module.funcs[i];
       func.index = i;
       this.moduleScope[func.name] = func;
     }
+
+    // Process
     for (var i in module.funcs) {
       this.processFunction(module.funcs[i]);
     }
@@ -318,7 +343,7 @@ var wasm = {};
       break;
     case "callexternal":
       this.beginTypeCoerce(expr.etype);
-      this.writer.out("imports[").out(expr.func).out("]");
+      this.writer.out(this.m.externs[expr.func].name);
       this.writer.out("(");
       for (var i in expr.args) {
 	if (i != 0) {
@@ -393,6 +418,11 @@ var wasm = {};
 
   JSGenerator.prototype.generateModule = function(module) {
     this.writer.out("(function(imports) {").eol().indent();
+    for (var i in module.externs) {
+      var extern = module.externs[i];
+      this.writer.out("var ").out(extern.name).out(" = imports.").out(extern.name).out(";").eol();
+    };
+
     for (var i in module.funcs) {
       this.generateFunc(module.funcs[i]);
     };

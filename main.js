@@ -1,73 +1,10 @@
 var demo = {};
 
 (function(exports) {
-  var createModuleAST = function() {
-    return wasm.Module({
-      externs: [
-	wasm.Extern({
-	  args: ["f32"],
-	  returnType: "void",
-	}),
-      ],
-      funcs: [
-	wasm.Function({
-	  name: "bar",
-	  argCount: 1,
-	  returnType: "i32",
-	  exportFunc: false,
-	  locals: [
-	    "i32",
-	    "i32",
-	  ],
-	  body: [
-	    wasm.Return({
-	      expr: wasm.BinaryOp({
-		left: wasm.ConstI32({value: 7}),
-		op: "+",
-		right: wasm.GetLocal({index: 0}),
-	      }),
-	    }),
-	  ],
-	}),
-	wasm.Function({
-	  name: "main",
-	  argCount: 0,
-	  returnType: "i32",
-	  exportFunc: true,
-	  locals: [
-	  ],
-	  body: [
-	    wasm.CallExternal({
-	      func: 0,
-	      args: [
-		wasm.ConstF32({value: 7.1}),
-	      ]
-	    }),
-	    wasm.Return({
-	      expr: wasm.BinaryOp({
-		left: wasm.BinaryOp({
-		  left: wasm.ConstI32({value: 2}),
-		  op: "-",
-		  right: wasm.ConstI32({value: 3}),
-		}),
-		op: "*",
-		right: wasm.CallDirect({
-		  func: 0,
-		  args: [
-		    wasm.ConstI32({value: 5}),
-		  ],
-		}),
-	      }),
-	    }),
-	  ],
-	}),
-      ],
-    });
-  };
 
   var setupUI = function(parse) {
     var code = document.getElementById("code");
-    code.value = "func bar() i32 {\n  return 3;\n}\n\nexport func main() i32 {\n  return (11 - 7) * bar();\n}";
+    code.value = "import hook() void;\n\nfunc bar() i32 {\n  return 3;\n}\n\nexport func main() i32 {\n  //comment\n  hook();\n  return (11 - 7) * bar();\n}";
 
     var button = document.getElementById("eval");
     button.onclick = function() {
@@ -124,26 +61,10 @@ var demo = {};
     });
   };
 
-  var runDemo = function() {
-    var m = createModuleAST();
-
-    // AST => JS
-    var src = wasm.GenerateJS(m);
-    appendGenerated(src);
-
-    // Compile the module without binding it.
-    var compiled = eval(src);
-
-    // Bind the module.
-    instance = compiled([
-      function(arg) { appendTerminal("got external call: " + arg + "\n"); },
-    ]);
-
-    // Run main.
-    var result = instance.main();
-    appendTerminal("\nresult: " + result);
-
-    demo.m = compiled;
+  var externs = {
+    hook: function() {
+      appendTerminal("hook called.\n");
+    },
   };
 
   var parser;
@@ -167,9 +88,7 @@ var demo = {};
 	  var compiled = eval(src);
 
           // Bind the module.
-	  instance = compiled([
-	    function(arg) { appendTerminal("got external call: " + arg + "\n"); },
-	  ]);
+	  instance = compiled(externs);
 
 	  // Run main.
 	  try {
@@ -184,7 +103,5 @@ var demo = {};
 	});
       });
     });
-
-    //runDemo();
   };
 })(demo);
