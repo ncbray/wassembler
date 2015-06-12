@@ -102,6 +102,10 @@ var demo = {};
 	    return
 	  }
 	  appendTerminal("\nresult: " + result);
+
+	  var buffer = wasm.GenerateBinary(parsed);
+	  console.log(new Uint8Array(buffer));
+	  console.log(buffer.byteLength);
 	}, function(err) {
 	  setAST(err);
 	});
