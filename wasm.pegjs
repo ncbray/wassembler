@@ -79,12 +79,20 @@ returnType = typeRef
 
 optionalExport = "export" EOT {return true} / {return false}
 
-funcdecl = e:optionalExport S "func" EOT S name:ident S "(" S ")" S returnType:returnType S "{" S body:body S "}" {
-  return wasm.Function({
+param = name:ident S type:typeRef {
+  return wasm.Param({
     name: name,
-    argCount: 0,
+    ptype: type
+  });
+}
+
+paramList = (first:param rest:(S "," S p:param {return p;})* {return buildList(first, rest);} / {return [];} )
+
+funcdecl = e:optionalExport S "func" EOT S name:ident S "(" S params:paramList S ")" S returnType:returnType S "{" S body:body S "}" {
+  return wasm.Function({
     exportFunc: e,
-    locals: [],
+    name: name,
+    params: params,
     returnType: returnType,
     body: body,
   })

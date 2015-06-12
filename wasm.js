@@ -86,14 +86,31 @@ var wasm = {};
     };
   };
 
+  exports.Param = function(args) {
+    return {
+      type: "param",
+      name: args.name,
+      ptype: args.ptype
+    };
+  };
+
+  exports.Local = function(args) {
+    return {
+      type: "local",
+      name: args.name,
+      ltype: args.ltype,
+      index: args.index,
+    };
+  };
+
   exports.Function = function(args) {
     return {
       type: "function",
-      name: args.name,
-      argCount: args.argCount,
       exportFunc: args.exportFunc,
-      locals: args.locals,
+      name: args.name,
+      params: args.params,
       returnType: args.returnType,
+      locals: [],
       body: args.body
     };
   };
@@ -128,6 +145,13 @@ var wasm = {};
       expr.etype = "f32";
       return expr;
     case "getname":
+      var ref = this.localScope[expr.name];
+      if (ref !== undefined) {
+	var lcl = wasm.GetLocal({index: ref.index});
+	lcl.etype = ref.ltype;
+	return lcl;
+      }
+
       var ref = this.moduleScope[expr.name];
       if (ref !== undefined) {
 	switch(ref.type) {
@@ -138,9 +162,9 @@ var wasm = {};
 	default:
 	  throw ref;
 	}
-      } else {
-	throw expr;
       }
+
+      throw expr;
     case "getlocal":
       expr.etype = this.func.locals[expr.index];
       return expr;
@@ -174,7 +198,7 @@ var wasm = {};
       return this.processExpr(expr)
     case "calldirect":
       var target = this.module.funcs[expr.func];
-      if (expr.args.length != target.argCount) {
+      if (expr.args.length != target.params.length) {
 	console.log(target);
 	throw expr.args.length;
       }
@@ -182,7 +206,7 @@ var wasm = {};
 	var arg = expr.args[i];
 	arg = this.processExpr(arg);
 	expr.args[i] = arg;
-	if (arg.etype != target.locals[i]) {
+	if (arg.etype != target.locals[i].ltype) {
 	  console.log(i, arg.etype, target.locals[i]);
 	  throw expr;
 	}
@@ -215,8 +239,26 @@ var wasm = {};
     }
   };
 
+  SemanticPass.prototype.createLocal = function(name, type) {
+    var lcl = wasm.Local({
+      name: name,
+      ltype: type,
+      index: this.func.locals.length
+    });
+    this.func.locals.push(lcl);
+    this.localScope[name] = lcl;
+    return lcl.index;
+  };
+
   SemanticPass.prototype.processFunction = function(func) {
     this.func = func;
+    this.localScope = {};
+
+    for (var i in func.params) {
+      var p = func.params[i];
+      p.index = this.createLocal(p.name, p.ptype);
+    }
+
     for (var i in func.body) {
       func.body[i] = this.processExpr(func.body[i]);
     }
@@ -313,11 +355,6 @@ var wasm = {};
     }
   };
 
-
-  JSGenerator.prototype.generateLocalName = function(index) {
-    this.writer.out("l").out(index);
-  };
-
   // TODO precedence.
   JSGenerator.prototype.generateExpr = function(expr) {
     switch (expr.type) {
@@ -330,7 +367,8 @@ var wasm = {};
       this.endTypeCoerce(expr.etype);
       break;
     case "getlocal":
-      this.generateLocalName(expr.index);
+      var lcl = this.func.locals[expr.index];
+      this.writer.out(lcl.name);
       break;
     case "binop":
       this.beginTypeCoerce(expr.etype);
@@ -385,29 +423,31 @@ var wasm = {};
   };
 
   JSGenerator.prototype.generateFunc = function(func) {
+    this.func = func;
+
     this.writer.out("function ").out(func.name).out("(");
-    for (var i = 0; i < func.argCount; i++) {
+    for (var i = 0; i < func.params.length; i++) {
+      var lcl = func.locals[func.params[i].index];
       if (i != 0) {
 	this.writer.out(", ");
       }
-      this.generateLocalName(i);
+      this.writer.out(lcl.name);
     }
     this.writer.out(") {").eol();
     this.writer.indent();
 
-    for (var i = 0; i < func.argCount; i++) {
-      this.generateLocalName(i);
-      this.writer.out(" = ");
-      this.beginTypeCoerce(func.locals[i]);
-      this.generateLocalName(i);
-      this.endTypeCoerce(func.locals[i]);
+    // HACK assumes params come first.
+    for (var i = 0; i < func.params.length; i++) {
+      var lcl = func.locals[i];
+      this.writer.out(lcl.name).out(" = ");
+      this.beginTypeCoerce(func.locals[i].ltype);
+      this.writer.out(lcl.name);
+      this.endTypeCoerce(func.locals[i].ltype);
       this.writer.out(";").eol();
     }
 
-    for (var i = func.argCount; i < func.locals.length; i++) {
-      this.writer.out("var ");
-      this.generateLocalName(i);
-      this.writer.out(" = 0;").eol();
+    for (var i = func.params.length; i < func.locals.length; i++) {
+      this.writer.out("var ").out(lcl.name).out(" = 0;").eol();
       // TODO initialize to the correct type of zero.
     }
 
