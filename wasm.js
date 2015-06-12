@@ -86,6 +86,15 @@ var wasm = {};
     };
   };
 
+  exports.If = function(args) {
+    return {
+      type: "if",
+      cond: args.cond,
+      t: args.t,
+      f: args.f
+    };
+  };
+
   exports.Param = function(args) {
     return {
       type: "param",
@@ -234,7 +243,14 @@ var wasm = {};
       expr.expr = this.processExpr(expr.expr);
       expr.etype = "void";
       return expr;
+    case "if":
+      expr.cond = this.processExpr(expr.cond);
+      expr.t = this.processBlock(expr.t);
+      expr.f = this.processBlock(expr.f);
+      expr.etype = "void";
+      return expr;
     default:
+      console.log(expr);
       throw expr;
     }
   };
@@ -250,6 +266,16 @@ var wasm = {};
     return lcl.index;
   };
 
+  SemanticPass.prototype.processBlock = function(block) {
+    if (block === null) {
+      return block;
+    }
+    for (var i in block) {
+      block[i] = this.processExpr(block[i]);
+    }
+    return block;
+  };
+
   SemanticPass.prototype.processFunction = function(func) {
     this.func = func;
     this.localScope = {};
@@ -258,10 +284,7 @@ var wasm = {};
       var p = func.params[i];
       p.index = this.createLocal(p.name, p.ptype);
     }
-
-    for (var i in func.body) {
-      func.body[i] = this.processExpr(func.body[i]);
-    }
+    func.body = this.processBlock(func.body);
   };
 
   SemanticPass.prototype.processModule = function(module) {
@@ -409,16 +432,54 @@ var wasm = {};
       this.writer.out("return ");
       this.generateExpr(expr.expr);
       break;
+    case "if":
+      this.writer.out("if (");
+      this.generateExpr(expr.cond);
+      this.writer.out(") {").eol();
+      this.writer.indent();
+      this.generateBlock(expr.t);
+      this.writer.dedent();
+      if (expr.f) {
+	this.writer.out("} else {").eol();
+	this.writer.indent();
+	this.generateBlock(expr.f);
+	this.writer.dedent();
+      }
+      this.writer.out("}").eol();
+      break;
     default:
       console.log(expr);
       throw expr.type;
     };
   };
 
+  JSGenerator.prototype.generateStmt = function(expr) {
+    switch (expr.type) {
+    case "if":
+      this.writer.out("if (");
+      this.generateExpr(expr.cond);
+      this.writer.out(") {").eol();
+      this.writer.indent();
+      this.generateBlock(expr.t);
+      this.writer.dedent();
+      if (expr.f) {
+	this.writer.out("} else {").eol();
+	this.writer.indent();
+	this.generateBlock(expr.f);
+	this.writer.dedent();
+      }
+      this.writer.out("}").eol();
+      break;
+    default:
+      this.generateExpr(expr);
+      this.writer.out(";").eol();
+    };
+  };
+
+
   JSGenerator.prototype.generateBlock = function(block) {
     for (var i in block) {
-      this.generateExpr(block[i]);
-      this.writer.out(";").eol();
+      this.generateStmt(block[i]);
     }
   };
 

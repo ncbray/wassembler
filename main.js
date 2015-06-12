@@ -4,7 +4,7 @@ var demo = {};
 
   var setupUI = function(parse) {
     var code = document.getElementById("code");
-    code.value = "import hook() void;\nimport printI32(i32) void;\n\nfunc bar(a i32) i32 {\n  printI32(123);\n  return a * 3;\n}\n\nexport func main() i32 {\n  //comment\n  hook();\n  return (11 - 7) * bar(1);\n}";
+    code.value = "import hook() void;\nimport printI32(i32) void;\n\nfunc fact(n i32) i32 {\n  if(n <= 1) {\n    return 1;\n  } else {\n    return n * fact(n - 1);\n  }\n}\n\nfunc bar(a i32) i32 {\n  printI32(fact(7));\n  return a * 3;\n}\n\nexport func main() i32 {\n  //comment\n  hook();\n  return (11 - 7) * bar(1);\n}";
 
     var button = document.getElementById("eval");
     button.onclick = function() {

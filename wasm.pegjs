@@ -63,13 +63,22 @@ exprList = (first:expr rest:(S "," S e:expr {return e;})* {return buildList(firs
 
 stmt
   = s:(
-    ("return" EOT S e:(expr/{return null}) {
+    ("if" EOT S "(" S cond:expr S ")"
+      S "{" S t:body S "}"
+      f:(S "else" S "{" S f:body S "}" {return f;} / {return null;}) {
+      return wasm.If({
+        cond:cond,
+        t: t,
+	f: f
+      });
+    })
+    /("return" EOT S e:(expr/{return null}) S ";" {
       return wasm.Return({
         expr: e
       });
     })
-    / expr
-  ) S ";" {return s}
+    / e:expr S ";" {return e;}
+  ) {return s}
 
 body = (S stmt:stmt {return stmt})*
 
