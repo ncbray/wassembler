@@ -1,4 +1,8 @@
 {
+  function buildList(first, rest) {
+    return [first].concat(rest);
+  }
+
   function buildBinaryExpr(first, rest) {
     var e = first;
     for (var i in rest) {
@@ -16,7 +20,7 @@
     for (var i in rest) {
       e = wasm.Call({
         expr: e,
-	args: [],
+	args: rest[i],
       });
     }
     return e;
@@ -41,7 +45,7 @@ atom
   / "(" S e:expr S ")" {return e;}
   / name:ident {return wasm.GetName({name: name})}
 
-callOp = first:atom rest:(S "(" S ")")* {return buildCallExpr(first, rest);}
+callOp = first:atom rest:(S "(" S args:exprList S ")" {return args;})* {return buildCallExpr(first, rest);}
 
 mulOp = first:callOp rest:(S $("*"/"/"/"%") S callOp)* {return buildBinaryExpr(first, rest);}
 
@@ -55,6 +59,8 @@ equalOp = first:compareOp rest:(S $("=="/"!=") S compareOp)* {return buildBinary
 
 expr = equalOp
 
+exprList = (first:expr rest:(S "," S e:expr {return e;})* {return buildList(first, rest);} / {return [];} )
+
 stmt
   = s:(
     ("return" EOT S e:(expr/{return null}) {
@@ -67,7 +73,9 @@ stmt
 
 body = (S stmt:stmt {return stmt})*
 
-returnType = ident
+typeRef = ident
+
+returnType = typeRef
 
 optionalExport = "export" EOT {return true} / {return false}
 
@@ -82,10 +90,12 @@ funcdecl = e:optionalExport S "func" EOT S name:ident S "(" S ")" S returnType:r
   })
 }
 
-import = "import" S name:ident S "(" S ")" S r:returnType S ";" {
+typeList = (first:typeRef rest:(S "," S t:typeRef {return t;})* {return buildList(first, rest);} / {return [];} )
+
+import = "import" S name:ident S "(" S args:typeList S ")" S r:returnType S ";" {
   return wasm.Extern({
     name: name,
-    args: [],
+    args: args,
     returnType: r,
   });
 }
