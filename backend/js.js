@@ -126,6 +126,8 @@ var backend_js = {};
     case "getlocal":
     case "const_i32":
     case "const_f32":
+    case "load":
+    case "store":
       return false;
     default:
       return true;
@@ -143,6 +145,10 @@ var backend_js = {};
       return 17;
     case "binop":
       return binOpPrec[expr.op];
+    case "load":
+      return 18;
+    case "store":
+      return 3;
     default:
       console.log(expr);
       throw expr;
@@ -160,6 +166,10 @@ var backend_js = {};
     default:
       throw expr.etype;
     };
+  };
+
+  var memInfo = {
+    "i32": {heapName: "I32", shift: 2},
   };
 
   // TODO precedence.
@@ -181,6 +191,21 @@ var backend_js = {};
       var lcl = this.func.locals[expr.index];
       this.writer.out(lcl.name);
       break;
+    case "load":
+      var info = memInfo[expr.mtype];
+      this.writer.out(info.heapName).out("[(");
+      this.generateExpr(expr.address, 0);
+      this.writer.out(")>>" + info.shift + "]");
+      break;
+
+    case "store":
+      var info = memInfo[expr.mtype];
+      this.writer.out(info.heapName).out("[(");
+      this.generateExpr(expr.address, 0);
+      this.writer.out(")>>" + info.shift + "] = ");
+      this.generateExpr(expr.value);
+      break;
+
     case "binop":
       var opPrec = binOpPrec[expr.op];
       if (opPrec === undefined) {
@@ -296,9 +321,20 @@ var backend_js = {};
       this.writer.out("var ").out(extern.name).out(" = imports.").out(extern.name).out(";").eol();
     };
 
+    this.writer.eol();
+
+    this.writer.out("var MEM = new ArrayBuffer(4096);").eol();
+    this.writer.out("var I32 = new Int32Array(MEM);").eol();
+
+    this.writer.eol();
+
+
     for (var i in module.funcs) {
       this.generateFunc(module.funcs[i]);
     };
+
+    this.writer.eol();
+
     this.writer.out("return {").eol().indent();
     for (var i in module.funcs) {
       var func = module.funcs[i];

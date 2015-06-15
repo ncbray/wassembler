@@ -51,6 +51,17 @@ var semantic = {};
     case "getlocal":
       expr.etype = this.func.locals[expr.index];
       break;
+    case "load":
+      expr.address = this.processExpr(expr.address);
+      // TODO type check
+      expr.etype = expr.mtype;
+      break;
+    case "store":
+      expr.address = this.processExpr(expr.address);
+      expr.value = this.processExpr(expr.value);
+      // TODO type check
+      expr.etype = expr.mtype;
+      break;
     case "binop":
       expr.left = this.processExpr(expr.left);
       expr.right = this.processExpr(expr.right);

@@ -40,9 +40,28 @@ EOT = ![a-zA-Z0-9_]
 
 ident "identifier" = $[a-zA-Z0-9_]+
 
+loadOp
+  = t:("loadI32" {return "i32"}) S "(" S addr:expr S ")" {
+    return wast.Load({
+      mtype: t,
+      address: addr
+    });
+  }
+
+storeOp
+  = t:("storeI32" {return "i32"}) S "(" S addr:expr S "," S value:expr S ")" {
+    return wast.Store({
+      mtype: t,
+      address: addr,
+      value: value
+    });
+  }
+
 atom
   = digits:$[0-9]+ {return wast.ConstI32({value: +digits})}
   / "(" S e:expr S ")" {return e;}
+  / loadOp
+  / storeOp
   / name:ident {return wast.GetName({name: name})}
 
 callOp = first:atom rest:(S "(" S args:exprList S ")" {return args;})* {return buildCallExpr(first, rest);}

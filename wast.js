@@ -44,6 +44,23 @@ var wast = {};
     };
   };
 
+  exports.Load = function(args) {
+    return {
+      type: "load",
+      mtype: args.mtype,
+      address: args.address
+    };
+  };
+
+  exports.Store = function(args) {
+    return {
+      type: "store",
+      mtype: args.mtype,
+      address: args.address,
+      value: args.value,
+    };
+  };
+
   exports.BinaryOp = function(args) {
     return {
       type: "binop",

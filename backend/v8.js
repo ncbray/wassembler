@@ -64,6 +64,7 @@ var backend_v8 = {};
   };
 
   var ops = {
+    setheap: {bytecode: 0x03},
     if1: {bytecode: 0x04},
     if2: {bytecode: 0x05},
     block: {bytecode: 0x06},
@@ -72,6 +73,7 @@ var backend_v8 = {};
     i32const: {bytecode: 0x11},
     getlocal: {bytecode: 0x14},
 
+    getheap: {bytecode: 0x16},
     callfunc: {bytecode: 0x17},
 
     not: {bytecode: 0x1b},
@@ -116,6 +118,17 @@ var backend_v8 = {};
     case "getlocal":
       this.writer.u8(ops.getlocal.bytecode);
       this.generateLocalRef(expr.index);
+      break;
+    case "load":
+      this.writer.u8(ops.getheap.bytecode);
+      this.generateType(expr.mtype);
+      this.generateExpr(expr.address);
+      break;
+    case "store":
+      this.writer.u8(ops.setheap.bytecode);
+      this.generateType(expr.mtype);
+      this.generateExpr(expr.address);
+      this.generateExpr(expr.value);
       break;
     case "binop":
       // TODO support other data types.
