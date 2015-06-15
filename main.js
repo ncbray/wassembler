@@ -94,8 +94,7 @@ var demo = {};
 
       var module = semantic.processModule(parsed);
 
-
-      var src = wasm.GenerateJS(module);
+      var src = backend_js.generate(module);
       setText("generated", src);
 
       // Compile the module without binding it.
@@ -125,7 +124,7 @@ var demo = {};
       appendText("terminal", "\nresult: " + result);
 
       // Generate binary encoding
-      var buffer = wasm.GenerateBinary(module);
+      var buffer = backend_v8.generate(module);
       console.log(new Uint8Array(buffer));
       console.log(buffer.byteLength);
     }, function(err) {
