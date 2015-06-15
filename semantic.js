@@ -2,117 +2,145 @@ var semantic = {};
 
 (function(exports) {
 
-  var SemanticPass = function() {
+  var SemanticPass = function(status) {
+    this.status = status;
+  };
+
+  SemanticPass.prototype.error = function(message) {
+    this.status.error(message);
+    this.dead = true;
   };
 
   SemanticPass.prototype.processExpr = function(expr) {
+    var old_dead = this.dead;
+    this.dead = false;
+
     switch(expr.type) {
     case "const_i32":
       expr.etype = "i32";
-      return expr;
+      break;
     case "const_f32":
       expr.etype = "f32";
-      return expr;
+      break;
     case "getname":
       var ref = this.localScope[expr.name];
       if (ref !== undefined) {
 	var lcl = wast.GetLocal({index: ref.index});
 	lcl.etype = ref.ltype;
-	return lcl;
+	expr = lcl;
+	break;
       }
 
       var ref = this.moduleScope[expr.name];
       if (ref !== undefined) {
 	switch(ref.type) {
 	case "function":
-	  return wast.GetFunction({index: ref.index});
+	  expr = wast.GetFunction({index: ref.index});
+	  break;
         case "extern":
-	  return wast.GetExtern({index: ref.index});
+	  expr = wast.GetExtern({index: ref.index});
+	  break;
 	default:
+	  console.log(ref);
 	  throw ref;
 	}
+	break;
       }
-
-      throw expr;
+      this.error("cannot resolve name - " + expr.name);
+      break;
     case "getlocal":
       expr.etype = this.func.locals[expr.index];
-      return expr;
+      break;
     case "binop":
       expr.left = this.processExpr(expr.left);
       expr.right = this.processExpr(expr.right);
       if (expr.left.etype != expr.right.etype) {
-	console.log(expr);
-	throw expr;
+	this.error("binary op type error - " + expr.left.etype + expr.op + expr.right.etype + " = ???");
       }
       expr.etype = expr.left.etype;
-      return expr;
+      break;
     case "call":
       expr.expr = this.processExpr(expr.expr);
-      switch (expr.expr.type) {
-      case "getfunction":
-	expr = wast.CallDirect({
-	  func: expr.expr.index,
-	  args: expr.args,
-	});
-	break;
-      case "getextern":
-	expr = wast.CallExternal({
-	  func: expr.expr.index,
-	  args: expr.args,
-	});
-	break;
-      default:
-	throw expr.expr;
+      if (!this.dead) {
+	switch (expr.expr.type) {
+	case "getfunction":
+	  expr = wast.CallDirect({
+	    func: expr.expr.index,
+	    args: expr.args,
+	  });
+	  break;
+	case "getextern":
+	  expr = wast.CallExternal({
+	    func: expr.expr.index,
+	    args: expr.args,
+	  });
+	  break;
+	default:
+	  console.log(expr.expr);
+	  throw expr.expr;
+	}
       }
-      return this.processExpr(expr)
-    case "calldirect":
-      var target = this.module.funcs[expr.func];
-      if (expr.args.length != target.params.length) {
-	console.log(target);
-	throw expr.args.length;
-      }
+
+      // Process arguments
       for (var i = 0; i < expr.args.length; i++) {
-	var arg = expr.args[i];
-	arg = this.processExpr(arg);
-	expr.args[i] = arg;
-	if (arg.etype != target.locals[i].ltype) {
-	  console.log(i, arg.etype, target.locals[i]);
+	expr.args[i] = this.processExpr(expr.args[i]);
+      }
+
+      if (!this.dead) {
+	switch (expr.type) {
+	case "calldirect":
+	  var target = this.module.funcs[expr.func];
+	  if (expr.args.length != target.params.length) {
+	    console.log(target);
+	    throw expr.args.length;
+	  }
+	  for (var i = 0; i < expr.args.length; i++) {
+	    var arg = expr.args[i];
+	    if (arg.etype != target.params[i].ptype) {
+	      console.log(i, arg.etype, params[i].ptype);
+	      throw expr;
+	    }
+	  }
+	  expr.etype = target.returnType;
+	  break;
+	case "callexternal":
+	  var target = this.module.externs[expr.func];
+	  if (expr.args.length != target.args.length) {
+	    console.log(target);
+	    throw expr.args.length;
+	  }
+	  for (var i = 0; i < expr.args.length; i++) {
+	    var arg = expr.args[i];
+	    if (arg.etype != target.args[i]) {
+	      console.log(i, arg.etype, target.args[i]);
+	      throw expr;
+	    }
+	  }
+	  expr.etype = target.returnType;
+	  break;
+	default:
+	  console.log(expr);
 	  throw expr;
 	}
       }
-      expr.etype = target.returnType;
-      return expr;
-    case "callexternal":
-      var target = this.module.externs[expr.func];
-      if (expr.args.length != target.args.length) {
-	console.log(target);
-	throw expr.args.length;
-      }
-      for (var i = 0; i < expr.args.length; i++) {
-	var arg = expr.args[i];
-	arg = this.processExpr(arg);
-	expr.args[i] = arg;
-	if (arg.etype != target.args[i]) {
-	  console.log(i, arg.etype, target.args[i]);
-	  throw expr;
-	}
-      }
-      expr.etype = target.returnType;
-      return expr;
+      break;
     case "return":
       expr.expr = this.processExpr(expr.expr);
       expr.etype = "void";
-      return expr;
+      break;
     case "if":
       expr.cond = this.processExpr(expr.cond);
       expr.t = this.processBlock(expr.t);
       expr.f = this.processBlock(expr.f);
       expr.etype = "void";
-      return expr;
+      break;
     default:
       console.log(expr);
       throw expr;
     }
+
+    this.dead = this.dead || old_dead;
+    return expr;
   };
 
   SemanticPass.prototype.createLocal = function(name, type) {
@@ -130,15 +158,19 @@ var semantic = {};
     if (block === null) {
       return block;
     }
+    var old_dead = this.dead;
     for (var i in block) {
       block[i] = this.processExpr(block[i]);
     }
+    this.dead = this.dead || old_dead;
     return block;
   };
 
   SemanticPass.prototype.processFunction = function(func) {
     this.func = func;
     this.localScope = {};
+
+    this.dead = false;
 
     for (var i in func.params) {
       var p = func.params[i];
@@ -171,8 +203,8 @@ var semantic = {};
     return module;
   };
 
-  exports.processModule = function(module) {
-    var semantic = new SemanticPass();
+  exports.processModule = function(module, status) {
+    var semantic = new SemanticPass(status);
     return semantic.processModule(module);
   };
 

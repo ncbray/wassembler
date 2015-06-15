@@ -81,6 +81,15 @@ var demo = {};
     },
   };
 
+  var Status = function() {
+    this.num_errors = 0;
+  };
+
+  Status.prototype.error = function(message) {
+    appendText("generated", message + "\n");
+    this.num_errors += 1;
+  };
+
   var parser;
 
   var reevaluate = function(text) {
@@ -89,10 +98,19 @@ var demo = {};
     setText("generated", "");
     setText("terminal", "");
 
+    var status = new Status();
+
     parse(parser, text).then(function(parsed) {
+      // Display the old AST, incase the semantic pass fails.
       setText("ast", JSON.stringify(parsed, null, "  "));
 
-      var module = semantic.processModule(parsed);
+      var module = semantic.processModule(parsed, status);
+      if (status.num_errors > 0) {
+	return;
+      }
+
+      // The semantic pass will have refined the AST.
+      setText("ast", JSON.stringify(module, null, "  "));
 
       var src = backend_js.generate(module);
       setText("generated", src);
