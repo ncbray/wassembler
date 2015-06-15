@@ -6,7 +6,7 @@
   function buildBinaryExpr(first, rest) {
     var e = first;
     for (var i in rest) {
-      e = wasm.BinaryOp({
+      e = wast.BinaryOp({
         left: e,
         op: rest[i][1],
 	right: rest[i][3],
@@ -18,7 +18,7 @@
   function buildCallExpr(first, rest) {
     var e = first;
     for (var i in rest) {
-      e = wasm.Call({
+      e = wast.Call({
         expr: e,
 	args: rest[i],
       });
@@ -41,9 +41,9 @@ EOT = ![a-zA-Z0-9_]
 ident "identifier" = $[a-zA-Z0-9_]+
 
 atom
-  = digits:$[0-9]+ {return wasm.ConstI32({value: +digits})}
+  = digits:$[0-9]+ {return wast.ConstI32({value: +digits})}
   / "(" S e:expr S ")" {return e;}
-  / name:ident {return wasm.GetName({name: name})}
+  / name:ident {return wast.GetName({name: name})}
 
 callOp = first:atom rest:(S "(" S args:exprList S ")" {return args;})* {return buildCallExpr(first, rest);}
 
@@ -66,14 +66,14 @@ stmt
     ("if" EOT S "(" S cond:expr S ")"
       S "{" S t:body S "}"
       f:(S "else" S "{" S f:body S "}" {return f;} / {return null;}) {
-      return wasm.If({
+      return wast.If({
         cond:cond,
         t: t,
 	f: f
       });
     })
     /("return" EOT S e:(expr/{return null}) S ";" {
-      return wasm.Return({
+      return wast.Return({
         expr: e
       });
     })
@@ -89,7 +89,7 @@ returnType = typeRef
 optionalExport = "export" EOT {return true} / {return false}
 
 param = name:ident S type:typeRef {
-  return wasm.Param({
+  return wast.Param({
     name: name,
     ptype: type
   });
@@ -98,7 +98,7 @@ param = name:ident S type:typeRef {
 paramList = (first:param rest:(S "," S p:param {return p;})* {return buildList(first, rest);} / {return [];} )
 
 funcdecl = e:optionalExport S "func" EOT S name:ident S "(" S params:paramList S ")" S returnType:returnType S "{" S body:body S "}" {
-  return wasm.Function({
+  return wast.Function({
     exportFunc: e,
     name: name,
     params: params,
@@ -110,7 +110,7 @@ funcdecl = e:optionalExport S "func" EOT S name:ident S "(" S params:paramList S
 typeList = (first:typeRef rest:(S "," S t:typeRef {return t;})* {return buildList(first, rest);} / {return [];} )
 
 import = "import" S name:ident S "(" S args:typeList S ")" S r:returnType S ";" {
-  return wasm.Extern({
+  return wast.Extern({
     name: name,
     args: args,
     returnType: r,
@@ -118,7 +118,7 @@ import = "import" S name:ident S "(" S args:typeList S ")" S r:returnType S ";" 
 }
 
 module = imports:(S i:import {return i})* funcs:(S f:funcdecl {return f})* S {
-  return wasm.Module({
+  return wast.Module({
     externs: imports,
     funcs: funcs,
   })
