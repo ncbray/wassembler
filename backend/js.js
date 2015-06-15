@@ -34,15 +34,49 @@ var backend_js = {};
     return this;
   };
 
+  var binOpPrec = {
+    "*": 14,
+    "/": 14,
+    "%": 14,
+    "+": 13,
+    "-": 13,
+    "<<": 12,
+    ">>": 12,
+    ">>>": 12,
+    "<": 11,
+    "<=": 11,
+    ">": 11,
+    ">=": 11,
+    "==": 10,
+    "!=": 10,
+    "===": 10,
+    "!==": 10,
+    "&": 9,
+    "^": 8,
+    "|": 7,
+  };
+
   var JSGenerator = function(m) {
     this.m = m;
     this.writer = new CodeWriter();
   };
 
-  JSGenerator.prototype.beginTypeCoerce = function(etype) {
+  JSGenerator.prototype.beginTypeCoerce = function(etype, rawP, coercedP, contextP, doCoerce) {
+    if (!doCoerce) {
+      if (rawP < contextP) {
+	this.writer.out("(");
+      }
+      return;
+    }
+    if (coercedP < contextP) {
+      this.writer.out("(");
+    }
+    if (rawP < coercedP) {
+      this.writer.out("(");
+    }
+
     switch (etype) {
     case "i32":
-      this.writer.out("(");
       break;
     case "f32":
       this.writer.out("Math.fround(");
@@ -54,10 +88,21 @@ var backend_js = {};
     }
   };
 
-  JSGenerator.prototype.endTypeCoerce = function(etype) {
+  JSGenerator.prototype.endTypeCoerce = function(etype, rawP, coercedP, contextP, doCoerce) {
+    if (!doCoerce) {
+      if (rawP < contextP) {
+	this.writer.out(")");
+      }
+      return;
+    }
+
+    if (rawP < coercedP) {
+      this.writer.out(")");
+    }
+
     switch (etype) {
     case "i32":
-      this.writer.out("|0)");
+      this.writer.out(" | 0");
       break;
     case "f32":
       this.writer.out(")");
@@ -67,73 +112,119 @@ var backend_js = {};
     default:
       throw etype;
     }
+
+    if (coercedP < contextP) {
+      this.writer.out(")");
+    }
+  };
+
+  var coerceNeeded = function(expr) {
+    if (expr.etype == "void") {
+      return false;
+    }
+    switch(expr.type) {
+    case "getlocal":
+    case "const_i32":
+    case "const_f32":
+      return false;
+    default:
+      return true;
+    }
+  };
+
+  var rawPrec = function(expr) {
+    switch (expr.type) {
+    case "getlocal":
+    case "const_i32":
+    case "const_f32":
+      return 19;
+    case "calldirect":
+    case "callexternal":
+      return 17;
+    case "binop":
+      return binOpPrec[expr.op];
+    default:
+      console.log(expr);
+      throw expr;
+    }
+  };
+
+  var coercedPrec = function(expr) {
+    switch (expr.etype) {
+    case "i32":
+      return binOpPrec["|"];
+    case "f32":    
+      return 17;
+    case "void":
+      return 17;
+    default:
+      throw expr.etype;
+    };
   };
 
   // TODO precedence.
-  JSGenerator.prototype.generateExpr = function(expr) {
+  JSGenerator.prototype.generateExpr = function(expr, contextP) {
+    var rawP = rawPrec(expr);
+    var coercedP = coercedPrec(expr);
+    var doCoerce = coerceNeeded(expr);
+
+    this.beginTypeCoerce(expr.etype, rawP, coercedP, contextP, doCoerce);
+
     switch (expr.type) {
     case "const_i32":
       this.writer.out(expr.value);
       break;
     case "const_f32":
-      this.beginTypeCoerce(expr.etype);
       this.writer.out(expr.value);
-      this.endTypeCoerce(expr.etype);
       break;
     case "getlocal":
       var lcl = this.func.locals[expr.index];
       this.writer.out(lcl.name);
       break;
     case "binop":
-      this.beginTypeCoerce(expr.etype);
-      this.writer.out("(");
-      this.generateExpr(expr.left);
+      var opPrec = binOpPrec[expr.op];
+      if (opPrec === undefined) {
+	throw expr.op;
+      }
+      this.generateExpr(expr.left, opPrec);
       this.writer.out(" ").out(expr.op).out(" ");
-      this.generateExpr(expr.right);
-      this.writer.out(")");
-      this.endTypeCoerce(expr.etype);
+      this.generateExpr(expr.right, opPrec + 1);
       break;
     case "callexternal":
-      this.beginTypeCoerce(expr.etype);
       this.writer.out(this.m.externs[expr.func].name);
       this.writer.out("(");
       for (var i in expr.args) {
 	if (i != 0) {
 	  this.writer.out(", ")
 	}
-	this.generateExpr(expr.args[i]);
+	this.generateExpr(expr.args[i], 0);
       }
       this.writer.out(")");
-      this.endTypeCoerce(expr.etype);
       break;
     case "calldirect":
-      this.beginTypeCoerce(expr.etype);
       this.writer.out(this.m.funcs[expr.func].name);
       this.writer.out("(");
       for (var i in expr.args) {
 	if (i != 0) {
 	  this.writer.out(", ")
 	}
-	this.generateExpr(expr.args[i]);
+	this.generateExpr(expr.args[i], 0);
       }
       this.writer.out(")");
-      this.endTypeCoerce(expr.etype);
-      break;
-    case "return":
-      this.writer.out("return ");
-      this.generateExpr(expr.expr);
       break;
     default:
       console.log(expr);
       throw expr.type;
     };
+
+    this.endTypeCoerce(expr.etype, rawP, coercedP, contextP, doCoerce);
   };
 
   JSGenerator.prototype.generateStmt = function(expr) {
     switch (expr.type) {
     case "if":
       this.writer.out("if (");
-      this.generateExpr(expr.cond);
+      this.generateExpr(expr.cond, 0);
       this.writer.out(") {").eol();
       this.writer.indent();
       this.generateBlock(expr.t);
@@ -146,8 +237,13 @@ var backend_js = {};
       }
       this.writer.out("}").eol();
       break;
+    case "return":
+      this.writer.out("return ");
+      this.generateExpr(expr.expr, 0);
+      this.writer.out(";").eol();
+      break;
     default:
-      this.generateExpr(expr);
+      this.generateExpr(expr, 0);
       this.writer.out(";").eol();
     };
   };
@@ -177,9 +273,9 @@ var backend_js = {};
     for (var i = 0; i < func.params.length; i++) {
       var lcl = func.locals[i];
       this.writer.out(lcl.name).out(" = ");
-      this.beginTypeCoerce(func.locals[i].ltype);
+      this.beginTypeCoerce(func.locals[i].ltype, 19, 19, 0, true);
       this.writer.out(lcl.name);
-      this.endTypeCoerce(func.locals[i].ltype);
+      this.endTypeCoerce(func.locals[i].ltype, 19, 19, 0, true);
       this.writer.out(";").eol();
     }
 
