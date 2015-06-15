@@ -2,52 +2,63 @@ var demo = {};
 
 (function(exports) {
 
-  var setupUI = function(parse) {
-    var code = document.getElementById("code");
-    code.value = "import hook() void;\nimport printI32(i32) void;\n\nfunc fact(n i32) i32 {\n  if(n <= 1) {\n    return 1;\n  } else {\n    return n * fact(n - 1);\n  }\n}\n\nfunc bar(a i32) i32 {\n  printI32(fact(7));\n  return a * 3;\n}\n\nexport func main() i32 {\n  //comment\n  hook();\n  return (11 - 7) * bar(1);\n}";
+  var setupUI = function(code, parse) {
+    setText("code", code);
 
     var button = document.getElementById("eval");
     button.onclick = function() {
-      parse(code.value);
+      parse(getText("code"));
     };
-
-    parse(code.value);
+    button.onclick();
   };
 
-  var setAST = function(text) {
-    document.getElementById("ast").value = text;
+  var getText = function(pane) {
+    return document.getElementById(pane).value;
   };
 
-  var appendAST = function(text) {
-    document.getElementById("ast").value += text;
+  var setText = function(pane, text) {
+    document.getElementById(pane).value = text;
   };
 
-  var setGenerated = function(text) {
-    document.getElementById("generated").value = text;
+  var appendText = function(pane, text) {
+    document.getElementById(pane).value += text;
   };
 
-  var appendGenerated = function(text) {
-    document.getElementById("generated").value += text;
-  };
-
-  var setTerminal = function(text) {
-    document.getElementById("terminal").value = text;
-  };
-
-  var appendTerminal = function(text) {
-    document.getElementById("terminal").value += text;
-  };
-
-
-  var createParser = function() {
+  var getURL = function(url) {
     return new Promise(function(resolve, reject) {
       var req = new XMLHttpRequest();
       req.onload = function() {
-	var parser = PEG.buildParser(req.response);
-	resolve(parser);
+	if (req.status == 200) {
+	  resolve(req.response);
+	} else {
+	  reject(Error("getURL " + url + " - reponse " + req.status));
+	}
       };
-      req.open("get", "wasm.pegjs");
+      req.onerror = function() {
+	reject(Error("getURL " + url + " - network error"));
+      };
+      req.open("get", url);
       req.send();
+    });
+  };
+
+  var syntaxError = function(prefix, e) {
+    return new Error(prefix + " " + e.line + ":" + e.column + " - " + e.message);
+  };
+
+  var createParser = function(url) {
+    return new Promise(function(resolve, reject) {
+      getURL(url).then(function(grammar) {
+	try {
+	  var parser = PEG.buildParser(grammar);
+	} catch (e) {
+	  console.log(e);
+	  reject(syntaxError(url, e));
+	}
+	resolve(parser);	
+      }, function(err) {
+	reject(err);
+      });
     });
   };
 
@@ -56,60 +67,79 @@ var demo = {};
       try {
 	resolve(parser.parse(text));
       } catch (e) {
-	reject("ERROR " + e.line + ":" + e.column + " - " + e.message);
+	reject(syntaxError("code", e));
       }
     });
   };
 
   var externs = {
     hook: function() {
-      appendTerminal("hook called.\n");
+      appendText("terminal", "hook called.\n");
     },
     printI32: function(value) {
-      appendTerminal("printI32: " + value + "\n");
+      appendText("terminal", "printI32: " + value + "\n");
     },
   };
 
   var parser;
 
+  var reevaluate = function(text) {
+    // Clear the outputs.
+    setText("ast", "");
+    setText("generated", "");
+    setText("terminal", "");
+
+    parse(parser, text).then(function(parsed) {
+      setText("ast", JSON.stringify(parsed, null, "  "));
+
+      var src = wasm.GenerateJS(parsed);
+      setText("generated", src);
+
+      // Compile the module without binding it.
+      try {
+	var compiled = eval(src);
+      } catch (e) {
+	appendText("terminal", "compile error: " + e.message);
+	return;
+      }
+
+      // Bind the module.
+      try {
+	instance = compiled(externs);
+      } catch (e) {
+	appendText("terminal", "binding error: " + e.message);
+	return;
+      }
+
+      // Run main.
+      appendText("terminal", "running main...\n\n");
+      try {
+	var result = instance.main();
+      } catch (e) {
+	appendText("terminal", "\nruntime error: " + e.message);
+	return;
+      }
+      appendText("terminal", "\nresult: " + result);
+
+      // Generate binary encoding
+      var buffer = wasm.GenerateBinary(parsed);
+      console.log(new Uint8Array(buffer));
+      console.log(buffer.byteLength);
+    }, function(err) {
+      setText("ast", err);
+    });
+  };
+
   exports.run = function() {
-    createParser().then(function(p) {
-      parser = p;
-      setupUI(function(text) {
-	// Clear the outputs.
-	setAST("");
-	setGenerated("");
-	setTerminal("");
-
-	parse(parser, text).then(function(parsed) {
-	  setAST(JSON.stringify(parsed, null, "  "));
-
-	  var src = wasm.GenerateJS(parsed);
-	  setGenerated(src);
-
-	  // Compile the module without binding it.
-	  var compiled = eval(src);
-
-          // Bind the module.
-	  instance = compiled(externs);
-
-	  // Run main.
-	  appendTerminal("running main...\n\n");
-	  try {
-	    var result = instance.main();
-	  } catch (e) {
-	    appendTerminal("\nruntime error: " + e.message);
-	    return
-	  }
-	  appendTerminal("\nresult: " + result);
-
-	  var buffer = wasm.GenerateBinary(parsed);
-	  console.log(new Uint8Array(buffer));
-	  console.log(buffer.byteLength);
-	}, function(err) {
-	  setAST(err);
-	});
-      });
+    Promise.all([
+      createParser("wasm.pegjs"),
+      getURL("example.wasm")
+    ]).then(function(values) {
+      parser = values[0];
+      var code = values[1];
+      setupUI(code, reevaluate);
+    }, function(err){
+      setText("code", err);
     });
   };
 })(demo);

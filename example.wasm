@@ -1,0 +1,22 @@
+// Imports
+import hook() void;
+import printI32(i32) void;
+
+// The program
+func fact(n i32) i32 {
+  if(n <= 1) {
+    return 1;
+  } else {
+    return n * fact(n - 1);
+  }
+}
+
+func bar(a i32) i32 {
+  printI32(fact(7));
+  return a * 3;
+}
+
+export func main() i32 {
+  hook();
+  return (11 - 7) * bar(1);
+}
