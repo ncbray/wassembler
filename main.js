@@ -92,7 +92,10 @@ var demo = {};
     parse(parser, text).then(function(parsed) {
       setText("ast", JSON.stringify(parsed, null, "  "));
 
-      var src = wasm.GenerateJS(parsed);
+      var module = semantic.processModule(parsed);
+
+
+      var src = wasm.GenerateJS(module);
       setText("generated", src);
 
       // Compile the module without binding it.
@@ -122,7 +125,7 @@ var demo = {};
       appendText("terminal", "\nresult: " + result);
 
       // Generate binary encoding
-      var buffer = wasm.GenerateBinary(parsed);
+      var buffer = wasm.GenerateBinary(module);
       console.log(new Uint8Array(buffer));
       console.log(buffer.byteLength);
     }, function(err) {
