@@ -142,6 +142,12 @@ define(['astutil'], function(astutil) {
 	{name: "funcs"},
       ],
     },
+    {
+      name: "ParsedModule",
+      fields: [
+	{name: "decls"},
+      ],
+    },
   ];
 
   return astutil.makeASTBuilder(schema);

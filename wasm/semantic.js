@@ -258,6 +258,34 @@ define(["wasm/ast"], function(wast) {
   };
 
   SemanticPass.prototype.processModule = function(module) {
+    if (module.type != "ParsedModule") {
+      console.log(module);
+      throw module.type;
+    }
+
+    // Bucket the declarations.
+    var externs = [];
+    var funcs = [];
+    for (var i in module.decls) {
+      var decl = module.decls[i];
+      switch (decl.type) {
+      case "Function":
+	funcs.push(decl);
+	break;
+      case "Extern":
+	externs.push(decl);
+	break;
+      default:
+	console.log(decl);
+	throw decl.type;
+      }
+    }
+
+    module = wast.Module({
+      externs: externs,
+      funcs: funcs
+    });
+
     this.module = module;
     this.indexModule(module);
     if (!this.dead) {

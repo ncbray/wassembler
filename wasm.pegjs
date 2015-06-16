@@ -148,9 +148,12 @@ import = "import" S name:ident S "(" S args:typeList S ")" S r:returnType S ";" 
   });
 }
 
-module = imports:(S i:import {return i})* funcs:(S f:funcdecl {return f})* S {
-  return wast.Module({
-    externs: imports,
-    funcs: funcs,
+decl = funcdecl / import
+
+declList = (first:decl rest:(S d:decl {return d;})* {return buildList(first, rest);}) / {return [];}
+
+module = S decls:declList S {
+  return wast.ParsedModule({
+    decls: decls,
   })
 }
