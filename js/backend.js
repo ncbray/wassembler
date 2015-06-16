@@ -1,4 +1,4 @@
-define([], function() {
+define(["wasm/typeinfo"], function(typeinfo) {
   var CodeWriter = function() {
     this.margins = [];
     this.margin = "";
@@ -170,7 +170,7 @@ define([], function() {
   };
 
   var memInfo = {
-    "i32": {heapName: "I32", shift: 2},
+    "i32": {heapName: "I32"},
   };
 
   // TODO precedence.
@@ -194,16 +194,18 @@ define([], function() {
       break;
     case "Load":
       var info = memInfo[expr.mtype];
+      var shift = Math.log2(typeinfo.sizeOf(expr.mtype));
       this.writer.out(info.heapName).out("[(");
       this.generateExpr(expr.address, 0);
-      this.writer.out(")>>" + info.shift + "]");
+      this.writer.out(")>>" + shift + "]");
       break;
 
     case "Store":
       var info = memInfo[expr.mtype];
+      var shift = Math.log2(typeinfo.sizeOf(expr.mtype));
       this.writer.out(info.heapName).out("[(");
       this.generateExpr(expr.address, 0);
-      this.writer.out(")>>" + info.shift + "] = ");
+      this.writer.out(")>>" + shift + "] = ");
       this.generateExpr(expr.value);
       break;
 

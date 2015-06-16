@@ -127,7 +127,7 @@ param = name:ident S type:typeRef {
 
 paramList = (first:param rest:(S "," S p:param {return p;})* {return buildList(first, rest);} / {return [];} )
 
-funcdecl = e:optionalExport S "func" EOT S name:ident S "(" S params:paramList S ")" S returnType:returnType S "{" S body:body S "}" {
+funcdecl "function decl" = e:optionalExport S "func" EOT S name:ident S "(" S params:paramList S ")" S returnType:returnType S "{" S body:body S "}" {
   return wast.Function({
     exportFunc: e,
     name: name,
@@ -140,7 +140,7 @@ funcdecl = e:optionalExport S "func" EOT S name:ident S "(" S params:paramList S
 
 typeList = (first:typeRef rest:(S "," S t:typeRef {return t;})* {return buildList(first, rest);} / {return [];} )
 
-import = "import" S name:ident S "(" S args:typeList S ")" S r:returnType S ";" {
+import "import decl" = "import" EOT S name:ident S "(" S args:typeList S ")" S r:returnType S ";" {
   return wast.Extern({
     name: name,
     args: args,
@@ -148,7 +148,14 @@ import = "import" S name:ident S "(" S args:typeList S ")" S r:returnType S ";" 
   });
 }
 
-decl = funcdecl / import
+memorydecl = "memory" EOT S name:ident S type:typeRef S ";" {
+  return wast.MemoryDecl({
+    name: name,
+    mtype: type,
+  });
+}
+
+decl = funcdecl / import / memorydecl
 
 declList = (first:decl rest:(S d:decl {return d;})* {return buildList(first, rest);}) / {return [];}
 

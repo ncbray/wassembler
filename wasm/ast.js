@@ -136,10 +136,18 @@ define(['astutil'], function(astutil) {
       ],
     },
     {
+      name: "MemoryDecl",
+      fields: [
+	{name: "name"},
+	{name: "mtype"},
+      ],
+    },
+    {
       name: "Module",
       fields: [
 	{name: "externs"},
 	{name: "funcs"},
+	{name: "memory"},
       ],
     },
     {

@@ -9,9 +9,12 @@ func fact(n i32) i32 {
   }
 }
 
+memory dummy i32;
+memory temp i32;
+
 func bar(a i32) i32 {
   printI32(fact(7));
-  storeI32(8, 123);
+  storeI32(temp, 123);
   return a * 3;
 }
 
@@ -19,5 +22,5 @@ import hook() void;
 
 export func main() i32 {
   hook();
-  return (11 - 7) * bar(1) * loadI32(8);
+  return (11 - 7) * bar(1) * loadI32(temp);
 }

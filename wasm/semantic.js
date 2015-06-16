@@ -1,4 +1,4 @@
-define(["wasm/ast"], function(wast) {
+define(["wasm/ast", "wasm/typeinfo"], function(wast, typeinfo) {
 
   var SemanticPass = function(status) {
     this.status = status;
@@ -45,6 +45,12 @@ define(["wasm/ast"], function(wast) {
 	    break;
           case "Extern":
 	    expr = wast.GetExtern({index: ref.index});
+	    break;
+          case "MemoryDecl":
+	    expr = wast.ConstI32({
+	      value: ref.ptr
+	    });
+	    this.setExprType(expr, "i32");
 	    break;
 	  default:
 	    console.log(ref);
@@ -94,7 +100,7 @@ define(["wasm/ast"], function(wast) {
 	  });
 	  break;
 	default:
-	  console.log(expr.expr);
+	  console.log(expr);
 	  throw expr.expr;
 	}
       }
@@ -255,6 +261,26 @@ define(["wasm/ast"], function(wast) {
       this.registerInModule(func.name, func);
       this.processFuncSig(func);
     }
+
+    // Zero is null, so don't use that.
+    var ptr = 8;
+    for (var i in module.memory) {
+      var mem = module.memory[i];
+      mem.mtype = this.processType(mem.mtype);
+
+      var size = typeinfo.sizeOf(mem.mtype);
+
+      // Align
+      if (ptr % size != 0) {
+	ptr += size - ptr % size;
+      }
+
+      // Allocate
+      mem.ptr = ptr;
+      ptr += size;
+
+      this.registerInModule(mem.name, mem);
+    }
   };
 
   SemanticPass.prototype.processModule = function(module) {
@@ -266,6 +292,7 @@ define(["wasm/ast"], function(wast) {
     // Bucket the declarations.
     var externs = [];
     var funcs = [];
+    var memory = [];
     for (var i in module.decls) {
       var decl = module.decls[i];
       switch (decl.type) {
@@ -275,6 +302,9 @@ define(["wasm/ast"], function(wast) {
       case "Extern":
 	externs.push(decl);
 	break;
+      case "MemoryDecl":
+	memory.push(decl);
+	break;
       default:
 	console.log(decl);
 	throw decl.type;
@@ -283,7 +313,8 @@ define(["wasm/ast"], function(wast) {
 
     module = wast.Module({
       externs: externs,
-      funcs: funcs
+      funcs: funcs,
+      memory: memory,
     });
 
     this.module = module;
