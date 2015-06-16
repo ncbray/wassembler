@@ -111,6 +111,7 @@ var semantic = {};
 	case "calldirect":
 	  var target = this.module.funcs[expr.func];
 	  if (expr.args.length != target.params.length) {
+	    this.error("argument count mismatch");
 	    console.log(target);
 	    throw expr.args.length;
 	  }
@@ -126,6 +127,7 @@ var semantic = {};
 	case "callexternal":
 	  var target = this.module.externs[expr.func];
 	  if (expr.args.length != target.args.length) {
+	    this.error("argument count mismatch");
 	    console.log(target);
 	    throw expr.args.length;
 	  }
@@ -164,7 +166,15 @@ var semantic = {};
   };
 
   SemanticPass.prototype.processType = function(type) {
-    return type.text;
+    var t = type.text;
+    switch (t) {
+    case "i32":
+    case "void":
+      break;
+    default:
+      this.error("unknown type - " + type.text, type.pos);
+    }
+    return t;
   };
 
   SemanticPass.prototype.createLocal = function(name, type) {
@@ -205,46 +215,58 @@ var semantic = {};
 
     for (var i in func.params) {
       var p = func.params[i];
-      p.ptype = this.processType(p.ptype);
       p.index = this.createLocal(p.name.text, p.ptype);
     }
-    func.returnType = this.processType(func.returnType);
     func.body = this.processBlock(func.body);
   };
 
-  SemanticPass.prototype.processExtern = function(extern) {
+  SemanticPass.prototype.processExternSig = function(extern) {
     for (var i in extern.args) {
       extern.args[i] = this.processType(extern.args[i]);
     }
     extern.returnType = this.processType(extern.returnType);
   };
 
-  SemanticPass.prototype.processModule = function(module) {
-    this.module = module;
+  SemanticPass.prototype.processFuncSig = function(func) {
+    for (var i in func.params) {
+      var p = func.params[i];
+      p.ptype = this.processType(p.ptype);
+    }
+    func.returnType = this.processType(func.returnType);
+  };
 
-    // Index
+  SemanticPass.prototype.registerInModule = function(name, decl) {
+    if (name.text in this.moduleScope) {
+      this.error("attempted to redefine name - " + name.text, name.pos);
+    } else {
+      this.moduleScope[name.text] = decl;
+    }
+  };
+
+  SemanticPass.prototype.indexModule = function(module) {
     this.moduleScope = {};
     for (var i in module.externs) {
       var e = module.externs[i];
       e.index = i;
-      var name = e.name.text;
-      this.moduleScope[name] = e;
+      this.registerInModule(e.name, e);
+      this.processExternSig(e);
     }
     for (var i in module.funcs) {
       var func = module.funcs[i];
       func.index = i;
-      var name = func.name.text;
-      this.moduleScope[name] = func;
+      this.registerInModule(func.name, func);
+      this.processFuncSig(func);
     }
+  };
 
-    // Process
-    for (var i in module.externs) {
-      this.processExtern(module.externs[i]);
+  SemanticPass.prototype.processModule = function(module) {
+    this.module = module;
+    this.indexModule(module);
+    if (!this.dead) {
+      for (var i in module.funcs) {
+	this.processFunction(module.funcs[i]);
+      }
     }
-    for (var i in module.funcs) {
-      this.processFunction(module.funcs[i]);
-    }
-
     return module;
   };
 
