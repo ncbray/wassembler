@@ -1,6 +1,6 @@
-var wast = {};
+define([], function() {
+  var exports = {};
 
-(function(exports) {
   exports.ConstI32 = function(args) {
     return {
       type: "const_i32",
@@ -165,4 +165,5 @@ var wast = {};
     };
   };
 
-})(wast);
+  return exports;
+});

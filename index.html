@@ -3,11 +3,7 @@
 <head>
 <title>Interactive Wassembler</title>
 <script src="third_party/peg-0.8.0.js"></script>
-<script src="wast.js"></script>
-<script src="semantic.js"></script>
-<script src="backend/js.js"></script>
-<script src="backend/v8.js"></script>
-<script src="main.js"></script>
+<script data-main="main" src="third_party/require.js"></script>
 </head>
 <body>
 <h1>Interactive Wassembler</h1>
@@ -24,6 +20,8 @@
 </div>
 </body>
 <script>
-demo.run();
+require(['main'], function(main){
+  main.run();
+});
 </script>
 </html>

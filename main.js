@@ -1,6 +1,6 @@
-var demo = {};
-
-(function(exports) {
+define(
+  ['wast', 'semantic', 'backend/js', 'backend/v8'],
+  function(wast, semantic, backend_js, backend_v8) {
 
   var setupUI = function(code, parse) {
     setText("code", code);
@@ -65,7 +65,7 @@ var demo = {};
   var parse = function(parser, text) {
     return new Promise(function(resolve, reject) {
       try {
-	resolve(parser.parse(text));
+	resolve(parser.parse(text, {wast: wast}));
       } catch (e) {
 	reject(syntaxError("code", e));
       }
@@ -156,7 +156,7 @@ var demo = {};
     });
   };
 
-  exports.run = function() {
+  var run = function() {
     Promise.all([
       createParser("wasm.pegjs"),
       getURL("example.wasm")
@@ -168,4 +168,6 @@ var demo = {};
       setText("code", err);
     });
   };
-})(demo);
+
+    return {run: run};
+});

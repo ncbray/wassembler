@@ -1,6 +1,4 @@
-var semantic = {};
-
-(function(exports) {
+define(["wast"], function(wast) {
 
   var SemanticPass = function(status) {
     this.status = status;
@@ -270,9 +268,13 @@ var semantic = {};
     return module;
   };
 
-  exports.processModule = function(module, status) {
+  var processModule = function(module, status) {
     var semantic = new SemanticPass(status);
     return semantic.processModule(module);
   };
 
-})(semantic);
+  return {
+    processModule: processModule,
+  };
+
+});

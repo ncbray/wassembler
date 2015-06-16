@@ -1,6 +1,4 @@
-var backend_v8 = {};
-
-(function(exports) {
+define([], function() {
 
   var BinaryWriter = function() {
     this.data = new DataView(new ArrayBuffer(1024*1024));
@@ -295,10 +293,11 @@ var backend_v8 = {};
     };
   };
 
-  exports.generate = function(module) {
+  var generate = function(module) {
     var gen = new BinaryGenerator();
     gen.generateModule(module);
     return gen.writer.getOutput();
   };
 
-})(backend_v8);
+  return {generate: generate};
+});

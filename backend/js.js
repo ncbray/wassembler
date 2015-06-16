@@ -1,6 +1,4 @@
-var backend_js = {};
-
-(function(exports) {
+define([], function() {
   var CodeWriter = function() {
     this.margins = [];
     this.margin = "";
@@ -350,10 +348,11 @@ var backend_js = {};
     this.writer.dedent().out("})");
   };
 
-  exports.generate = function(module) {
+  var generate = function(module) {
     var gen = new JSGenerator(module);
     gen.generateModule(module);
     return gen.writer.output;
   };
 
-})(backend_js);
+  return {generate: generate};
+});

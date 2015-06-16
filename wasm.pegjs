@@ -1,4 +1,7 @@
 {
+  // HACK
+  var wast = options.wast;
+
   function buildList(first, rest) {
     return [first].concat(rest);
   }
