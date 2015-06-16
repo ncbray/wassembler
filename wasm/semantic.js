@@ -249,13 +249,13 @@ define(["wasm/ast", "wasm/typeinfo"], function(wast, typeinfo) {
 
   SemanticPass.prototype.indexModule = function(module) {
     this.moduleScope = {};
-    for (var i in module.externs) {
+    for (var i = 0; i < module.externs.length; i++) {
       var e = module.externs[i];
       e.index = i;
       this.registerInModule(e.name, e);
       this.processExternSig(e);
     }
-    for (var i in module.funcs) {
+    for (var i = 0; i < module.funcs.length; i++) {
       var func = module.funcs[i];
       func.index = i;
       this.registerInModule(func.name, func);
