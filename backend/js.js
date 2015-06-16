@@ -9,6 +9,9 @@ var backend_js = {};
   };
 
   CodeWriter.prototype.out = function(text) {
+    if (typeof text != "string") {
+      throw Error(text);
+    }
     if (!this.dirty) {
       this.output += this.margin;
       this.dirty = true;
@@ -182,10 +185,10 @@ var backend_js = {};
 
     switch (expr.type) {
     case "const_i32":
-      this.writer.out(expr.value);
+      this.writer.out(expr.value.toString());
       break;
     case "const_f32":
-      this.writer.out(expr.value);
+      this.writer.out(expr.value.toString());
       break;
     case "getlocal":
       var lcl = this.func.locals[expr.index];
@@ -216,7 +219,7 @@ var backend_js = {};
       this.generateExpr(expr.right, opPrec + 1);
       break;
     case "callexternal":
-      this.writer.out(this.m.externs[expr.func].name);
+      this.writer.out(this.m.externs[expr.func].name.text);
       this.writer.out("(");
       for (var i in expr.args) {
 	if (i != 0) {
@@ -227,7 +230,7 @@ var backend_js = {};
       this.writer.out(")");
       break;
     case "calldirect":
-      this.writer.out(this.m.funcs[expr.func].name);
+      this.writer.out(this.m.funcs[expr.func].name.text);
       this.writer.out("(");
       for (var i in expr.args) {
 	if (i != 0) {
@@ -283,7 +286,7 @@ var backend_js = {};
   JSGenerator.prototype.generateFunc = function(func) {
     this.func = func;
 
-    this.writer.out("function ").out(func.name).out("(");
+    this.writer.out("function ").out(func.name.text).out("(");
     for (var i = 0; i < func.params.length; i++) {
       var lcl = func.locals[func.params[i].index];
       if (i != 0) {
@@ -318,7 +321,8 @@ var backend_js = {};
     this.writer.out("(function(imports) {").eol().indent();
     for (var i in module.externs) {
       var extern = module.externs[i];
-      this.writer.out("var ").out(extern.name).out(" = imports.").out(extern.name).out(";").eol();
+      var name = extern.name.text;
+      this.writer.out("var ").out(name).out(" = imports.").out(name).out(";").eol();
     };
 
     this.writer.eol();
@@ -339,7 +343,8 @@ var backend_js = {};
     for (var i in module.funcs) {
       var func = module.funcs[i];
       if (!func.exportFunc) continue;
-      this.writer.out(func.name).out(": ").out(func.name).out(",").eol();
+      var name = func.name.text;
+      this.writer.out(name).out(": ").out(name).out(",").eol();
     };
     this.writer.dedent().out("};").eol();
     this.writer.dedent().out("})");

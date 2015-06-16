@@ -26,6 +26,9 @@
     return e;
   }
 
+  function getPos() {
+    return {line: line(), column: column()};
+  }
 }
 
 start = module
@@ -38,7 +41,12 @@ S = (whitespace / comment)*
 
 EOT = ![a-zA-Z0-9_]
 
-ident "identifier" = $[a-zA-Z0-9_]+
+ident "identifier" = text:($[a-zA-Z0-9_]+) {
+  return wast.Identifier({
+    text: text,
+    pos: getPos(),
+  });
+}
 
 loadOp
   = t:("loadI32" {return "i32"}) S "(" S addr:expr S ")" {

@@ -85,8 +85,14 @@ var demo = {};
     this.num_errors = 0;
   };
 
-  Status.prototype.error = function(message) {
-    appendText("generated", message + "\n");
+  Status.prototype.error = function(message, pos) {
+    console.log(message, pos);
+    var prefix = "ERROR";
+    if (pos != undefined) {
+      prefix += " " + pos.line + ":" + pos.column;
+    }
+    prefix += ": ";
+    appendText("generated", prefix + message + "\n");
     this.num_errors += 1;
   };
 
