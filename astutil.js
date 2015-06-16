@@ -5,7 +5,7 @@ define([], function() {
       var decl = config[i];
       exports[decl.name] = (function(decl) {
         return function(args){
-	  var node = {type: decl.type};
+	  var node = {type: decl.name};
 	  for (var i in decl.fields) {
 	    var field = decl.fields[i];
 	    if (!(field.name in args)) {

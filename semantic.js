@@ -22,14 +22,14 @@ define(["wast"], function(wast) {
     this.dead = false;
 
     switch(expr.type) {
-    case "const_i32":
+    case "ConstI32":
       this.setExprType(expr, "i32");
       expr.etype = "i32";
       break;
-    case "const_f32":
+    case "ConstF32":
       this.setExprType(expr, "f32");
       break;
-    case "getname":
+    case "GetName":
       var name = expr.name.text;
       var ref = this.localScope[name];
       if (ref !== undefined) {
@@ -40,10 +40,10 @@ define(["wast"], function(wast) {
 	var ref = this.moduleScope[name];
 	if (ref !== undefined) {
 	  switch(ref.type) {
-	  case "function":
+	  case "Function":
 	    expr = wast.GetFunction({index: ref.index});
 	    break;
-          case "extern":
+          case "Extern":
 	    expr = wast.GetExtern({index: ref.index});
 	    break;
 	  default:
@@ -56,18 +56,18 @@ define(["wast"], function(wast) {
 	}
       }
       break;
-    case "load":
+    case "Load":
       expr.address = this.processExpr(expr.address);
       // TODO type check
       this.setExprType(expr, expr.mtype);
       break;
-    case "store":
+    case "Store":
       expr.address = this.processExpr(expr.address);
       expr.value = this.processExpr(expr.value);
       // TODO type check
       this.setExprType(expr, expr.mtype);
       break;
-    case "binop":
+    case "BinaryOp":
       expr.left = this.processExpr(expr.left);
       expr.right = this.processExpr(expr.right);
       if (!this.dead) {
@@ -77,17 +77,17 @@ define(["wast"], function(wast) {
 	this.setExprType(expr, expr.left.etype);
       }
       break;
-    case "call":
+    case "Call":
       expr.expr = this.processExpr(expr.expr);
       if (!this.dead) {
 	switch (expr.expr.type) {
-	case "getfunction":
+	case "GetFunction":
 	  expr = wast.CallDirect({
 	    func: expr.expr.index,
 	    args: expr.args,
 	  });
 	  break;
-	case "getextern":
+	case "GetExtern":
 	  expr = wast.CallExternal({
 	    func: expr.expr.index,
 	    args: expr.args,
@@ -106,7 +106,7 @@ define(["wast"], function(wast) {
 
       if (!this.dead) {
 	switch (expr.type) {
-	case "calldirect":
+	case "CallDirect":
 	  var target = this.module.funcs[expr.func];
 	  if (expr.args.length != target.params.length) {
 	    this.error("argument count mismatch");
@@ -122,7 +122,7 @@ define(["wast"], function(wast) {
 	  }
 	  this.setExprType(expr, target.returnType);
 	  break;
-	case "callexternal":
+	case "CallExternal":
 	  var target = this.module.externs[expr.func];
 	  if (expr.args.length != target.args.length) {
 	    this.error("argument count mismatch");
@@ -144,11 +144,11 @@ define(["wast"], function(wast) {
 	}
       }
       break;
-    case "return":
+    case "Return":
       expr.expr = this.processExpr(expr.expr);
       this.setExprType(expr, "void");
       break;
-    case "if":
+    case "If":
       expr.cond = this.processExpr(expr.cond);
       expr.t = this.processBlock(expr.t);
       expr.f = this.processBlock(expr.f);

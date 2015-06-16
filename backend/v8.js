@@ -109,26 +109,26 @@ define([], function() {
 
   BinaryGenerator.prototype.generateExpr = function(expr) {
     switch (expr.type) {
-    case "const_i32":
+    case "ConstI32":
       this.writer.u8(ops.i32const.bytecode);
       this.writer.i32(expr.value);
       break;
-    case "getlocal":
+    case "GetLocal":
       this.writer.u8(ops.getlocal.bytecode);
       this.generateLocalRef(expr.index);
       break;
-    case "load":
+    case "Load":
       this.writer.u8(ops.getheap.bytecode);
       this.generateType(expr.mtype);
       this.generateExpr(expr.address);
       break;
-    case "store":
+    case "Store":
       this.writer.u8(ops.setheap.bytecode);
       this.generateType(expr.mtype);
       this.generateExpr(expr.address);
       this.generateExpr(expr.value);
       break;
-    case "binop":
+    case "BinaryOp":
       // TODO support other data types.
       if (expr.etype != "i32") throw expr;
 
@@ -158,7 +158,7 @@ define([], function() {
       this.generateExpr(expr.left);
       this.generateExpr(expr.right);
       break;
-    case "callexternal":
+    case "CallExternal":
       this.writer.u8(ops.callfunc.bytecode);
       this.generateExternRef(expr.func);
       // Number of arguments infered from target signature.
@@ -166,7 +166,7 @@ define([], function() {
 	this.generateExpr(expr.args[i]);
       }
       break;
-    case "calldirect":
+    case "CallDirect":
       this.writer.u8(ops.callfunc.bytecode);
       this.generateFuncRef(expr.func);
       // Number of arguments infered from target signature.
@@ -174,7 +174,7 @@ define([], function() {
 	this.generateExpr(expr.args[i]);
       }
       break;
-    case "return":
+    case "Return":
       // Count infered from the function signature.
       this.writer.u8(ops.getlocal.bytecode);
       if (expr.expr) {
@@ -189,7 +189,7 @@ define([], function() {
 
   BinaryGenerator.prototype.generateStmt = function(expr) {
     switch (expr.type) {
-    case "if":
+    case "If":
       if (expr.f) {
 	this.writer.u8(ops.if2.bytecode);
 	this.generateExpr(expr.cond);

@@ -2,21 +2,18 @@ define(['astutil'], function(astutil) {
   var schema =[
     {
       name: "ConstI32",
-      type: "const_i32",
       fields: [
 	{name: "value"},
       ],
     },
     {
       name: "ConstF32",
-      type: "const_f32",
       fields: [
 	{name: "value"},
       ],
     },
     {
       name: "Identifier",
-      type: "identifier",
       fields: [
 	{name: "text"},
 	{name: "pos"},
@@ -24,35 +21,30 @@ define(['astutil'], function(astutil) {
     },
     {
       name: "GetName",
-      type: "getname",
       fields: [
 	{name: "name"},
       ],
     },
     {
       name: "GetFunction",
-      type: "getfunction",
       fields: [
 	{name: "index"},
       ],
     },
     {
       name: "GetExtern",
-      type: "getextern",
       fields: [
 	{name: "index"},
       ],
     },
     {
       name: "GetLocal",
-      type: "getlocal",
       fields: [
 	{name: "index"},
       ],
     },
     {
       name: "Load",
-      type: "load",
       fields: [
 	{name: "mtype"},
 	{name: "address"},
@@ -60,7 +52,6 @@ define(['astutil'], function(astutil) {
     },
     {
       name: "Store",
-      type: "store",
       fields: [
 	{name: "mtype"},
 	{name: "address"},
@@ -69,7 +60,6 @@ define(['astutil'], function(astutil) {
     },
     {
       name: "BinaryOp",
-      type: "binop",
       fields: [
 	{name: "left"},
 	{name: "op"},
@@ -78,7 +68,6 @@ define(['astutil'], function(astutil) {
     },
     {
       name: "Call",
-      type: "call",
       fields: [
 	{name: "expr"},
 	{name: "args"},
@@ -86,7 +75,6 @@ define(['astutil'], function(astutil) {
     },
     {
       name: "CallDirect",
-      type: "calldirect",
       fields: [
 	{name: "func"},
 	{name: "args"},
@@ -94,7 +82,6 @@ define(['astutil'], function(astutil) {
     },
     {
       name: "CallExternal",
-      type: "callexternal",
       fields: [
 	{name: "func"},
 	{name: "args"},
@@ -102,14 +89,12 @@ define(['astutil'], function(astutil) {
     },
     {
       name: "Return",
-      type: "return",
       fields: [
 	{name: "expr"},
       ],
     },
     {
       name: "If",
-      type: "if",
       fields: [
 	{name: "cond"},
 	{name: "t"},
@@ -118,7 +103,6 @@ define(['astutil'], function(astutil) {
     },
     {
       name: "Param",
-      type: "param",
       fields: [
 	{name: "name"},
 	{name: "ptype"},
@@ -126,7 +110,6 @@ define(['astutil'], function(astutil) {
     },
     {
       name: "Local",
-      type: "local",
       fields: [
 	{name: "name"},
 	{name: "ltype"},
@@ -135,7 +118,6 @@ define(['astutil'], function(astutil) {
     },
     {
       name: "Function",
-      type: "function",
       fields: [
 	{name: "exportFunc"},
 	{name: "name"},
@@ -147,7 +129,6 @@ define(['astutil'], function(astutil) {
     },
     {
       name: "Extern",
-      type: "extern",
       fields: [
 	{name: "name"},
 	{name: "args"},
@@ -156,7 +137,6 @@ define(['astutil'], function(astutil) {
     },
     {
       name: "Module",
-      type: "module",
       fields: [
 	{name: "externs"},
 	{name: "funcs"},

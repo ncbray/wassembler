@@ -124,11 +124,11 @@ define([], function() {
       return false;
     }
     switch(expr.type) {
-    case "getlocal":
-    case "const_i32":
-    case "const_f32":
-    case "load":
-    case "store":
+    case "GetLocal":
+    case "ConstI32":
+    case "ConstF32":
+    case "Load":
+    case "Store":
       return false;
     default:
       return true;
@@ -137,18 +137,18 @@ define([], function() {
 
   var rawPrec = function(expr) {
     switch (expr.type) {
-    case "getlocal":
-    case "const_i32":
-    case "const_f32":
+    case "GetLocal":
+    case "ConstI32":
+    case "ConstF32":
       return 19;
-    case "calldirect":
-    case "callexternal":
+    case "CallDirect":
+    case "CallExternal":
       return 17;
-    case "binop":
+    case "BinaryOp":
       return binOpPrec[expr.op];
-    case "load":
+    case "Load":
       return 18;
-    case "store":
+    case "Store":
       return 3;
     default:
       console.log(expr);
@@ -182,24 +182,24 @@ define([], function() {
     this.beginTypeCoerce(expr.etype, rawP, coercedP, contextP, doCoerce);
 
     switch (expr.type) {
-    case "const_i32":
+    case "ConstI32":
       this.writer.out(expr.value.toString());
       break;
-    case "const_f32":
+    case "ConstF32":
       this.writer.out(expr.value.toString());
       break;
-    case "getlocal":
+    case "GetLocal":
       var lcl = this.func.locals[expr.index];
       this.writer.out(lcl.name);
       break;
-    case "load":
+    case "Load":
       var info = memInfo[expr.mtype];
       this.writer.out(info.heapName).out("[(");
       this.generateExpr(expr.address, 0);
       this.writer.out(")>>" + info.shift + "]");
       break;
 
-    case "store":
+    case "Store":
       var info = memInfo[expr.mtype];
       this.writer.out(info.heapName).out("[(");
       this.generateExpr(expr.address, 0);
@@ -207,7 +207,7 @@ define([], function() {
       this.generateExpr(expr.value);
       break;
 
-    case "binop":
+    case "BinaryOp":
       var opPrec = binOpPrec[expr.op];
       if (opPrec === undefined) {
 	throw expr.op;
@@ -216,7 +216,7 @@ define([], function() {
       this.writer.out(" ").out(expr.op).out(" ");
       this.generateExpr(expr.right, opPrec + 1);
       break;
-    case "callexternal":
+    case "CallExternal":
       this.writer.out(this.m.externs[expr.func].name.text);
       this.writer.out("(");
       for (var i in expr.args) {
@@ -227,7 +227,7 @@ define([], function() {
       }
       this.writer.out(")");
       break;
-    case "calldirect":
+    case "CallDirect":
       this.writer.out(this.m.funcs[expr.func].name.text);
       this.writer.out("(");
       for (var i in expr.args) {
@@ -248,7 +248,7 @@ define([], function() {
 
   JSGenerator.prototype.generateStmt = function(expr) {
     switch (expr.type) {
-    case "if":
+    case "If":
       this.writer.out("if (");
       this.generateExpr(expr.cond, 0);
       this.writer.out(") {").eol();
@@ -263,7 +263,7 @@ define([], function() {
       }
       this.writer.out("}").eol();
       break;
-    case "return":
+    case "Return":
       this.writer.out("return ");
       this.generateExpr(expr.expr, 0);
       this.writer.out(";").eol();
