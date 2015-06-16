@@ -133,6 +133,7 @@ funcdecl = e:optionalExport S "func" EOT S name:ident S "(" S params:paramList S
     name: name,
     params: params,
     returnType: returnType,
+    locals: [],
     body: body,
   })
 }
