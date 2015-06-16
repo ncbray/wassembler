@@ -1,5 +1,5 @@
 define(
-  ['wast', 'semantic', 'backend/js', 'backend/v8'],
+  ['wasm/ast', 'wasm/semantic', 'js/backend', 'v8/backend'],
   function(wast, semantic, backend_js, backend_v8) {
 
   var setupUI = function(code, parse) {

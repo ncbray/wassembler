@@ -1,4 +1,4 @@
-define(["wast"], function(wast) {
+define(["wasm/ast"], function(wast) {
 
   var SemanticPass = function(status) {
     this.status = status;
