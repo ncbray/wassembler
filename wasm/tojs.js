@@ -74,13 +74,41 @@ define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
 	value: this.processExpr(expr.value),
       });
     case "BinaryOp":
-      var translated = jast.BinaryOp({
-	  left: this.processExpr(expr.left),
-	  op: expr.op,
-	  right: this.processExpr(expr.right),
-      });
-
-      translated = this.coerce(translated, expr.etype);
+      var translated;
+      var needs_coerce = true;
+      switch (expr.etype) {
+      case "i32":
+	switch (expr.op) {
+	case "*":
+	  translated = jast.Call({
+	    expr: jast.GetAttr({
+	      expr: jast.GetName({
+		name: "Math",
+	      }),
+	      attr: "imul",
+	    }),
+	    args: [
+	      this.processExpr(expr.left),
+	      this.processExpr(expr.right),
+	    ],
+	  });
+	  needs_coerce = expr.etype != "i32";
+	  break;
+	default:
+	  translated = jast.BinaryOp({
+	    left: this.processExpr(expr.left),
+	    op: expr.op,
+	    right: this.processExpr(expr.right),
+	  });
+	}
+	break;
+      default:
+	console.log(expr);
+	throw expr.etype;
+      }
+      if (needs_coerce) {
+	  translated = this.coerce(translated, expr.etype);
+      }
       return translated;
     case "CallDirect":
       var args = [];
