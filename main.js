@@ -1,6 +1,6 @@
 define(
-  ['wasm/ast', 'wasm/semantic', 'js/backend', 'v8/backend'],
-  function(wast, semantic, backend_js, backend_v8) {
+  ['wasm/ast', 'wasm/semantic', 'wasm/tojs', 'v8/backend', 'js/backend'],
+  function(wast, semantic, tojs, wasm_backend_v8, js_backend) {
 
   var setupUI = function(code, parse) {
     setText("code", code);
@@ -118,7 +118,11 @@ define(
       // The semantic pass will have refined the AST.
       setText("ast", JSON.stringify(module, null, "  "));
 
-      var src = backend_js.generate(module);
+      // Testing
+      var translated = tojs.translate(module);
+      setText("ast", JSON.stringify(translated, null, "  "));
+
+      var src = js_backend.generateExpr(translated)
       setText("generated", src);
 
       // Compile the module without binding it.
@@ -148,7 +152,7 @@ define(
       appendText("terminal", "\nresult: " + result);
 
       // Generate binary encoding
-      var buffer = backend_v8.generate(module);
+      var buffer = wasm_backend_v8.generate(module);
       console.log(new Uint8Array(buffer));
       console.log(buffer.byteLength);
     }, function(err) {

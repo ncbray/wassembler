@@ -1,59 +1,4 @@
-define([], function() {
-
-  var BinaryWriter = function() {
-    this.data = new DataView(new ArrayBuffer(1024*1024));
-    this.pos = 0;
-  };
-
-  BinaryWriter.prototype.remember = function() {
-    return new BinaryWriter();
-  };
-
-  BinaryWriter.prototype.getOutput = function() {
-    return this.data.buffer.slice(0, this.pos);
-  };
-
-  BinaryWriter.prototype.i8 = function(data) {
-    this.data.setInt8(this.pos, data, true);
-    this.pos += 1;
-  };
-
-  BinaryWriter.prototype.u8 = function(data) {
-    this.data.setUint8(this.pos, data, true);
-    this.pos += 1;
-  };
-
-  BinaryWriter.prototype.i16 = function(data) {
-    this.data.setInt16(this.pos, data, true);
-    this.pos += 2;
-  };
-
-  BinaryWriter.prototype.u16 = function(data) {
-    this.data.setUint16(this.pos, data, true);
-    this.pos += 2;
-  };
-
-  BinaryWriter.prototype.i32 = function(data) {
-    this.data.setInt32(this.pos, data, true);
-    this.pos += 4;
-  };
-
-  BinaryWriter.prototype.u32 = function(data) {
-    this.data.setUint32(this.pos, data, true);
-    this.pos += 4;
-  };
-
-  BinaryWriter.prototype.allocU32 = function() {
-    var temp = this.pos;
-    this.pos += 4;
-    return temp;
-  };
-
-  BinaryWriter.prototype.patchU32 = function(pos, data) {
-    this.data.setUint32(pos, data, true);
-    return this;
-  };
-
+define(["compilerutil"], function(compilerutil) {
   var types = {
     "void": 0,
     "i32": 1,
@@ -91,7 +36,7 @@ define([], function() {
   };
 
   var BinaryGenerator = function() {
-    this.writer = new BinaryWriter();
+    this.writer = new compilerutil.BinaryWriter();
   };
 
   BinaryGenerator.prototype.generateLocalRef = function(index) {

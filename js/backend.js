@@ -1,40 +1,4 @@
-define(["wasm/typeinfo"], function(typeinfo) {
-  var CodeWriter = function() {
-    this.margins = [];
-    this.margin = "";
-    this.output = "";
-    this.dirty = false;
-  };
-
-  CodeWriter.prototype.out = function(text) {
-    if (typeof text != "string") {
-      throw Error(text);
-    }
-    if (!this.dirty) {
-      this.output += this.margin;
-      this.dirty = true;
-    }
-    this.output += text;
-    return this;
-  };
-
-  CodeWriter.prototype.eol = function() {
-    this.output += "\n";
-    this.dirty = false;
-    return this;
-  };
-
-  CodeWriter.prototype.indent = function() {
-    this.margins.push(this.margin);
-    this.margin += "  ";
-    return this;
-  };
-
-  CodeWriter.prototype.dedent = function() {
-    this.margin = this.margins.pop();
-    return this;
-  };
-
+define(["compilerutil"], function(compilerutil) {
   var binOpPrec = {
     "*": 14,
     "/": 14,
@@ -57,304 +21,180 @@ define(["wasm/typeinfo"], function(typeinfo) {
     "|": 7,
   };
 
-  var JSGenerator = function(m) {
-    this.m = m;
-    this.writer = new CodeWriter();
-  };
-
-  JSGenerator.prototype.beginTypeCoerce = function(etype, rawP, coercedP, contextP, doCoerce) {
-    if (!doCoerce) {
-      if (rawP < contextP) {
-	this.writer.out("(");
-      }
-      return;
-    }
-    if (coercedP < contextP) {
-      this.writer.out("(");
-    }
-    if (rawP < coercedP) {
-      this.writer.out("(");
-    }
-
-    switch (etype) {
-    case "i32":
-      break;
-    case "f32":
-      this.writer.out("Math.fround(");
-      break;
-    case "void":
-      break;
-    default:
-      throw etype;
-    }
-  };
-
-  JSGenerator.prototype.endTypeCoerce = function(etype, rawP, coercedP, contextP, doCoerce) {
-    if (!doCoerce) {
-      if (rawP < contextP) {
-	this.writer.out(")");
-      }
-      return;
-    }
-
-    if (rawP < coercedP) {
-      this.writer.out(")");
-    }
-
-    switch (etype) {
-    case "i32":
-      this.writer.out(" | 0");
-      break;
-    case "f32":
-      this.writer.out(")");
-      break;
-    case "void":
-      break;
-    default:
-      throw etype;
-    }
-
-    if (coercedP < contextP) {
-      this.writer.out(")");
-    }
-  };
-
-  var coerceNeeded = function(expr) {
-    if (expr.etype == "void") {
-      return false;
-    }
+  var exprPrec = function(expr) {
     switch(expr.type) {
-    case "GetLocal":
-    case "ConstI32":
-    case "ConstF32":
-    case "Load":
-    case "Store":
-      return false;
-    default:
-      return true;
-    }
-  };
-
-  var rawPrec = function(expr) {
-    switch (expr.type) {
-    case "GetLocal":
-    case "ConstI32":
-    case "ConstF32":
+    case "FunctionExpr":
+    case "GetName":
+    case "ConstNum":
+    case "CreateObject":
       return 19;
-    case "CallDirect":
-    case "CallExternal":
-      return 17;
+    case "GetIndex":
+    case "GetAttr":
+    case "New":
+      return 18;
     case "BinaryOp":
       return binOpPrec[expr.op];
-    case "Load":
-      return 18;
-    case "Store":
+    case "Call":
+      return 17;
+    case "Assign":
       return 3;
     default:
       console.log(expr);
-      throw expr;
+      throw expr.type;
     }
   };
 
-  var coercedPrec = function(expr) {
-    switch (expr.etype) {
-    case "i32":
-      return binOpPrec["|"];
-    case "f32":    
-      return 17;
-    case "void":
-      return 17;
-    default:
-      throw expr.etype;
-    };
+  var JSGenerator = function() {
+    this.writer = new compilerutil.CodeWriter();
   };
 
-  var memInfo = {
-    "i32": {heapName: "I32"},
-  };
+  JSGenerator.prototype.generateExpr = function(expr, contextPrec) {
+    var prec = exprPrec(expr);
 
-  // TODO precedence.
-  JSGenerator.prototype.generateExpr = function(expr, contextP) {
-    var rawP = rawPrec(expr);
-    var coercedP = coercedPrec(expr);
-    var doCoerce = coerceNeeded(expr);
+    if (prec < contextPrec) {
+      this.writer.out("(");
+    }
 
-    this.beginTypeCoerce(expr.etype, rawP, coercedP, contextP, doCoerce);
-
-    switch (expr.type) {
-    case "ConstI32":
+    switch(expr.type) {
+    case "ConstNum":
       this.writer.out(expr.value.toString());
       break;
-    case "ConstF32":
-      this.writer.out(expr.value.toString());
+    case "GetName":
+      this.writer.out(expr.name);
       break;
-    case "GetLocal":
-      var lcl = this.func.locals[expr.index];
-      this.writer.out(lcl.name);
+    case "GetAttr":
+      this.generateExpr(expr.expr, prec);
+      this.writer.out(".").out(expr.attr);
       break;
-    case "Load":
-      var info = memInfo[expr.mtype];
-      var shift = Math.log2(typeinfo.sizeOf(expr.mtype));
-      this.writer.out(info.heapName).out("[(");
-      this.generateExpr(expr.address, 0);
-      this.writer.out(")>>" + shift + "]");
-      break;
-
-    case "Store":
-      var info = memInfo[expr.mtype];
-      var shift = Math.log2(typeinfo.sizeOf(expr.mtype));
-      this.writer.out(info.heapName).out("[(");
-      this.generateExpr(expr.address, 0);
-      this.writer.out(")>>" + shift + "] = ");
-      this.generateExpr(expr.value);
-      break;
-
     case "BinaryOp":
-      var opPrec = binOpPrec[expr.op];
-      if (opPrec === undefined) {
-	throw expr.op;
-      }
-      this.generateExpr(expr.left, opPrec);
+      this.generateExpr(expr.left, prec);
       this.writer.out(" ").out(expr.op).out(" ");
-      this.generateExpr(expr.right, opPrec + 1);
+      this.generateExpr(expr.right, prec + 1);
       break;
-    case "CallExternal":
-      this.writer.out(this.m.externs[expr.func].name.text);
+    case "Call":
+      this.generateExpr(expr.expr, prec);
       this.writer.out("(");
-      for (var i in expr.args) {
+      for (var i = 0; i < expr.args.length; i++) {
 	if (i != 0) {
-	  this.writer.out(", ")
+	  this.writer.out(", ");
 	}
 	this.generateExpr(expr.args[i], 0);
       }
       this.writer.out(")");
       break;
-    case "CallDirect":
-      this.writer.out(this.m.funcs[expr.func].name.text);
+    case "New":
+      this.writer.out("new ");
+      this.generateExpr(expr.expr, prec);
       this.writer.out("(");
-      for (var i in expr.args) {
+      for (var i = 0; i < expr.args.length; i++) {
 	if (i != 0) {
-	  this.writer.out(", ")
+	  this.writer.out(", ");
 	}
 	this.generateExpr(expr.args[i], 0);
       }
       this.writer.out(")");
+      break;
+    case "GetIndex":
+      this.generateExpr(expr.expr, prec);
+      this.writer.out("[");
+      this.generateExpr(expr.index, 0);
+      this.writer.out("]");
+      // TODO coerce return type
+      break;
+    case "Assign":
+      this.generateExpr(expr.target, prec + 1);
+      this.writer.out(" = ");
+      this.generateExpr(expr.value, prec);
+      break;
+    case "FunctionExpr":
+      this.writer.out("function(");
+      for (var i = 0; i < expr.params.length; i++) {
+	if (i != 0) {
+	  this.writer.out(", ");
+	}
+	this.writer.out(expr.params[i]);
+      }
+      this.writer.out(") {").eol().indent();
+      this.generateBlock(expr.body);
+      this.writer.dedent().out("}");
+      break;
+    case "CreateObject":
+      this.writer.out("{").eol().indent();
+      for (var i = 0; i < expr.args.length; i++) {
+	if (i != 0) {
+	  this.writer.out(",").eol();
+	}
+	var arg = expr.args[i];
+	this.writer.out(arg.key).out(": ");
+	this.generateExpr(arg.value, 0);
+      }
+      this.writer.eol();
+      this.writer.dedent().out("}");
       break;
     default:
       console.log(expr);
       throw expr.type;
-    };
+    }
 
-    this.endTypeCoerce(expr.etype, rawP, coercedP, contextP, doCoerce);
+    if (prec < contextPrec) {
+      this.writer.out(")");
+    }
   };
 
-  JSGenerator.prototype.generateStmt = function(expr) {
-    switch (expr.type) {
+  JSGenerator.prototype.generateStmt = function(stmt) {
+    switch (stmt.type) {
+    case "VarDecl":
+      this.writer.out("var ").out(stmt.name);
+      if (stmt.expr) {
+	this.writer.out(" = ");
+	this.generateExpr(stmt.expr, 0);
+      }
+      this.writer.out(";").eol();
+      break;
+    case "Return":
+      this.writer.out("return");
+      if (stmt.expr) {
+	this.writer.out(" ");
+	this.generateExpr(stmt.expr, 0);
+      }
+      this.writer.out(";").eol();
+      break;
     case "If":
       this.writer.out("if (");
-      this.generateExpr(expr.cond, 0);
+      this.generateExpr(stmt.cond, 0);
       this.writer.out(") {").eol();
       this.writer.indent();
-      this.generateBlock(expr.t);
+      this.generateBlock(stmt.t);
       this.writer.dedent();
-      if (expr.f) {
+      if (stmt.f) {
 	this.writer.out("} else {").eol();
 	this.writer.indent();
-	this.generateBlock(expr.f);
+	this.generateBlock(stmt.f);
 	this.writer.dedent();
       }
       this.writer.out("}").eol();
       break;
-    case "Return":
-      this.writer.out("return ");
-      this.generateExpr(expr.expr, 0);
-      this.writer.out(";").eol();
-      break;
     default:
-      this.generateExpr(expr, 0);
+      this.generateExpr(stmt, 0);
       this.writer.out(";").eol();
-    };
+    }
   };
-
 
   JSGenerator.prototype.generateBlock = function(block) {
-    for (var i in block) {
-      this.generateStmt(block[i]);
-    }
-  };
-
-  JSGenerator.prototype.generateFunc = function(func) {
-    this.func = func;
-
-    this.writer.out("function ").out(func.name.text).out("(");
-    for (var i = 0; i < func.params.length; i++) {
-      var lcl = func.locals[func.params[i].index];
-      if (i != 0) {
-	this.writer.out(", ");
+      for (var i = 0; i < block.length; i++) {
+	this.generateStmt(block[i]);
       }
-      this.writer.out(lcl.name);
-    }
-    this.writer.out(") {").eol();
-    this.writer.indent();
-
-    // HACK assumes params come first.
-    for (var i = 0; i < func.params.length; i++) {
-      var lcl = func.locals[i];
-      this.writer.out(lcl.name).out(" = ");
-      this.beginTypeCoerce(func.locals[i].ltype, 19, 19, 0, true);
-      this.writer.out(lcl.name);
-      this.endTypeCoerce(func.locals[i].ltype, 19, 19, 0, true);
-      this.writer.out(";").eol();
-    }
-
-    for (var i = func.params.length; i < func.locals.length; i++) {
-      this.writer.out("var ").out(lcl.name).out(" = 0;").eol();
-      // TODO initialize to the correct type of zero.
-    }
-
-    this.generateBlock(func.body);
-    this.writer.dedent();
-    this.writer.out("}").eol();
   };
 
-  JSGenerator.prototype.generateModule = function(module) {
-    this.writer.out("(function(imports) {").eol().indent();
-    for (var i in module.externs) {
-      var extern = module.externs[i];
-      var name = extern.name.text;
-      this.writer.out("var ").out(name).out(" = imports.").out(name).out(";").eol();
-    };
-
-    this.writer.eol();
-
-    this.writer.out("var MEM = new ArrayBuffer(4096);").eol();
-    this.writer.out("var I32 = new Int32Array(MEM);").eol();
-
-    this.writer.eol();
-
-
-    for (var i in module.funcs) {
-      this.generateFunc(module.funcs[i]);
-    };
-
-    this.writer.eol();
-
-    this.writer.out("return {").eol().indent();
-    for (var i in module.funcs) {
-      var func = module.funcs[i];
-      if (!func.exportFunc) continue;
-      var name = func.name.text;
-      this.writer.out(name).out(": ").out(name).out(",").eol();
-    };
-    this.writer.dedent().out("};").eol();
-    this.writer.dedent().out("})");
+  var generateExpr = function(expr) {
+    var gen = new JSGenerator();
+    gen.writer.out("(");
+    gen.generateExpr(expr, 0);
+    gen.writer.out(")");
+    return gen.writer.getOutput();
   };
 
-  var generate = function(module) {
-    var gen = new JSGenerator(module);
-    gen.generateModule(module);
-    return gen.writer.output;
+  return {
+    generateExpr: generateExpr,
   };
-
-  return {generate: generate};
 });
