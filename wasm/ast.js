@@ -32,6 +32,13 @@ define(['astutil'], function(astutil) {
       ],
     },
     {
+      name: "SetName",
+      fields: [
+	{name: "name"},
+	{name: "value"},
+      ],
+    },
+    {
       name: "GetFunction",
       fields: [
 	{name: "index"},

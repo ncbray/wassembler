@@ -65,6 +65,20 @@ define(["wasm/ast", "wasm/typeinfo"], function(wast, typeinfo) {
 	}
       }
       break;
+    case "SetName":
+      var name = expr.name.text;
+      var ref = this.localScope[name];
+      if (ref !== undefined) {
+	expr = wast.SetLocal({
+	  index: ref.index,
+	  value: this.processExpr(expr.value)
+	});
+	this.setExprType(expr, "void");
+	break;
+      } else {
+	this.error("cannot assign to name - " + name, expr.name.pos);
+      }
+      break;
     case "Load":
       expr.address = this.processExpr(expr.address);
       // TODO type check

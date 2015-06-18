@@ -21,7 +21,9 @@ func madd(a f64, b f64, c f64) f64 {
 
 func hard7() i32 {
   var value i32 = 3;
-  return value * 2 + 1;
+  value = value * 2;
+  value = value + 1;
+  return value;
 }
 
 memory dummy i32;

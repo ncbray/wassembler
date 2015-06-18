@@ -122,6 +122,12 @@ stmt
         value: value,
       });
     })
+    / (name:ident S "=" S value:expr S ";" {
+      return wast.SetName({
+        name: name,
+	value: value,
+      });
+    })
     / e:expr S ";" {return e;}
   ) {return s}
 
