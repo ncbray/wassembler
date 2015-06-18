@@ -39,6 +39,10 @@ define([], function() {
     return this;
   };
 
+  var checkRange = function(value, min, max) {
+    if (value < min || value > max) throw value;
+  }
+
   var BinaryWriter = function() {
     this.data = new DataView(new ArrayBuffer(1024*1024));
     this.pos = 0;
@@ -53,31 +57,37 @@ define([], function() {
   };
 
   BinaryWriter.prototype.i8 = function(data) {
+    checkRange(data, -0x80, 0x7f);
     this.data.setInt8(this.pos, data, true);
     this.pos += 1;
   };
 
   BinaryWriter.prototype.u8 = function(data) {
+    checkRange(data, 0x0, 0xff);
     this.data.setUint8(this.pos, data, true);
     this.pos += 1;
   };
 
   BinaryWriter.prototype.i16 = function(data) {
+    checkRange(data, -0x8000, 0x7fff);
     this.data.setInt16(this.pos, data, true);
     this.pos += 2;
   };
 
   BinaryWriter.prototype.u16 = function(data) {
+    checkRange(data, 0x0, 0xffff);
     this.data.setUint16(this.pos, data, true);
     this.pos += 2;
   };
 
   BinaryWriter.prototype.i32 = function(data) {
+    checkRange(data, -0x80000000, 0x7fffffff);
     this.data.setInt32(this.pos, data, true);
     this.pos += 4;
   };
 
   BinaryWriter.prototype.u32 = function(data) {
+    checkRange(data, 0x0, 0xffffffff);
     this.data.setUint32(this.pos, data, true);
     this.pos += 4;
   };
