@@ -109,6 +109,13 @@ stmt
 	f: f
       });
     })
+    /("while" EOT S "(" S cond:expr S ")"
+      S "{" S b:body S "}" {
+      return wast.While({
+        cond:cond,
+        body: b
+      });
+    })
     /("return" EOT S e:(expr/{return null}) S ";" {
       return wast.Return({
         expr: e

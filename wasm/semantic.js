@@ -174,7 +174,14 @@ define(["wasm/ast", "wasm/typeinfo"], function(wast, typeinfo) {
     case "If":
       expr.cond = this.processExpr(expr.cond);
       expr.t = this.processBlock(expr.t);
-      expr.f = this.processBlock(expr.f);
+      if (expr.f != null) {
+	expr.f = this.processBlock(expr.f);
+      }
+      this.setExprType(expr, "void");
+      break;
+    case "While":
+      expr.cond = this.processExpr(expr.cond);
+      expr.body = this.processBlock(expr.body);
       this.setExprType(expr, "void");
       break;
     default:

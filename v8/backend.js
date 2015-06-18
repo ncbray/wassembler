@@ -1,4 +1,4 @@
-define(["compilerutil"], function(compilerutil) {
+define(["compilerutil", "wasm/ast"], function(compilerutil, wast) {
   var types = {
     "void": 0,
     "i32": 1,
@@ -13,6 +13,8 @@ define(["compilerutil"], function(compilerutil) {
     if1: {bytecode: 0x04},
     if2: {bytecode: 0x05},
     block: {bytecode: 0x06},
+    loop: {bytecode: 0x09},
+    break_: {bytecode: 0x0b},
     ret: {bytecode: 0x0c},
 
     i8const: {bytecode: 0x10},
@@ -35,6 +37,7 @@ define(["compilerutil"], function(compilerutil) {
     i32mod: {bytecode: 0x25},
     u32mod: {bytecode: 0x26},
 
+    i32eq: {bytecode: 0x2d},
     i32lt: {bytecode: 0x2e},
     i32le: {bytecode: 0x2f},
     u32lt: {bytecode: 0x30},
@@ -60,6 +63,7 @@ define(["compilerutil"], function(compilerutil) {
       "*": ops.i32mul,
       "/": ops.i32div,
       "%": ops.i32div,
+      "==": ops.i32eq,
       "<": ops.i32lt,
       "<=": ops.i32le,
     },
@@ -127,9 +131,9 @@ define(["compilerutil"], function(compilerutil) {
       this.generateExpr(expr.value);
       break;
     case "BinaryOp":
-      if (!(expr.etype in binOpMap)) throw expr;
+      if (!(expr.etype in binOpMap)) throw Error(expr.etype);
       var map = binOpMap[expr.etype];
-      if (!(expr.op in map)) throw expr;      
+      if (!(expr.op in map)) throw Error(expr.op);
       var op = map[expr.op];
 
       this.writer.u8(op.bytecode);
@@ -159,6 +163,11 @@ define(["compilerutil"], function(compilerutil) {
 	this.generateExpr(expr.expr);
       }
       break;
+      break;
+    case "Break":
+      this.writer.u8(ops.getlocal.break_);
+      this.writer.u8(0);
+      break;
     default:
       console.log(expr);
       throw expr.type;
@@ -178,6 +187,17 @@ define(["compilerutil"], function(compilerutil) {
 	this.generateExpr(expr.cond);
 	this.generateBlock(expr.t);
       }
+      break;
+    case "While":
+      this.writer.u8(ops.loop.bytecode);
+      var body = [wast.If({
+	cond: expr.cond,
+	t: [],
+	f: [wast.Break({}),]
+      })];
+      console.log(body);
+      body.concat(expr.body);
+      this.generateBlock(body);
       break;
     case "SetLocal":
       this.writer.u8(ops.setlocal.bytecode);

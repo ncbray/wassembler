@@ -180,6 +180,15 @@ define(["compilerutil"], function(compilerutil) {
       }
       this.writer.out("}").eol();
       break;
+    case "While":
+      this.writer.out("while (");
+      this.generateExpr(stmt.cond, 0);
+      this.writer.out(") {").eol();
+      this.writer.indent();
+      this.generateBlock(stmt.body);
+      this.writer.dedent();
+      this.writer.out("}").eol();
+      break;
     default:
       this.generateExpr(stmt, 0);
       this.writer.out(";").eol();

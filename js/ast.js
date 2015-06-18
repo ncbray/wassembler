@@ -90,6 +90,13 @@ define(["astutil"], function(astutil) {
       ],
     },
     {
+      name: "While",
+      fields: [
+        {name: "cond"},
+	{name: "body"},
+      ],
+    },
+    {
       name: "VarDecl",
       fields: [
 	{name: "name"},

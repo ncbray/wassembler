@@ -122,11 +122,23 @@ define(['astutil'], function(astutil) {
       ],
     },
     {
+      name: "Break",
+      fields: [
+      ],
+    },
+    {
       name: "If",
       fields: [
 	{name: "cond"},
 	{name: "t"},
 	{name: "f"},
+      ],
+    },
+    {
+      name: "While",
+      fields: [
+	{name: "cond"},
+	{name: "body"},
       ],
     },
     {

@@ -170,7 +170,13 @@ define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
       result.push(jast.If({
 	cond: this.processExpr(stmt.cond),
 	t: this.processBlock(stmt.t, []),
-	f: this.processBlock(stmt.f, []),
+	f: stmt.f ? this.processBlock(stmt.f, []) : null,
+      }));
+      break;
+    case "While":
+      result.push(jast.While({
+	cond: this.processExpr(stmt.cond),
+	body: this.processBlock(stmt.body, []),
       }));
       break;
     case "SetLocal":

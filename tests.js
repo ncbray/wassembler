@@ -74,6 +74,22 @@ define(["base"], function(base) {
     assert.equal(m.main(5), 30);
   });
 
+  QUnit.module("loops");
+
+  QUnit.test("assign", function(assert) {
+    var m = create("export func is_prime(n i32) i32 {if (n % 2 == 0) {return 0;} var d i32 = 3; while(d < n) { if (n % d == 0) {return 0;} d = d + 2;} return 1;}", assert);
+    assert.equal(m.is_prime(2), 0);
+    assert.equal(m.is_prime(3), 1);
+    assert.equal(m.is_prime(4), 0);
+    assert.equal(m.is_prime(5), 1);
+    assert.equal(m.is_prime(6), 0);
+    assert.equal(m.is_prime(7), 1);
+    assert.equal(m.is_prime(8), 0);
+    assert.equal(m.is_prime(9), 0);
+    assert.equal(m.is_prime(97), 1);
+  });
+
+
   QUnit.module("function calls");
 
   QUnit.test("factorial", function(assert) {
