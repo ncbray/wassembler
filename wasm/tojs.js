@@ -173,6 +173,14 @@ define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
 	f: this.processBlock(stmt.f, []),
       }));
       break;
+    case "SetLocal":
+      result.push(jast.Assign({
+	target: jast.GetName({
+	  name: this.localName(stmt.index),
+	}),
+	value: this.processExpr(stmt.value),
+      }));
+      break;
     case "Return":
       result.push(jast.Return({
 	expr: this.processExpr(stmt.expr),
@@ -189,6 +197,17 @@ define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
       this.processStmt(block[i], result);
     }
     return result;
+  };
+
+  JSTranslator.prototype.zeroValue = function(t) {
+    switch (t) {
+    case "i32":
+    case "f32":
+    case "f64":
+      return this.coerce(jast.ConstNum({value: 0}), t);
+    default:
+      throw Error(t);
+    }
   };
 
   JSTranslator.prototype.processFunc = function(func) {
@@ -208,9 +227,10 @@ define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
 
     // HACK?
     for (var i = func.params.length; i < func.locals.length; i++) {
+      var lcl = func.locals[i];
       body.push(jast.VarDecl({
-	name: extern.name.text,
-	expr: null,
+	name: lcl.name,
+	expr: this.zeroValue(lcl.ltype),
       }));
     }
 

@@ -57,6 +57,18 @@ define(["base"], function(base) {
   });
 
 
+  QUnit.module("variables");
+
+  QUnit.test("default", function(assert) {
+    var m = create("export func main() i32 {var foo i32; return foo;}", assert);
+    assert.equal(m.main(), 0);
+  });
+
+  QUnit.test("init", function(assert) {
+    var m = create("export func main(n i32) i32 {var foo i32 = n * 2; return foo * 3;}", assert);
+    assert.equal(m.main(5), 30);
+  });
+
   QUnit.module("function calls");
 
   QUnit.test("factorial", function(assert) {

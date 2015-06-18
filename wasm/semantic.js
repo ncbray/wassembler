@@ -194,6 +194,11 @@ define(["wasm/ast", "wasm/typeinfo"], function(wast, typeinfo) {
       throw Error(type);
     }
 
+    if (name in this.localScope) {
+      this.error("attemped to redeclare " + name);
+      return -1;
+    }
+
     var lcl = wast.Local({
       name: name,
       ltype: type,
@@ -204,16 +209,36 @@ define(["wasm/ast", "wasm/typeinfo"], function(wast, typeinfo) {
     return lcl.index;
   };
 
+  SemanticPass.prototype.processStmt = function(node, block) {
+    switch (node.type) {
+    case "VarDecl":
+      var t = this.processType(node.vtype);
+      var index = this.createLocal(node.name.text, t);
+      if (node.value) {
+	node = wast.SetLocal({
+	  index: index,
+	  value: this.processExpr(node.value),
+	});
+	this.setExprType(node, "void");
+	block.push(node);
+      }
+      break;
+    default:
+      block.push(this.processExpr(node));
+    }
+  };
+
   SemanticPass.prototype.processBlock = function(block) {
     if (block === null) {
       return block;
     }
     var old_dead = this.dead;
+    var out = []
     for (var i in block) {
-      block[i] = this.processExpr(block[i]);
+      this.processStmt(block[i], out);
     }
     this.dead = this.dead || old_dead;
-    return block;
+    return out;
   };
 
   SemanticPass.prototype.processFunction = function(func) {

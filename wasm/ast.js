@@ -50,6 +50,13 @@ define(['astutil'], function(astutil) {
       ],
     },
     {
+      name: "SetLocal",
+      fields: [
+	{name: "index"},
+	{name: "value"},
+      ],
+    },
+    {
       name: "Load",
       fields: [
 	{name: "mtype"},
@@ -91,6 +98,14 @@ define(['astutil'], function(astutil) {
       fields: [
 	{name: "func"},
 	{name: "args"},
+      ],
+    },
+    {
+      name: "VarDecl",
+      fields: [
+	{name: "name"},
+	{name: "vtype"},
+	{name: "value"},
       ],
     },
     {

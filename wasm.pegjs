@@ -44,7 +44,7 @@ S = (whitespace / comment)*
 
 EOT = ![a-zA-Z0-9_]
 
-keyword = ("if" / "func" / "memory" / "return" / "export" / "import") EOT
+keyword = ("if" / "func" / "memory" / "return" / "export" / "import" / "var") EOT
 
 ident "identifier" = !keyword text:$([a-zA-Z_][a-zA-Z0-9_]*) {
   return wast.Identifier({
@@ -112,6 +112,14 @@ stmt
     /("return" EOT S e:(expr/{return null}) S ";" {
       return wast.Return({
         expr: e
+      });
+    })
+    / ("var" EOT S name:ident S type:typeRef
+       value:(S "=" S e:expr {return e;} / {return null;}) S ";" {
+      return wast.VarDecl({
+        name: name,
+        vtype: type,
+        value: value,
       });
     })
     / e:expr S ";" {return e;}

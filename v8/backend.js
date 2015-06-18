@@ -7,6 +7,8 @@ define(["compilerutil"], function(compilerutil) {
   };
 
   var ops = {
+    setlocal: {bytecode: 0x01},
+
     setheap: {bytecode: 0x03},
     if1: {bytecode: 0x04},
     if2: {bytecode: 0x05},
@@ -176,6 +178,11 @@ define(["compilerutil"], function(compilerutil) {
 	this.generateExpr(expr.cond);
 	this.generateBlock(expr.t);
       }
+      break;
+    case "SetLocal":
+      this.writer.u8(ops.setlocal.bytecode);
+      this.generateLocalRef(expr.index);
+      this.generateExpr(expr.value);
       break;
     default:
       this.generateExpr(expr);
