@@ -19,11 +19,15 @@ func madd(a f64, b f64, c f64) f64 {
   return a * b + c;
 }
 
+func hard7() i32 {
+  return 7;
+}
+
 memory dummy i32;
 memory temp i32;
 
 func bar(a i32) i32 {
-  printI32(fact(7));
+  printI32(fact(hard7()));
   printF32(madf(1.1f, 2.3f, 0.1f));
   printF64(madd(1.1, 2.3, 0.1));
   storeI32(temp, 123);

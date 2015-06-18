@@ -44,7 +44,9 @@ S = (whitespace / comment)*
 
 EOT = ![a-zA-Z0-9_]
 
-ident "identifier" = text:($[a-zA-Z0-9_]+) {
+keyword = ("if" / "func" / "memory" / "return" / "export" / "import") EOT
+
+ident "identifier" = !keyword text:$([a-zA-Z_][a-zA-Z0-9_]*) {
   return wast.Identifier({
     text: text,
     pos: getPos(),
