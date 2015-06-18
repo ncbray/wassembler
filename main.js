@@ -79,6 +79,12 @@ define(
     printI32: function(value) {
       appendText("terminal", "printI32: " + value + "\n");
     },
+    printF32: function(value) {
+      appendText("terminal", "printF32: " + value + "\n");
+    },
+    printF64: function(value) {
+      appendText("terminal", "printF64: " + value + "\n");
+    },
   };
 
   var Status = function() {

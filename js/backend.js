@@ -34,6 +34,8 @@ define(["compilerutil"], function(compilerutil) {
       return 18;
     case "BinaryOp":
       return binOpPrec[expr.op];
+    case "PrefixOp":
+      return 15;
     case "Call":
       return 17;
     case "Assign":
@@ -65,6 +67,10 @@ define(["compilerutil"], function(compilerutil) {
     case "GetAttr":
       this.generateExpr(expr.expr, prec);
       this.writer.out(".").out(expr.attr);
+      break;
+    case "PrefixOp":
+      this.writer.out(expr.op);
+      this.generateExpr(expr.expr, prec);
       break;
     case "BinaryOp":
       this.generateExpr(expr.left, prec);

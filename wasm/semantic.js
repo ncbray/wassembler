@@ -29,6 +29,9 @@ define(["wasm/ast", "wasm/typeinfo"], function(wast, typeinfo) {
     case "ConstF32":
       this.setExprType(expr, "f32");
       break;
+    case "ConstF64":
+      this.setExprType(expr, "f64");
+      break;
     case "GetName":
       var name = expr.name.text;
       var ref = this.localScope[name];
@@ -173,6 +176,8 @@ define(["wasm/ast", "wasm/typeinfo"], function(wast, typeinfo) {
     var t = type.text;
     switch (t) {
     case "i32":
+    case "f32":
+    case "f64":
     case "void":
       break;
     default:

@@ -13,6 +13,12 @@ define(['astutil'], function(astutil) {
       ],
     },
     {
+      name: "ConstF64",
+      fields: [
+	{name: "value"},
+      ],
+    },
+    {
       name: "Identifier",
       fields: [
 	{name: "text"},

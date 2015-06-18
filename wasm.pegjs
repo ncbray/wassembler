@@ -68,8 +68,13 @@ storeOp
     });
   }
 
+constant
+  = digits:($([0-9]+ "." [0-9]*)) "f" {return wast.ConstF32({value: Math.fround(+digits)})}
+  / digits:($([0-9]+ "." [0-9]*)) {return wast.ConstF64({value: +digits})}
+  / digits:$[0-9]+ {return wast.ConstI32({value: +digits})}
+
 atom
-  = digits:$[0-9]+ {return wast.ConstI32({value: +digits})}
+  = constant
   / "(" S e:expr S ")" {return e;}
   / loadOp
   / storeOp
@@ -148,7 +153,7 @@ import "import decl" = "import" EOT S name:ident S "(" S args:typeList S ")" S r
   });
 }
 
-memorydecl = "memory" EOT S name:ident S type:typeRef S ";" {
+memorydecl "memory decl" = "memory" EOT S name:ident S type:typeRef S ";" {
   return wast.MemoryDecl({
     name: name,
     mtype: type,

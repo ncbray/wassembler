@@ -28,6 +28,23 @@ define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
 	  value: 0
 	}),
       });
+    case "f32":
+      return jast.Call({
+	expr: jast.GetAttr({
+	  expr: jast.GetName({
+	    name: "Math",
+	  }),
+	  attr: "fround",
+	}),
+	args: [
+	  expr,
+	],
+      });
+    case "f64":
+      return jast.PrefixOp({
+	op: "+",
+	expr: expr,
+      });
     default:
       console.log(expr);
       throw type;
@@ -37,6 +54,14 @@ define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
   JSTranslator.prototype.processExpr = function(expr) {
     switch(expr.type) {
     case "ConstI32":
+      return jast.ConstNum({
+	value: expr.value,
+      });
+    case "ConstF32":
+      return jast.ConstNum({
+	value: expr.value,
+      });
+    case "ConstF64":
       return jast.ConstNum({
 	value: expr.value,
       });
@@ -74,8 +99,14 @@ define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
 	value: this.processExpr(expr.value),
       });
     case "BinaryOp":
-      var translated;
+      // The default
+      var translated = jast.BinaryOp({
+	left: this.processExpr(expr.left),
+	op: expr.op,
+	right: this.processExpr(expr.right),
+      });
       var needs_coerce = true;
+
       switch (expr.etype) {
       case "i32":
 	switch (expr.op) {
@@ -94,13 +125,11 @@ define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
 	  });
 	  needs_coerce = expr.etype != "i32";
 	  break;
-	default:
-	  translated = jast.BinaryOp({
-	    left: this.processExpr(expr.left),
-	    op: expr.op,
-	    right: this.processExpr(expr.right),
-	  });
 	}
+	break;
+      case "f32":
+	break;
+      case "f64":
 	break;
       default:
 	console.log(expr);

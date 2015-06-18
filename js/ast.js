@@ -35,6 +35,13 @@ define(["astutil"], function(astutil) {
       ],
     },
     {
+      name: "PrefixOp",
+      fields: [
+	{name: "op"},
+	{name: "expr"},
+      ],
+    },
+    {
       name: "Call",
       fields: [
 	{name: "expr"},
