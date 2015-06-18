@@ -130,6 +130,7 @@ define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
       case "f32":
 	break;
       case "f64":
+	needs_coerce = false;
 	break;
       default:
 	console.log(expr);
@@ -197,7 +198,12 @@ define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
     var body = [];
     for (var i = 0; i < func.params.length; i++){
       var p = func.params[i];
-      params.push(p.name.text);
+      var name = p.name.text;
+      params.push(name);
+      body.push(jast.VarDecl({
+	name: name,
+	expr: this.coerce(jast.GetName({name: name}), p.ptype),
+      }));
     }
 
     // HACK?

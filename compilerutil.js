@@ -82,6 +82,16 @@ define([], function() {
     this.pos += 4;
   };
 
+  BinaryWriter.prototype.f32 = function(data) {
+    this.data.setFloat32(this.pos, data, true);
+    this.pos += 4;
+  };
+
+  BinaryWriter.prototype.f64 = function(data) {
+    this.data.setFloat64(this.pos, data, true);
+    this.pos += 8;
+  };
+
   BinaryWriter.prototype.allocU32 = function() {
     var temp = this.pos;
     this.pos += 4;

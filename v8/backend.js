@@ -13,7 +13,11 @@ define(["compilerutil"], function(compilerutil) {
     block: {bytecode: 0x06},
     ret: {bytecode: 0x0c},
 
+    i8const: {bytecode: 0x10},
     i32const: {bytecode: 0x11},
+    f64const: {bytecode: 0x12},
+    f32const: {bytecode: 0x13},
+
     getlocal: {bytecode: 0x14},
 
     getheap: {bytecode: 0x16},
@@ -33,6 +37,46 @@ define(["compilerutil"], function(compilerutil) {
     i32le: {bytecode: 0x2f},
     u32lt: {bytecode: 0x30},
     u32le: {bytecode: 0x31},
+
+    f64add: {bytecode: 0x40},
+    f64sub: {bytecode: 0x41},
+    f64mul: {bytecode: 0x42},
+    f64div: {bytecode: 0x43},
+    f64mod: {bytecode: 0x44},
+
+    f32add: {bytecode: 0x50},
+    f32sub: {bytecode: 0x51},
+    f32mul: {bytecode: 0x52},
+    f32div: {bytecode: 0x53},
+    f32mod: {bytecode: 0x54},
+  };
+
+  var binOpMap = {
+    "i32": {
+      "+": ops.i32add,
+      "-": ops.i32sub,
+      "*": ops.i32mul,
+      "/": ops.i32div,
+      "%": ops.i32div,
+      "<": ops.i32lt,
+      "<=": ops.i32le,
+    },
+
+    "f32": {
+      "+": ops.f32add,
+      "-": ops.f32sub,
+      "*": ops.f32mul,
+      "/": ops.f32div,
+      "%": ops.f32div,
+    },
+
+    "f64": {
+      "+": ops.f64add,
+      "-": ops.f64sub,
+      "*": ops.f64mul,
+      "/": ops.f64div,
+      "%": ops.f64div,
+    },
   };
 
   var BinaryGenerator = function() {
@@ -40,8 +84,7 @@ define(["compilerutil"], function(compilerutil) {
   };
 
   BinaryGenerator.prototype.generateLocalRef = function(index) {
-    // HACK we'll likely need to renumber.
-    this.writer.u8(index);
+    this.writer.u8(this.func.locals[index].remappedIndex);
   };
 
   BinaryGenerator.prototype.generateFuncRef = function(index) {
@@ -57,6 +100,14 @@ define(["compilerutil"], function(compilerutil) {
     case "ConstI32":
       this.writer.u8(ops.i32const.bytecode);
       this.writer.i32(expr.value);
+      break;
+    case "ConstF32":
+      this.writer.u8(ops.f32const.bytecode);
+      this.writer.f32(expr.value);
+      break;
+    case "ConstF64":
+      this.writer.u8(ops.f64const.bytecode);
+      this.writer.f64(expr.value);
       break;
     case "GetLocal":
       this.writer.u8(ops.getlocal.bytecode);
@@ -74,32 +125,12 @@ define(["compilerutil"], function(compilerutil) {
       this.generateExpr(expr.value);
       break;
     case "BinaryOp":
-      // TODO support other data types.
-      if (expr.etype != "i32") throw expr;
+      if (!(expr.etype in binOpMap)) throw expr;
+      var map = binOpMap[expr.etype];
+      if (!(expr.op in map)) throw expr;      
+      var op = map[expr.op];
 
-      switch (expr.op) {
-      case "+":
-	this.writer.u8(ops.i32add.bytecode);
-	break;
-      case "-":
-	this.writer.u8(ops.i32sub.bytecode);
-	break;
-      case "*":
-	this.writer.u8(ops.i32mul.bytecode);
-	break;
-      case "/":
-	this.writer.u8(ops.i32div.bytecode);
-	break;
-      case "<=":
-	this.writer.u8(ops.i32le.bytecode);
-	break;
-      case "<":
-	this.writer.u8(ops.i32lt.bytecode);
-	break;
-      default:
-	console.log(expr);
-	throw(expr.op);
-      }
+      this.writer.u8(op.bytecode);
       this.generateExpr(expr.left);
       this.generateExpr(expr.right);
       break;
@@ -210,6 +241,43 @@ define(["compilerutil"], function(compilerutil) {
     for (var i in module.funcs) {
       var func = module.funcs[i];
 
+      // Bucket locals by type.
+      var i32Locals = [];
+      var f32Locals = [];
+      var f64Locals = [];
+      for (var i in func.locals) {
+	var l = func.locals[i];
+	switch (l.ltype) {
+	case "i32":
+	  i32Locals.push(l);
+	  break;
+	case "f32":
+	  f32Locals.push(l);
+	  break;
+	case "f64":
+	  f64Locals.push(l);
+	  break;
+	default:
+	  console.log(l);
+	  throw l.ltype;
+	}
+      }
+
+      // Recalculate index, when bucked by types.
+      var localIndex = 0;
+      for (var i in i32Locals) {
+	i32Locals[i].remappedIndex = localIndex;
+	localIndex += 1;
+      }
+      for (var i in f32Locals) {
+	f32Locals[i].remappedIndex = localIndex;
+	localIndex += 1;
+      }
+      for (var i in f64Locals) {
+	f64Locals[i].remappedIndex = localIndex;
+	localIndex += 1;
+      }
+
       this.funcID[i] = uid;
       uid += 1;
 
@@ -222,10 +290,9 @@ define(["compilerutil"], function(compilerutil) {
       funcBegin[i] = this.writer.allocU32();
       funcEnd[i] = this.writer.allocU32();
 
-      // HACK assme all locals are i32.
-      this.writer.u16(func.locals.length);
-      this.writer.u16(0); // No f32
-      this.writer.u16(0); // No f64
+      this.writer.u16(i32Locals.length);
+      this.writer.u16(f32Locals.length);
+      this.writer.u16(f64Locals.length);
 
       this.writer.u8(func.exportFunc);
       this.writer.u8(0); // Not an extern.
