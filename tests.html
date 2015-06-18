@@ -1,0 +1,21 @@
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
+<html>
+<head>
+<meta charset="utf-8">
+<title>Wassembler Tests</title>
+<script src="third_party/peg-0.8.0.js"></script>
+<script src="third_party/qunit-1.18.0.js"></script>
+<script data-main="tests" src="third_party/require.js"></script>
+<link rel="stylesheet" href="third_party/qunit-1.18.0.css">
+</head>
+<body>
+<div id="qunit"></div>
+<div id="qunit-fixture"></div>
+<script>
+QUnit.config.autostart = false;
+require(['tests'], function(tests){
+  tests.run();
+});
+</script>
+</body>
+</html>

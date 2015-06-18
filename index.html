@@ -1,6 +1,7 @@
 <!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML//EN">
 <html>
 <head>
+<meta charset="utf-8">
 <title>Interactive Wassembler</title>
 <script src="third_party/peg-0.8.0.js"></script>
 <script data-main="main" src="third_party/require.js"></script>
@@ -8,7 +9,10 @@
 <body>
 <h1>Interactive Wassembler</h1>
 <div>
-<button id="eval">Eval</button>
+<div>
+<span><button id="eval">Eval</button></span>
+<span><a href="https://github.com/ncbray/wassembler">Repo</a></span>
+<span><a href="tests.html">Tests</a></span>
 </div>
 <div>
 <textarea id="code" cols="80" rows="30"></textarea>
@@ -17,6 +21,7 @@
 <div>
 <textarea id="generated" cols="80" rows="30" readonly="true"></textarea>
 <textarea id="terminal" cols="80" rows="30" readonly="true"></textarea>
+</div>
 </div>
 </body>
 <script>

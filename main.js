@@ -1,6 +1,6 @@
 define(
-  ['wasm/ast', 'wasm/semantic', 'wasm/tojs', 'v8/backend', 'js/backend'],
-  function(wast, semantic, tojs, wasm_backend_v8, js_backend) {
+  ['base', 'v8/backend'],
+  function(base, wasm_backend_v8) {
 
   var setupUI = function(code, parse) {
     setText("code", code);
@@ -24,54 +24,6 @@ define(
     document.getElementById(pane).value += text;
   };
 
-  var getURL = function(url) {
-    return new Promise(function(resolve, reject) {
-      var req = new XMLHttpRequest();
-      req.onload = function() {
-	if (req.status == 200) {
-	  resolve(req.response);
-	} else {
-	  reject(Error("getURL " + url + " - reponse " + req.status));
-	}
-      };
-      req.onerror = function() {
-	reject(Error("getURL " + url + " - network error"));
-      };
-      req.open("get", url);
-      req.send();
-    });
-  };
-
-  var syntaxError = function(prefix, e) {
-    return new Error(prefix + " " + e.line + ":" + e.column + " - " + e.message);
-  };
-
-  var createParser = function(url) {
-    return new Promise(function(resolve, reject) {
-      getURL(url).then(function(grammar) {
-	try {
-	  var parser = PEG.buildParser(grammar);
-	} catch (e) {
-	  console.log(e);
-	  reject(syntaxError(url, e));
-	}
-	resolve(parser);	
-      }, function(err) {
-	reject(err);
-      });
-    });
-  };
-
-  var parse = function(parser, text) {
-    return new Promise(function(resolve, reject) {
-      try {
-	resolve(parser.parse(text, {wast: wast}));
-      } catch (e) {
-	reject(syntaxError("code", e));
-      }
-    });
-  };
-
   var externs = {
     hook: function() {
       appendText("terminal", "hook called.\n");
@@ -87,22 +39,13 @@ define(
     },
   };
 
-  var Status = function() {
-    this.num_errors = 0;
-  };
-
-  Status.prototype.error = function(message, pos) {
-    console.log(message, pos);
-    var prefix = "ERROR";
-    if (pos != undefined) {
-      prefix += " " + pos.line + ":" + pos.column;
-    }
-    prefix += ": ";
-    appendText("generated", prefix + message + "\n");
-    this.num_errors += 1;
-  };
+  var exampleFile = "example.wasm";
 
   var parser;
+
+  var status = new base.Status(function(message) {
+    appendText("terminal", message + "\n");
+  });
 
   var reevaluate = function(text) {
     // Clear the outputs.
@@ -110,68 +53,64 @@ define(
     setText("generated", "");
     setText("terminal", "");
 
-    var status = new Status();
-
-    parse(parser, text).then(function(parsed) {
-      // Display the old AST, incase the semantic pass fails.
-      setText("ast", JSON.stringify(parsed, null, "  "));
-
-      var module = semantic.processModule(parsed, status);
-      if (status.num_errors > 0) {
-	return;
-      }
-
-      // The semantic pass will have refined the AST.
-      setText("ast", JSON.stringify(module, null, "  "));
-
-      // Testing
-      var translated = tojs.translate(module);
-      setText("ast", JSON.stringify(translated, null, "  "));
-
-      var src = js_backend.generateExpr(translated)
-      setText("generated", src);
-
-      // Compile the module without binding it.
-      try {
-	var compiled = eval(src);
-      } catch (e) {
-	appendText("terminal", "compile error: " + e.message);
-	return;
-      }
-
-      // Bind the module.
-      try {
-	instance = compiled(externs);
-      } catch (e) {
-	appendText("terminal", "binding error: " + e.message);
-	return;
-      }
-
-      // Run main.
-      appendText("terminal", "running main...\n\n");
-      try {
-	var result = instance.main();
-      } catch (e) {
-	appendText("terminal", "\nruntime error: " + e.message);
-	return;
-      }
-      appendText("terminal", "\nresult: " + result);
-
-      // Generate binary encoding
-      var buffer = wasm_backend_v8.generate(module);
-      console.log(new Uint8Array(buffer));
-      console.log(buffer.byteLength);
-    }, function(err) {
-      setText("ast", err);
+    status = new base.Status(function(message) {
+      appendText("terminal", message + "\n");
     });
+
+    var reportAST = function(ast) {
+      setText("ast", JSON.stringify(ast, null, "  "));
+    };
+
+    var reportSrc = function(src) {
+      setText("generated", src);
+    };
+
+    var module = base.frontend(exampleFile, text, parser, status, reportAST);
+    if (status.num_errors > 0) {
+      return null;
+    }
+
+    var compiled = base.astToCompiledJS(module, status, reportSrc);
+    if (status.num_errors > 0) {
+      return null;
+    }
+
+    // Bind the module.
+    try {
+      instance = compiled(externs);
+    } catch (e) {
+      appendText("terminal", "running main...\n\n");
+      return;
+    }
+
+    // Run main.
+    appendText("terminal", "running main...\n\n");
+    try {
+      var result = instance.main();
+    } catch (e) {
+      appendText("terminal", "\nruntime error: " + e.message);
+      return;
+    }
+    appendText("terminal", "\nresult: " + result);
+
+    // Generate binary encoding
+    var buffer = wasm_backend_v8.generate(module);
+    console.log(new Uint8Array(buffer));
+    console.log(buffer.byteLength);
   };
 
   var run = function() {
     Promise.all([
-      createParser("wasm.pegjs"),
-      getURL("example.wasm")
+      base.getURL("wasm.pegjs"),
+      base.getURL(exampleFile)
     ]).then(function(values) {
-      parser = values[0];
+      status.setFilename("wasm.pegjs");
+      parser = base.createParser(values[0], status);
+      status.setFilename("");
+      if (status.num_errors > 0) {
+	return;
+      }
+
       var code = values[1];
       setupUI(code, reevaluate);
     }, function(err){
