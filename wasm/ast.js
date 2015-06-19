@@ -79,6 +79,13 @@ define(['astutil'], function(astutil) {
       ],
     },
     {
+      name: "PrefixOp",
+      fields: [
+	{name: "op"},
+	{name: "expr"},
+      ],
+    },
+    {
       name: "BinaryOp",
       fields: [
 	{name: "left"},

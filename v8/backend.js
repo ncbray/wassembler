@@ -130,6 +130,17 @@ define(["compilerutil", "wasm/ast"], function(compilerutil, wast) {
       this.generateExpr(expr.address);
       this.generateExpr(expr.value);
       break;
+    case "PrefixOp":
+      switch (expr.op) {
+      case "!":
+	this.writer.u8(ops.not.bytecode);
+	this.generateExpr(expr.expr);
+	break;
+      default:
+	console.log(expr);
+	throw Error(expr.op);
+      }
+      break;
     case "BinaryOp":
       if (!(expr.etype in binOpMap)) throw Error(expr.etype);
       var map = binOpMap[expr.etype];

@@ -1,4 +1,4 @@
-define(["base"], function(base) {
+define(["base", "wasm/desugar", "v8/backend"], function(base, desugar, wasm_backend_v8) {
   var parser = null;
 
   var create = function(text, assert) {
@@ -9,6 +9,10 @@ define(["base"], function(base) {
 
     var module = base.astToCompiledJS(ast, status);
     assert.notEqual(module, null, "backend");
+
+    // Smoke test the V8 backend.
+    ast = desugar.process(ast, {simple_loops: true, canonicalize: true});
+    wasm_backend_v8.generate(ast);
 
     return module({});
   };
@@ -42,6 +46,48 @@ define(["base"], function(base) {
     var m = create("export func main(a i32, b i32) i32 {return a / b;}", assert);
     assert.equal(m.main(13, 2), 6);
     assert.equal(m.main(13, -2), -6);
+  });
+
+  QUnit.test("lt i32", function(assert) {
+    var m = create("export func main(a i32, b i32) i32 {return a < b;}", assert);
+    assert.equal(m.main(13, 2), 0);
+    assert.equal(m.main(5, 5), 0);
+    assert.equal(m.main(2, 13), 1);
+  });
+
+  QUnit.test("le i32", function(assert) {
+    var m = create("export func main(a i32, b i32) i32 {return a <= b;}", assert);
+    assert.equal(m.main(13, 2), 0);
+    assert.equal(m.main(5, 5), 1);
+    assert.equal(m.main(2, 13), 1);
+  });
+
+  QUnit.test("gt i32", function(assert) {
+    var m = create("export func main(a i32, b i32) i32 {return a > b;}", assert);
+    assert.equal(m.main(13, 2), 1);
+    assert.equal(m.main(5, 5), 0);
+    assert.equal(m.main(2, 13), 0);
+  });
+
+  QUnit.test("ge i32", function(assert) {
+    var m = create("export func main(a i32, b i32) i32 {return a >= b;}", assert);
+    assert.equal(m.main(13, 2), 1);
+    assert.equal(m.main(5, 5), 1);
+    assert.equal(m.main(2, 13), 0);
+  });
+
+  QUnit.test("eq i32", function(assert) {
+    var m = create("export func main(a i32, b i32) i32 {return a == b;}", assert);
+    assert.equal(m.main(13, 2), 0);
+    assert.equal(m.main(5, 5), 1);
+    assert.equal(m.main(2, 13), 0);
+  });
+
+  QUnit.test("ne i32", function(assert) {
+    var m = create("export func main(a i32, b i32) i32 {return a != b;}", assert);
+    assert.equal(m.main(13, 2), 1);
+    assert.equal(m.main(5, 5), 0);
+    assert.equal(m.main(2, 13), 1);
   });
 
   QUnit.test("divide f32", function(assert) {
