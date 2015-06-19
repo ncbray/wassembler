@@ -348,13 +348,12 @@ define(["wasm/ast", "wasm/typeinfo"], function(wast, typeinfo) {
     var ptr = 8;
     for (var i in module.memory) {
       var mem = module.memory[i];
-      mem.mtype = this.processType(mem.mtype);
-
-      var size = typeinfo.sizeOf(mem.mtype);
+      var size = mem.size;
+      var align = mem.align;
 
       // Align
-      if (ptr % size != 0) {
-	ptr += size - ptr % size;
+      if (ptr % align != 0) {
+	ptr += align - ptr % align;
       }
 
       // Allocate

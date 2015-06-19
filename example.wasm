@@ -40,10 +40,10 @@ func hard7() i32 {
   return value;
 }
 
-memory dummy i32;
-memory temp i32;
-memory temp16 i16;
-memory temp8 i8;
+memory dummy 100 align 4;
+memory temp32 4 align 4;
+memory temp16 2 align 2;
+memory temp8 1 align 1;
 
 func bar(a i32) i32 {
   printI32(fact(hard7()));
@@ -51,7 +51,7 @@ func bar(a i32) i32 {
   printI32(is_prime(97));
   printF32(madf(1.1f, 2.3f, 0.1f));
   printF64(madd(1.1, 2.3, 0.1));
-  storeI32(temp, 123);
+  storeI32(temp32, 123);
   return a * 3;
 }
 
@@ -59,7 +59,7 @@ import hook() void;
 
 export func main() i32 {
   hook();
-  return (11 - 7) * bar(1) * loadI32(temp);
+  return (11 - 7) * bar(1) * loadI32(temp32);
 }
 
 func i8_sort_of_works(a i8, b i8) i8 {

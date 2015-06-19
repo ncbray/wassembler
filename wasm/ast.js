@@ -192,7 +192,8 @@ define(['astutil'], function(astutil) {
       name: "MemoryDecl",
       fields: [
 	{name: "name"},
-	{name: "mtype"},
+	{name: "size"},
+	{name: "align"},
       ],
     },
     {
