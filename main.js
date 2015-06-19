@@ -1,15 +1,18 @@
 define(
-  ['base', 'v8/backend'],
-  function(base, wasm_backend_v8) {
+  ["base", "wasm/desugar", "v8/backend"],
+  function(base, desugar, wasm_backend_v8) {
 
   var setupUI = function(code, parse) {
     setText("code", code);
 
-    var button = document.getElementById("eval");
-    button.onclick = function() {
-      parse(getText("code"));
+    var reeval = function() {
+      parse(getText("code"), document.getElementById("desugar").checked);
     };
-    button.onclick();
+
+    document.getElementById("eval").onclick = reeval;
+    document.getElementById("desugar").onclick = reeval;
+
+    reeval();
   };
 
   var getText = function(pane) {
@@ -47,7 +50,7 @@ define(
     appendText("terminal", message + "\n");
   });
 
-  var reevaluate = function(text) {
+  var reevaluate = function(text, early_desugar) {
     // Clear the outputs.
     setText("ast", "");
     setText("generated", "");
@@ -70,6 +73,14 @@ define(
       return null;
     }
 
+    var doDesugar = function() {
+      module = desugar.process(module, {simple_loops: true});
+    }
+
+    if (early_desugar) {
+      doDesugar();
+    }
+
     var compiled = base.astToCompiledJS(module, status, reportSrc);
     if (status.num_errors > 0) {
       return null;
@@ -79,7 +90,7 @@ define(
     try {
       instance = compiled(externs);
     } catch (e) {
-      appendText("terminal", "running main...\n\n");
+      appendText("terminal", "binding failed - " + e.message);
       return;
     }
 
@@ -92,6 +103,10 @@ define(
       return;
     }
     appendText("terminal", "\nresult: " + result);
+
+    if (!early_desugar) {
+      doDesugar();
+    }
 
     // Generate binary encoding
     var buffer = wasm_backend_v8.generate(module);

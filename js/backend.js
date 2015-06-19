@@ -165,6 +165,10 @@ define(["compilerutil"], function(compilerutil) {
       }
       this.writer.out(";").eol();
       break;
+    case "Break":
+      this.writer.out("break");
+      this.writer.out(";").eol();
+      break;
     case "If":
       this.writer.out("if (");
       this.generateExpr(stmt.cond, 0);

@@ -185,6 +185,12 @@ define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
 	body: this.processBlock(stmt.body, []),
       }));
       break;
+    case "Loop":
+      result.push(jast.While({
+	cond: jast.GetName({name: "true"}),
+	body: this.processBlock(stmt.body, []),
+      }));
+      break;
     case "SetLocal":
       result.push(jast.Assign({
 	target: jast.GetName({
@@ -197,6 +203,9 @@ define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
       result.push(jast.Return({
 	expr: this.processExpr(stmt.expr),
       }));
+      break;
+    case "Break":
+      result.push(jast.Break({}));
       break;
     default:
       result.push(this.processExpr(stmt));

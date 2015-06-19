@@ -76,6 +76,11 @@ define(["astutil"], function(astutil) {
       ],
     },
     {
+      name: "Break",
+      fields: [
+      ],
+    },
+    {
       name: "Return",
       fields: [
 	{name: "expr"},

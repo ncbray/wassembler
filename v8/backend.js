@@ -188,16 +188,9 @@ define(["compilerutil", "wasm/ast"], function(compilerutil, wast) {
 	this.generateBlock(expr.t);
       }
       break;
-    case "While":
+    case "Loop":
       this.writer.u8(ops.loop.bytecode);
-      var body = [wast.If({
-	cond: expr.cond,
-	t: [],
-	f: [wast.Break({}),]
-      })];
-      console.log(body);
-      body.concat(expr.body);
-      this.generateBlock(body);
+      this.generateBlock(expr.body);
       break;
     case "SetLocal":
       this.writer.u8(ops.setlocal.bytecode);

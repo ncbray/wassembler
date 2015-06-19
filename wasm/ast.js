@@ -142,6 +142,12 @@ define(['astutil'], function(astutil) {
       ],
     },
     {
+      name: "Loop",
+      fields: [
+	{name: "body"},
+      ],
+    },
+    {
       name: "Param",
       fields: [
 	{name: "name"},
