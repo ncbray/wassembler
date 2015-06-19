@@ -49,11 +49,20 @@ define(["compilerutil", "wasm/ast"], function(compilerutil, wast) {
     f64div: {bytecode: 0x43},
     f64mod: {bytecode: 0x44},
 
+    f64eq: {bytecode: 0x45},
+    f64lt: {bytecode: 0x46},
+    f64le: {bytecode: 0x47},
+
     f32add: {bytecode: 0x50},
     f32sub: {bytecode: 0x51},
     f32mul: {bytecode: 0x52},
     f32div: {bytecode: 0x53},
     f32mod: {bytecode: 0x54},
+
+    f32eq: {bytecode: 0x55},
+    f32lt: {bytecode: 0x56},
+    f32le: {bytecode: 0x57},
+
   };
 
   var binOpMap = {
@@ -74,6 +83,9 @@ define(["compilerutil", "wasm/ast"], function(compilerutil, wast) {
       "*": ops.f32mul,
       "/": ops.f32div,
       "%": ops.f32div,
+      "==": ops.f32eq,
+      "<": ops.f32lt,
+      "<=": ops.f32le,
     },
 
     "f64": {
@@ -82,6 +94,9 @@ define(["compilerutil", "wasm/ast"], function(compilerutil, wast) {
       "*": ops.f64mul,
       "/": ops.f64div,
       "%": ops.f64div,
+      "==": ops.f64eq,
+      "<": ops.f64lt,
+      "<=": ops.f64le,
     },
   };
 

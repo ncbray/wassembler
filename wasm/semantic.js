@@ -97,7 +97,18 @@ define(["wasm/ast", "wasm/typeinfo"], function(wast, typeinfo) {
 	if (expr.left.etype != expr.right.etype) {
 	  this.error("binary op type error - " + expr.left.etype + expr.op + expr.right.etype + " = ???");
 	}
-	this.setExprType(expr, expr.left.etype);
+	switch (expr.op) {
+	case "<":
+	case "<=":
+	case ">":
+	case ">=":
+	case "==":
+	case "!=":
+	  this.setExprType(expr, "i32");
+	  break;
+	default:
+	  this.setExprType(expr, expr.left.etype);
+	}
       }
       break;
     case "Call":
@@ -170,9 +181,16 @@ define(["wasm/ast", "wasm/typeinfo"], function(wast, typeinfo) {
     case "Return":
       expr.expr = this.processExpr(expr.expr);
       this.setExprType(expr, "void");
+      if (!this.dead && expr.expr.etype != this.func.returnType) {
+	this.error("return type mismatch - " + expr.expr.etype + " vs. " + this.func.returnType);
+      }
       break;
     case "If":
       expr.cond = this.processExpr(expr.cond);
+      if (!this.dead && expr.cond.etype != "i32") {
+	this.error("condition type mismatch - " + expr.cond.etype + " vs. i32");
+      }
+
       expr.t = this.processBlock(expr.t);
       if (expr.f != null) {
 	expr.f = this.processBlock(expr.f);

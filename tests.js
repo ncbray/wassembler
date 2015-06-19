@@ -96,6 +96,48 @@ define(["base", "wasm/desugar", "v8/backend"], function(base, desugar, wasm_back
     assert.equal(m.main(13, -2.1), Math.fround(13/-2.1));
   });
 
+  QUnit.test("lt f32", function(assert) {
+    var m = create("export func main(a f32, b f32) i32 {return a < b;}", assert);
+    assert.equal(m.main(7.3, 7.1), 0);
+    assert.equal(m.main(7.2, 7.2), 0);
+    assert.equal(m.main(7, 7.3), 1);
+  });
+
+  QUnit.test("le f32", function(assert) {
+    var m = create("export func main(a f32, b f32) i32 {return a <= b;}", assert);
+    assert.equal(m.main(7.3, 7.1), 0);
+    assert.equal(m.main(7.2, 7.2), 1);
+    assert.equal(m.main(7.1, 7.3), 1);
+  });
+
+  QUnit.test("gt f32", function(assert) {
+    var m = create("export func main(a f32, b f32) i32 {return a > b;}", assert);
+    assert.equal(m.main(7.3, 7.1), 1);
+    assert.equal(m.main(7.2, 7.2), 0);
+    assert.equal(m.main(7.1, 7.3), 0);
+  });
+
+  QUnit.test("ge f32", function(assert) {
+    var m = create("export func main(a f32, b f32) i32 {return a >= b;}", assert);
+    assert.equal(m.main(7.3, 7.1), 1);
+    assert.equal(m.main(7.2, 7.2), 1);
+    assert.equal(m.main(7.1, 7.3), 0);
+  });
+
+  QUnit.test("eq f32", function(assert) {
+    var m = create("export func main(a f32, b f32) i32 {return a == b;}", assert);
+    assert.equal(m.main(7.3, 7.1), 0);
+    assert.equal(m.main(7.2, 7.2), 1);
+    assert.equal(m.main(7.1, 7.3), 0);
+  });
+
+  QUnit.test("ne f32", function(assert) {
+    var m = create("export func main(a f32, b f32) i32 {return a != b;}", assert);
+    assert.equal(m.main(7.3, 7.1), 1);
+    assert.equal(m.main(7.2, 7.2), 0);
+    assert.equal(m.main(7.1, 7.3), 1);
+  });
+
   QUnit.test("divide f64", function(assert) {
     var m = create("export func main(a f64, b f64) f64 {return a / b;}", assert);
     assert.equal(m.main(13, 2.1), 13/2.1);
@@ -164,7 +206,7 @@ define(["base", "wasm/desugar", "v8/backend"], function(base, desugar, wasm_back
 
 
   QUnit.test("exports", function(assert) {
-    var m = create("func foo(n f32) i32 {return n * 3.5f;} export func bar(n f32) f32 {return foo(n);}", assert);
+    var m = create("func foo(n f32) f32 {return n * 3.5f;} export func bar(n f32) f32 {return foo(n);}", assert);
     assert.notOk("foo" in m);
     assert.ok("bar" in m);
     assert.equal(m.bar(11), 38.5);
