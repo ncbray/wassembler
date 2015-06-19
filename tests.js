@@ -240,6 +240,16 @@ define(["base", "wasm/desugar", "v8/backend"], function(base, desugar, wasm_back
 
   QUnit.module("memory");
 
+  QUnit.test("i8", function(assert) {
+    var m = create("memory temp i8; export func main(n i8) i8 {storeI32(temp, n); return loadI8(temp);}", assert);
+    assert.equal(m.main(7), 7);
+  });
+
+  QUnit.test("i16", function(assert) {
+    var m = create("memory temp i16; export func main(n i16) i16 {storeI16(temp, n); return loadI16(temp);}", assert);
+    assert.equal(m.main(7), 7);
+  });
+
   QUnit.test("i32", function(assert) {
     var m = create("memory temp i32; export func main(n i32) i32 {storeI32(temp, n); return loadI32(temp);}", assert);
     assert.equal(m.main(7), 7);

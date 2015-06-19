@@ -42,6 +42,8 @@ func hard7() i32 {
 
 memory dummy i32;
 memory temp i32;
+memory temp16 i16;
+memory temp8 i8;
 
 func bar(a i32) i32 {
   printI32(fact(hard7()));
@@ -61,9 +63,11 @@ export func main() i32 {
 }
 
 func i8_sort_of_works(a i8, b i8) i8 {
-     return a + b;
+  storeI8(temp8, a + b);
+  return loadI8(temp8);
 }
 
 func i16_sort_of_works(a i16, b i16) i16 {
-     return a + b;
+  storeI16(temp16, a + b);
+  return loadI16(temp16);
 }

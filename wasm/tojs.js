@@ -1,5 +1,7 @@
 define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
   var arrayNames = {
+    'i8': 'I8',
+    'i16': 'I16',
     'i32': 'I32',
     'f32': 'F32',
     'f64': 'F64',
@@ -378,6 +380,30 @@ define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
 	}),
 	args: [
 	  jast.ConstNum({value: 4096}),
+	],
+      }),
+    }));
+
+    body.push(jast.VarDecl({
+      name: arrayNames["i8"],
+      expr: jast.New({
+	expr: jast.GetName({
+	  name: "Int8Array",
+	}),
+	args: [
+	  jast.GetName({name: "buffer"}),
+	],
+      }),
+    }));
+
+    body.push(jast.VarDecl({
+      name: arrayNames["i16"],
+      expr: jast.New({
+	expr: jast.GetName({
+	  name: "Int16Array",
+	}),
+	args: [
+	  jast.GetName({name: "buffer"}),
 	],
       }),
     }));

@@ -6,6 +6,17 @@ define(["compilerutil", "wasm/ast"], function(compilerutil, wast) {
     "f64": 3,
   };
 
+  var mem_types = {
+    "i8": 0,
+    "u8": 1,
+    "i16": 2,
+    "u16": 3,
+    "i32": 4,
+    "u32": 5,
+    "f32": 6,
+    "f64": 7,
+  };
+
   var ops = {
     setlocal: {bytecode: 0x01},
 
@@ -144,12 +155,12 @@ define(["compilerutil", "wasm/ast"], function(compilerutil, wast) {
       break;
     case "Load":
       this.writer.u8(ops.getheap.bytecode);
-      this.generateType(expr.mtype);
+      this.generateMemType(expr.mtype);
       this.generateExpr(expr.address);
       break;
     case "Store":
       this.writer.u8(ops.setheap.bytecode);
-      this.generateType(expr.mtype);
+      this.generateMemType(expr.mtype);
       this.generateExpr(expr.address);
       this.generateExpr(expr.value);
       break;
@@ -250,8 +261,19 @@ define(["compilerutil", "wasm/ast"], function(compilerutil, wast) {
   };
 
   BinaryGenerator.prototype.generateType = function(t) {
+    if (!(t in types)) {
+      throw Error(t);
+    }
     this.writer.u8(types[t]);
   };
+
+  BinaryGenerator.prototype.generateMemType = function(t) {
+    if (!(t in mem_types)) {
+      throw Error(t);
+    }
+    this.writer.u8(mem_types[t]);
+  };
+
 
   BinaryGenerator.prototype.generateSignature = function(argTypes, returnType) {
     this.writer.u8(argTypes.length);

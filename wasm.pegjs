@@ -53,7 +53,7 @@ ident "identifier" = !keyword text:$([a-zA-Z_][a-zA-Z0-9_]*) {
   });
 }
 
-mtype = "I32" {return "i32";} / "F32" {return "f32";} / "F64" {return "f64";}
+mtype = "I32" {return "i32";} / "F32" {return "f32";} / "F64" {return "f64";} / "I8" {return "i8";} / "I16" {return "i16";}
 
 loadOp
   = "load" t:mtype S "(" S addr:expr S ")" {
