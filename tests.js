@@ -258,6 +258,14 @@ define(["base", "wasm/desugar", "v8/backend"], function(base, desugar, wasm_back
 
   QUnit.module("function calls");
 
+  QUnit.test("void return", function(assert) {
+    var m = create("export func main() void {return;}", assert);
+    assert.equal(m.main(), undefined);
+
+    var m = create("export func main() void {}", assert);
+    assert.equal(m.main(), undefined);
+  });
+
   QUnit.test("factorial", function(assert) {
     var m = create("export func fact(n i32) i32 {if (n <= 1) {return 1;} else {return n * fact(n - 1);}}", assert);
     assert.equal(m.fact(0), 1);

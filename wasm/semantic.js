@@ -183,11 +183,15 @@ define(["wasm/ast", "wasm/typeinfo"], function(wast, typeinfo) {
       }
       break;
     case "Return":
-      expr.expr = this.processExpr(expr.expr);
-      this.setExprType(expr, "void");
-      if (!this.dead && expr.expr.etype != this.func.returnType) {
-	this.error("return type mismatch - " + expr.expr.etype + " vs. " + this.func.returnType);
+      var actual = "void";
+      if (expr.expr) {
+	expr.expr = this.processExpr(expr.expr);
+	actual = expr.expr.etype;
       }
+      if (!this.dead && actual != this.func.returnType) {
+	this.error("return type mismatch - " + actual + " vs. " + this.func.returnType);
+      }
+      this.setExprType(expr, "void");
       break;
     case "If":
       expr.cond = this.processExpr(expr.cond);

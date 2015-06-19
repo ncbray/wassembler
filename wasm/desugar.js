@@ -44,7 +44,9 @@ define(["wasm/ast"], function(wast) {
       node.value = this.processExpr(node.value);
       break;
     case "Return":
-      node.expr = this.processExpr(node.expr);
+      if (node.expr) {
+	node.expr = this.processExpr(node.expr);
+      }
       break;
     case "Break":
       break;

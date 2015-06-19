@@ -212,7 +212,7 @@ define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
       break;
     case "Return":
       result.push(jast.Return({
-	expr: this.processExpr(stmt.expr),
+	expr: stmt.expr ? this.processExpr(stmt.expr) : null,
       }));
       break;
     case "Break":
