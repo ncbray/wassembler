@@ -22,6 +22,24 @@
 <textarea id="generated" cols="80" rows="30" readonly="true"></textarea>
 <textarea id="terminal" cols="80" rows="30" readonly="true"></textarea>
 </div>
+<div>
+<h2>Help</h2>
+<ul>
+<li>The first text area is editable. Hit "Eval" to recompile.</li>
+<li>Supported types: i32, f32, f64, and void.</li>
+<li>Basic arithmetic binary operators and comparisons are supported.</li>
+<li>if, while, and return are supported.</li>
+<li>memory name type; statically allocates memory.  Sorry, no arrays yet.</li>
+<li>loadI32(addr) and storeI32(addr, value) are memory accesses, and there are variants for other types.</li>
+<li>Prefixing a function with "export" makes it visible to JS.</li>
+<li>import name(argtypes) returntype; declares a binding to a JS function.</li>
+</ul>
+<h2>Bugs</h2>
+<ul>
+<li>Compares of floating-point types produce a floating point type.</li>
+<li>Returns from void functions are not supported.</li>
+</ul>
+</div>
 </div>
 </body>
 <script>
