@@ -74,9 +74,26 @@ define(["base"], function(base) {
     assert.equal(m.main(5), 30);
   });
 
+  QUnit.module("memory");
+
+  QUnit.test("i32", function(assert) {
+    var m = create("memory temp i32; export func main(n i32) i32 {storeI32(temp, n); return loadI32(temp);}", assert);
+    assert.equal(m.main(7), 7);
+  });
+
+  QUnit.test("f32", function(assert) {
+    var m = create("memory temp f32; export func main(n f32) f32 {storeF32(temp, n); return loadF32(temp);}", assert);
+    assert.equal(m.main(7.5), 7.5);
+  });
+
+  QUnit.test("f64", function(assert) {
+    var m = create("memory temp f64; export func main(n f64) f64 {storeF64(temp, n); return loadF64(temp);}", assert);
+    assert.equal(m.main(7.5), 7.5);
+  });
+
   QUnit.module("loops");
 
-  QUnit.test("assign", function(assert) {
+  QUnit.test("is_prime", function(assert) {
     var m = create("export func is_prime(n i32) i32 {if (n % 2 == 0) {return 0;} var d i32 = 3; while(d < n) { if (n % d == 0) {return 0;} d = d + 2;} return 1;}", assert);
     assert.equal(m.is_prime(2), 0);
     assert.equal(m.is_prime(3), 1);

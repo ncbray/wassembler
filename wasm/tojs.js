@@ -1,6 +1,8 @@
 define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
   var arrayNames = {
     'i32': 'I32',
+    'f32': 'F32',
+    'f64': 'F64',
   };
 
   var JSTranslator = function() {
@@ -70,6 +72,8 @@ define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
 	name: this.localName(expr.index),
       });
     case "Load":
+      if (!(expr.mtype in arrayNames)) throw Error(expr.mtype);
+
       var shift = Math.log2(typeinfo.sizeOf(expr.mtype));
 
       return jast.GetIndex({
@@ -83,6 +87,8 @@ define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
 	}),
       });
     case "Store":
+      if (!(expr.mtype in arrayNames)) throw Error(expr.mtype);
+
       var shift = Math.log2(typeinfo.sizeOf(expr.mtype));
 
       return jast.Assign({
@@ -285,6 +291,30 @@ define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
       expr: jast.New({
 	expr: jast.GetName({
 	  name: "Int32Array",
+	}),
+	args: [
+	  jast.GetName({name: "buffer"}),
+	],
+      }),
+    }));
+
+    body.push(jast.VarDecl({
+      name: arrayNames["f32"],
+      expr: jast.New({
+	expr: jast.GetName({
+	  name: "Float32Array",
+	}),
+	args: [
+	  jast.GetName({name: "buffer"}),
+	],
+      }),
+    }));
+
+    body.push(jast.VarDecl({
+      name: arrayNames["f64"],
+      expr: jast.New({
+	expr: jast.GetName({
+	  name: "Float64Array",
 	}),
 	args: [
 	  jast.GetName({name: "buffer"}),

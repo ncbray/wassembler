@@ -53,8 +53,10 @@ ident "identifier" = !keyword text:$([a-zA-Z_][a-zA-Z0-9_]*) {
   });
 }
 
+mtype = "I32" {return "i32";} / "F32" {return "f32";} / "F64" {return "f64";}
+
 loadOp
-  = t:("loadI32" {return "i32"}) S "(" S addr:expr S ")" {
+  = "load" t:mtype S "(" S addr:expr S ")" {
     return wast.Load({
       mtype: t,
       address: addr
@@ -62,7 +64,7 @@ loadOp
   }
 
 storeOp
-  = t:("storeI32" {return "i32"}) S "(" S addr:expr S "," S value:expr S ")" {
+  = "store" t:mtype S "(" S addr:expr S "," S value:expr S ")" {
     return wast.Store({
       mtype: t,
       address: addr,
