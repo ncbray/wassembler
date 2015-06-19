@@ -142,35 +142,39 @@ define(["wasm/ast", "wasm/typeinfo"], function(wast, typeinfo) {
 	switch (expr.type) {
 	case "CallDirect":
 	  var target = this.module.funcs[expr.func];
+
 	  if (expr.args.length != target.params.length) {
-	    this.error("argument count mismatch");
-	    console.log(target);
-	    throw expr.args.length;
+	    this.error("argument count mismatch - got " + expr.args.length + ", but expected " + target.params.length);
 	  }
-	  for (var i = 0; i < expr.args.length; i++) {
-	    var arg = expr.args[i];
-	    if (arg.etype != target.params[i].ptype) {
-	      console.log(i, arg.etype, params[i].ptype);
-	      throw expr;
+
+	  this.setExprType(expr, target.returnType);
+
+	  if (!this.dead) {
+	    for (var i = 0; i < expr.args.length; i++) {
+	      var arg = expr.args[i];
+	      if (arg.etype != target.params[i].ptype) {
+		this.error("arg " + i + " - got " + arg.etype + ", but expected " + target.params[i].ptype);
+	      }
 	    }
 	  }
-	  this.setExprType(expr, target.returnType);
 	  break;
 	case "CallExternal":
 	  var target = this.module.externs[expr.func];
+
 	  if (expr.args.length != target.args.length) {
-	    this.error("argument count mismatch");
-	    console.log(target);
-	    throw expr.args.length;
+	    this.error("argument count mismatch - got " + expr.args.length + ", but expected " + target.args.length);
 	  }
-	  for (var i = 0; i < expr.args.length; i++) {
-	    var arg = expr.args[i];
-	    if (arg.etype != target.args[i]) {
-	      console.log(i, arg.etype, target.args[i]);
-	      throw expr;
+
+	  this.setExprType(expr, target.returnType);
+
+	  if (!this.dead) {
+	    for (var i = 0; i < expr.args.length; i++) {
+	      var arg = expr.args[i];
+	      if (arg.etype != target.args[i]) {
+		this.error("arg " + i + " - got " + arg.etype + ", but expected " + target.args[i]);
+	      }
 	    }
 	  }
-	  this.setExprType(expr, target.returnType);
 	  break;
 	default:
 	  console.log(expr);
@@ -199,6 +203,9 @@ define(["wasm/ast", "wasm/typeinfo"], function(wast, typeinfo) {
       break;
     case "While":
       expr.cond = this.processExpr(expr.cond);
+      if (!this.dead && expr.cond.etype != "i32") {
+	this.error("condition type mismatch - " + expr.cond.etype + " vs. i32");
+      }
       expr.body = this.processBlock(expr.body);
       this.setExprType(expr, "void");
       break;
