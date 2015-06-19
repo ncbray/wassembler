@@ -30,6 +30,12 @@ define(["base", "wasm/desugar", "v8/backend"], function(base, desugar, wasm_back
     assert.equal(m.main(), 11.5);
   });
 
+  QUnit.test("add i32", function(assert) {
+    var m = create("export func main(a i32, b i32) i32 {return a + b;}", assert);
+    assert.equal(m.main(13, 2), 15);
+    assert.equal(m.main(13, -2), 11);
+  });
+
   QUnit.test("mul i32", function(assert) {
     var m = create("export func main(a i32, b i32) i32 {return a * b;}", assert);
     assert.equal(m.main(13, 2), 26);
@@ -90,6 +96,13 @@ define(["base", "wasm/desugar", "v8/backend"], function(base, desugar, wasm_back
     assert.equal(m.main(2, 13), 1);
   });
 
+
+  QUnit.test("add f32", function(assert) {
+    var m = create("export func main(a f32, b f32) f32 {return a + b;}", assert);
+    assert.equal(m.main(13, 2.1), Math.fround(15.1));
+    assert.equal(m.main(13, -2.1), Math.fround(10.9));
+  });
+
   QUnit.test("divide f32", function(assert) {
     var m = create("export func main(a f32, b f32) f32 {return a / b;}", assert);
     assert.equal(m.main(13, 2.1), Math.fround(13/2.1));
@@ -138,10 +151,58 @@ define(["base", "wasm/desugar", "v8/backend"], function(base, desugar, wasm_back
     assert.equal(m.main(7.1, 7.3), 1);
   });
 
+  QUnit.test("add f64", function(assert) {
+    var m = create("export func main(a f64, b f64) f64 {return a + b;}", assert);
+    assert.equal(m.main(13, 2.1), 15.1);
+    assert.equal(m.main(13, -2.1),10.9);
+  });
+
   QUnit.test("divide f64", function(assert) {
     var m = create("export func main(a f64, b f64) f64 {return a / b;}", assert);
     assert.equal(m.main(13, 2.1), 13/2.1);
     assert.equal(m.main(13, -2.1), 13/-2.1);
+  });
+
+  QUnit.test("lt f64", function(assert) {
+    var m = create("export func main(a f64, b f64) i32 {return a < b;}", assert);
+    assert.equal(m.main(7.3, 7.1), 0);
+    assert.equal(m.main(7.2, 7.2), 0);
+    assert.equal(m.main(7, 7.3), 1);
+  });
+
+  QUnit.test("le f64", function(assert) {
+    var m = create("export func main(a f64, b f64) i32 {return a <= b;}", assert);
+    assert.equal(m.main(7.3, 7.1), 0);
+    assert.equal(m.main(7.2, 7.2), 1);
+    assert.equal(m.main(7.1, 7.3), 1);
+  });
+
+  QUnit.test("gt f64", function(assert) {
+    var m = create("export func main(a f64, b f64) i32 {return a > b;}", assert);
+    assert.equal(m.main(7.3, 7.1), 1);
+    assert.equal(m.main(7.2, 7.2), 0);
+    assert.equal(m.main(7.1, 7.3), 0);
+  });
+
+  QUnit.test("ge f64", function(assert) {
+    var m = create("export func main(a f64, b f64) i32 {return a >= b;}", assert);
+    assert.equal(m.main(7.3, 7.1), 1);
+    assert.equal(m.main(7.2, 7.2), 1);
+    assert.equal(m.main(7.1, 7.3), 0);
+  });
+
+  QUnit.test("eq f64", function(assert) {
+    var m = create("export func main(a f64, b f64) i32 {return a == b;}", assert);
+    assert.equal(m.main(7.3, 7.1), 0);
+    assert.equal(m.main(7.2, 7.2), 1);
+    assert.equal(m.main(7.1, 7.3), 0);
+  });
+
+  QUnit.test("ne f64", function(assert) {
+    var m = create("export func main(a f64, b f64) i32 {return a != b;}", assert);
+    assert.equal(m.main(7.3, 7.1), 1);
+    assert.equal(m.main(7.2, 7.2), 0);
+    assert.equal(m.main(7.1, 7.3), 1);
   });
 
 
