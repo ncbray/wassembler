@@ -59,3 +59,11 @@ export func main() i32 {
   hook();
   return (11 - 7) * bar(1) * loadI32(temp);
 }
+
+func i8_sort_of_works(a i8, b i8) i8 {
+     return a + b;
+}
+
+func i16_sort_of_works(a i16, b i16) i16 {
+     return a + b;
+}

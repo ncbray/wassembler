@@ -74,7 +74,7 @@ define(
     }
 
     var doDesugar = function() {
-      module = desugar.process(module, {simple_loops: true, canonicalize: true});
+      module = desugar.process(module, {simple_loops: true, canonicalize: true, simplify_types: true});
     }
 
     if (early_desugar) {

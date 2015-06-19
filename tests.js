@@ -11,7 +11,7 @@ define(["base", "wasm/desugar", "v8/backend"], function(base, desugar, wasm_back
     assert.notEqual(module, null, "backend");
 
     // Smoke test the V8 backend.
-    ast = desugar.process(ast, {simple_loops: true, canonicalize: true});
+    ast = desugar.process(ast, {simple_loops: true, canonicalize: true, simplify_types: true});
     wasm_backend_v8.generate(ast);
 
     return module({});
@@ -20,20 +20,30 @@ define(["base", "wasm/desugar", "v8/backend"], function(base, desugar, wasm_back
 
   QUnit.module("numeric types");
 
+  QUnit.test("add i8", function(assert) {
+    var m = create("export func main(a i8, b i8) i8 {return a + b;}", assert);
+    assert.equal(m.main(13, 2), 15);
+    assert.equal(m.main(13, -2), 11);
+    assert.equal(m.main(0x7f, 0x7f), -2);
+  });
+
+  QUnit.test("add i16", function(assert) {
+    var m = create("export func main(a i16, b i16) i16 {return a + b;}", assert);
+    assert.equal(m.main(13, 2), 15);
+    assert.equal(m.main(13, -2), 11);
+    assert.equal(m.main(0x7fff, 0x7fff), -2);
+  });
+
   QUnit.test("simple i32", function(assert) {
     var m = create("export func main() i32 {return 11;}", assert);
     assert.equal(m.main(), 11);
-  });
-
-  QUnit.test("simple f32", function(assert) {
-    var m = create("export func main() f32 {return 11.5f;}", assert);
-    assert.equal(m.main(), 11.5);
   });
 
   QUnit.test("add i32", function(assert) {
     var m = create("export func main(a i32, b i32) i32 {return a + b;}", assert);
     assert.equal(m.main(13, 2), 15);
     assert.equal(m.main(13, -2), 11);
+    assert.equal(m.main(0x7fffffff, 0x7fffffff), -2);
   });
 
   QUnit.test("mul i32", function(assert) {
@@ -96,6 +106,11 @@ define(["base", "wasm/desugar", "v8/backend"], function(base, desugar, wasm_back
     assert.equal(m.main(2, 13), 1);
   });
 
+
+  QUnit.test("simple f32", function(assert) {
+    var m = create("export func main() f32 {return 11.5f;}", assert);
+    assert.equal(m.main(), 11.5);
+  });
 
   QUnit.test("add f32", function(assert) {
     var m = create("export func main(a f32, b f32) f32 {return a + b;}", assert);

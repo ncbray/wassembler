@@ -225,6 +225,8 @@ define(["wasm/ast", "wasm/typeinfo"], function(wast, typeinfo) {
   SemanticPass.prototype.processType = function(type) {
     var t = type.text;
     switch (t) {
+    case "i8":
+    case "i16":
     case "i32":
     case "f32":
     case "f64":

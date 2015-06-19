@@ -20,8 +20,81 @@ define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
     return this.module.externs[index].name.text;
   };
 
+  JSTranslator.prototype.implicitType = function(expr) {
+    switch (expr.type) {
+    case "GetName":
+      return "?";
+    case "ConstNum":
+      return "f64";
+    case "BinaryOp":
+      switch (expr.op) {
+      case "+":
+      case "-":
+      case "*":
+      case "/":
+      case "%":
+	return "f64";
+      case "<":
+      case "<=":
+      case ">":
+      case ">=":
+      case "==":
+      case "!=":
+	return "bool";
+      case ">>":
+      case "<<":
+	return "i32";
+      default:
+	console.log(expr);
+	throw Error(expr.op);
+      }
+    case "PrefixOp":
+      switch (expr.op) {
+      case "!":
+	return "bool";
+      default:
+	console.log(expr);
+	throw Error(expr.op);
+      }
+    default:
+      console.log(expr);
+      throw Error(expr.type);
+    }
+  }
+
   JSTranslator.prototype.coerce = function(expr, type) {
+    if (this.implicitType(expr) == type) {
+      return expr;
+    }
     switch (type) {
+    case "i8":
+      return jast.BinaryOp({
+	left: jast.BinaryOp({
+	  left: expr,
+	  op: "<<",
+	  right: jast.ConstNum({
+	    value: 24
+	  }),
+	}),
+	op: ">>",
+	right: jast.ConstNum({
+	  value: 24
+	}),
+      });
+    case "i16":
+      return jast.BinaryOp({
+	left: jast.BinaryOp({
+	  left: expr,
+	  op: "<<",
+	  right: jast.ConstNum({
+	    value: 16
+	  }),
+	}),
+	op: ">>",
+	right: jast.ConstNum({
+	  value: 16
+	}),
+      });
     case "i32":
       return jast.BinaryOp({
 	left: expr,
@@ -125,6 +198,9 @@ define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
       var needs_coerce = true;
 
       switch (expr.etype) {
+      case "i8":
+      case "i16":
+	break;
       case "i32":
 	switch (expr.op) {
 	case "*":

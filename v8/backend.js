@@ -37,6 +37,10 @@ define(["compilerutil", "wasm/ast"], function(compilerutil, wast) {
     i32mod: {bytecode: 0x25},
     u32mod: {bytecode: 0x26},
 
+    i32shl: {bytecode: 0x2a},
+    i32shr: {bytecode: 0x2b},
+    i32sar: {bytecode: 0x2c},
+
     i32eq: {bytecode: 0x2d},
     i32lt: {bytecode: 0x2e},
     i32le: {bytecode: 0x2f},
@@ -72,6 +76,10 @@ define(["compilerutil", "wasm/ast"], function(compilerutil, wast) {
       "*": ops.i32mul,
       "/": ops.i32div,
       "%": ops.i32div,
+      "<<": ops.i32shl,
+      ">>>": ops.i32shr,
+      ">>": ops.i32sar,
+
       "==": ops.i32eq,
       "<": ops.i32lt,
       "<=": ops.i32le,

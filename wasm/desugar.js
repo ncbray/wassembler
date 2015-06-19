@@ -77,6 +77,7 @@ define(["wasm/ast"], function(wast) {
 
   BottomUp.prototype.processFunc = function(func) {
     func.body = this.processBlock(func.body);
+    this.visitor.processFunc(func);
     return func;
   };
 
@@ -96,6 +97,11 @@ define(["wasm/ast"], function(wast) {
     "==": "!=",
   };
 
+  var simplified_type = {
+    "i8": "i32",
+    "i16": "i32",
+  };
+
   var Desugar = function(config) {
     this.config = config;
   };
@@ -108,7 +114,7 @@ define(["wasm/ast"], function(wast) {
     expr.etype = "i32";
     expr = this.processExpr(expr);
     return expr
-  }
+  };
 
   Desugar.prototype.processExpr = function(node) {
     switch (node.type) {
@@ -144,8 +150,52 @@ define(["wasm/ast"], function(wast) {
 	}
       }
     }
+    if (this.config.simplify_types) {
+      switch(node.etype) {
+      case "i8":
+	node.etype = "i32";
+	node = wast.BinaryOp({
+	  left: wast.BinaryOp({
+	    left: node,
+	    op: "<<",
+	    right: wast.ConstI32({
+	      value: 24
+	    }),
+	  }),
+	  op: ">>",
+	  right: wast.ConstI32({
+	    value: 24
+	  }),
+	});
+	node.etype = "i32";
+	node.left.etype = "i32";
+	node.left.right.etype = "i32";
+	node.right.etype = "i32";
+	break;
+      case "i16":
+	node.etype = "i32";
+	node = wast.BinaryOp({
+	  left: wast.BinaryOp({
+	    left: node,
+	    op: "<<",
+	    right: wast.ConstI32({
+	      value: 16
+	    }),
+	  }),
+	  op: ">>",
+	  right: wast.ConstI32({
+	    value: 16
+	  }),
+	});
+	node.etype = "i32";
+	node.left.etype = "i32";
+	node.left.right.etype = "i32";
+	node.right.etype = "i32";
+	break;
+      }
+    }
     return node;
-  }
+  };
 
   Desugar.prototype.processStmt = function(node, out) {
     switch (node.type) {
@@ -163,7 +213,25 @@ define(["wasm/ast"], function(wast) {
       }
     }
     out.push(node);
-  }
+  };
+
+  Desugar.prototype.processFunc = function(node) {
+    if (this.config.simplify_types) {
+      var remap = function(t) {
+	if (t in simplified_type) {
+	  return simplified_type[t];
+	}
+	return t;
+      }
+      for (var i = 0; i < node.params.length; i++) {
+	node.params[i].ptype = remap(node.params[i].ptype);
+      }
+      for (var i = 0; i < node.locals.length; i++) {
+	node.locals[i].ltype = remap(node.locals[i].ltype);
+      }
+      node.returnType = remap(node.returnType);
+    }
+  };
 
   var process = function(module, config) {
     var desugar = new BottomUp(new Desugar(config));
