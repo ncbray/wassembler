@@ -90,6 +90,11 @@ define(["wasm/ast", "wasm/typeinfo"], function(wast, typeinfo) {
       // TODO type check
       this.setExprType(expr, expr.mtype);
       break;
+    case "Coerce":
+      expr.expr = this.processExpr(expr.expr);
+      // TODO type check
+      this.setExprType(expr, expr.mtype);
+      break;
     case "BinaryOp":
       expr.left = this.processExpr(expr.left);
       expr.right = this.processExpr(expr.right);
@@ -178,7 +183,7 @@ define(["wasm/ast", "wasm/typeinfo"], function(wast, typeinfo) {
 	  break;
 	default:
 	  console.log(expr);
-	  throw expr;
+	  throw Error(expr.type);
 	}
       }
       break;
@@ -215,7 +220,7 @@ define(["wasm/ast", "wasm/typeinfo"], function(wast, typeinfo) {
       break;
     default:
       console.log(expr);
-      throw expr;
+      throw Error(expr.type);
     }
 
     this.dead = this.dead || old_dead;

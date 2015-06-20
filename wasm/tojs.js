@@ -190,6 +190,8 @@ define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
 	  translated = this.coerce(translated, expr.etype);
       }
       return translated;
+    case "Coerce":
+      return this.coerce(this.processExpr(expr.expr), expr.mtype);
     case "BinaryOp":
       // The default
       var translated = jast.BinaryOp({

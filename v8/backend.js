@@ -78,6 +78,16 @@ define(["compilerutil", "wasm/ast"], function(compilerutil, wast) {
     f32lt: {bytecode: 0x56},
     f32le: {bytecode: 0x57},
 
+    i32fromf32: {bytecode: 0x60},
+    i32fromf64: {bytecode: 0x61},
+    u32fromf32: {bytecode: 0x62},
+    u32fromf64: {bytecode: 0x63},
+    f64fromi32: {bytecode: 0x64},
+    f64fromu32: {bytecode: 0x65},
+    f64fromf32: {bytecode: 0x66},
+    f32fromi32: {bytecode: 0x67},
+    f32fromu32: {bytecode: 0x68},
+    f32fromf64: {bytecode: 0x69},
   };
 
   var binOpMap = {
@@ -164,6 +174,75 @@ define(["compilerutil", "wasm/ast"], function(compilerutil, wast) {
       this.generateExpr(expr.address);
       this.generateExpr(expr.value);
       break;
+    case "Coerce":
+      var src = expr.expr.etype;
+      var dst = expr.mtype;
+      switch (dst) {
+      case "i8":
+	switch (src) {
+	case "i32":
+	  this.generateExpr(expr.expr); // HACK
+	  break;
+	default:
+	  throw Error(dst + "<=" + src);
+	}
+	break;
+      case "i16":
+	switch (src) {
+	case "i32":
+	  this.generateExpr(expr.expr); // HACK
+	  break;
+	default:
+	  throw Error(dst + "<=" + src);
+	}
+	break;
+      case "i32":
+	switch (src) {
+	case "f32":
+	  this.writer.u8(ops.i32fromf32.bytecode);
+	  this.generateExpr(expr.expr);
+	  break;
+	case "f64":
+	  this.writer.u8(ops.i32fromf64.bytecode);
+	  this.generateExpr(expr.expr);
+	  break;
+	default:
+	  throw Error(dst + "<=" + src);
+	}
+	break;
+      case "f32":
+	switch (src) {
+	case "i32":
+	  this.writer.u8(ops.f32fromi32.bytecode);
+	  this.generateExpr(expr.expr);
+	  break;
+	case "f64":
+	  this.writer.u8(ops.f32fromf64.bytecode);
+	  this.generateExpr(expr.expr);
+	  break;
+	default:
+	  throw Error(dst + "<=" + src);
+	}
+	break;
+      case "f64":
+	switch (src) {
+	case "i32":
+	  this.writer.u8(ops.f64fromi32.bytecode);
+	  this.generateExpr(expr.expr);
+	  break;
+	case "f32":
+	  this.writer.u8(ops.f64fromf32.bytecode);
+	  this.generateExpr(expr.expr);
+	  break;
+	default:
+	  throw Error(dst + "<=" + src);
+	}
+	break;
+      default:
+	throw Error(dst + "<=" + src);
+      }
+      break;
+
     case "PrefixOp":
       switch (expr.op) {
       case "!":

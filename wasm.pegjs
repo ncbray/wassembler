@@ -53,10 +53,13 @@ ident "identifier" = !keyword text:$([a-zA-Z_][a-zA-Z0-9_]*) {
   });
 }
 
-mtype = "I32" {return "i32";} / "F32" {return "f32";} / "F64" {return "f64";} / "I8" {return "i8";} / "I16" {return "i16";}
+mtypeU = "I32" {return "i32";} / "F32" {return "f32";} / "F64" {return "f64";} / "I8" {return "i8";} / "I16" {return "i16";}
+
+mtypeL = "i32" {return "i32";} / "f32" {return "f32";} / "f64" {return "f64";} / "i8" {return "i8";} / "i16" {return "i16";}
+
 
 loadOp
-  = "load" t:mtype S "(" S addr:expr S ")" {
+  = "load" t:mtypeU S "(" S addr:expr S ")" {
     return wast.Load({
       mtype: t,
       address: addr
@@ -64,13 +67,22 @@ loadOp
   }
 
 storeOp
-  = "store" t:mtype S "(" S addr:expr S "," S value:expr S ")" {
+  = "store" t:mtypeU S "(" S addr:expr S "," S value:expr S ")" {
     return wast.Store({
       mtype: t,
       address: addr,
       value: value
     });
   }
+
+coerceOp
+  = t:mtypeL S "(" S expr:expr S ")" {
+    return wast.Coerce({
+      mtype: t,
+      expr: expr,
+    });
+  }
+
 
 number "number" = digits:$([0-9]+) {
        return +digits;
@@ -86,6 +98,7 @@ atom
   / "(" S e:expr S ")" {return e;}
   / loadOp
   / storeOp
+  / coerceOp
   / name:ident {return wast.GetName({name: name})}
 
 callOp = first:atom rest:(S "(" S args:exprList S ")" {return args;})* {return buildCallExpr(first, rest);}

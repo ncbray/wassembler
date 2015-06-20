@@ -79,6 +79,13 @@ define(['astutil'], function(astutil) {
       ],
     },
     {
+      name: "Coerce",
+      fields: [
+	{name: "mtype"},
+	{name: "expr"},
+      ],
+    },
+    {
       name: "PrefixOp",
       fields: [
 	{name: "op"},

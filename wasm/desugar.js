@@ -25,6 +25,9 @@ define(["wasm/ast"], function(wast) {
     case "Load":
       node.address = this.processExpr(node.address);
       break;
+    case "Coerce":
+      node.expr = this.processExpr(node.expr);
+      break;
     case "CallDirect":
     case "CallExternal":
       for (var i = 0; i < node.args.length; i++) {

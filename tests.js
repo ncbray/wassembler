@@ -35,6 +35,11 @@ define(["base", "wasm/desugar", "v8/backend"], function(base, desugar, wasm_back
 
     QUnit.module(mode_name + " basic i8");
 
+    QUnit.test("simple i8", function(assert) {
+      var m = create("export func main() i8 {return i8(11);}", assert);
+      assert.equal(m.main(), 11);
+    });
+
     QUnit.test("add i8", function(assert) {
       var m = create("export func main(a i8, b i8) i8 {return a + b;}", assert);
       assert.equal(m.main(13, 2), 15);
@@ -43,6 +48,11 @@ define(["base", "wasm/desugar", "v8/backend"], function(base, desugar, wasm_back
     });
 
     QUnit.module(mode_name + " basic i16");
+
+    QUnit.test("simple i16", function(assert) {
+      var m = create("export func main() i16 {return i16(11);}", assert);
+      assert.equal(m.main(), 11);
+    });
 
     QUnit.test("add i16", function(assert) {
       var m = create("export func main(a i16, b i16) i16 {return a + b;}", assert);
@@ -259,6 +269,42 @@ define(["base", "wasm/desugar", "v8/backend"], function(base, desugar, wasm_back
       var m = create("export func main(n i32) i32 {var foo i32 = n; foo = foo * 2; return foo * 3;}", assert);
       assert.equal(m.main(5), 30);
     });
+
+
+    QUnit.module(mode_name + " coercion");
+
+    QUnit.test("i32 to f32", function(assert) {
+      var m = create("export func amt(a i32, b i32) f32 {return f32(a) / f32(b);}", assert);
+      assert.equal(m.amt(3, 15), Math.fround(0.2));
+    });
+
+    QUnit.test("i32 to f64", function(assert) {
+      var m = create("export func amt(a i32, b i32) f64 {return f64(a) / f64(b);}", assert);
+      assert.equal(m.amt(3, 15), 0.2);
+    });
+
+    QUnit.test("f32 to i32", function(assert) {
+      var m = create("export func trunc(n f32) i32 {return i32(n);}", assert);
+      assert.equal(m.trunc(7.1), 7);
+      assert.equal(m.trunc(6.9), 6);
+    });
+
+    QUnit.test("f32 to f64", function(assert) {
+      var m = create("export func widen(n f32) f64 {return f64(n);}", assert);
+      assert.equal(m.widen(0.1), Math.fround(0.1));
+    });
+
+    QUnit.test("f64 to i32", function(assert) {
+      var m = create("export func trunc(n f64) i32 {return i32(n);}", assert);
+      assert.equal(m.trunc(7.1), 7);
+      assert.equal(m.trunc(6.9), 6);
+    });
+
+    QUnit.test("f64 to f32", function(assert) {
+      var m = create("export func narrow(n f64) f32 {return f32(n);}", assert);
+      assert.equal(m.narrow(0.1), Math.fround(0.1));
+    });
+
 
     QUnit.module(mode_name + " memory");
 
