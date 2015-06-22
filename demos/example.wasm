@@ -1,6 +1,6 @@
-import printI32(i32) void;
-import printF32(f32) void;
-import printF64(f64) void;
+import func printI32(i32) void;
+import func printF32(f32) void;
+import func printF64(f64) void;
 
 // Factorial function
 func fact(n i32) i32 {
@@ -55,7 +55,7 @@ func bar(a i32) i32 {
   return a * 3;
 }
 
-import hook() void;
+import func hook() void;
 
 export func main() i32 {
   hook();

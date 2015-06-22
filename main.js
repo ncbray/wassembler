@@ -42,7 +42,8 @@ define(
     },
   };
 
-  var exampleFile = "example.wasm";
+  var exampleFile = "demos/example.wasm";
+  //var exampleFile = "demos/draw.wasm";
 
   var parser;
 

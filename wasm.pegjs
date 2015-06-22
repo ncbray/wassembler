@@ -187,7 +187,7 @@ funcdecl = e:optionalExport S "func" EOT S name:ident S "(" S params:paramList S
 
 typeList = (first:typeRef rest:(S "," S t:typeRef {return t;})* {return buildList(first, rest);} / {return [];} )
 
-import = "import" EOT S name:ident S "(" S args:typeList S ")" S r:returnType S ";" {
+import = "import" EOT S "func" EOT S name:ident S "(" S args:typeList S ")" S r:returnType S ";" {
   return wast.Extern({
     name: name,
     args: args,
