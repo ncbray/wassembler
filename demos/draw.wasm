@@ -12,17 +12,26 @@ func shade(x f32, y f32) i32 {
   var rsq f32 = xOff * xOff + yOff * yOff;
   var radius f32 = sqrtF32(rsq);
   var r f32 = cosF32(radius * 100.0f);
-  if (r < 0.0f) {
-    r = 0.0f;
-  }
   var g f32 = x;
   var b f32 = y;
   var a f32 = 1.0f;
   return packColor(r, g, b, a);
 }
 
+func f2b(v f32) i32 {
+  var vi i32 = i32(v * 255.0f);
+  if (vi < 0) {
+    vi = 0;
+  }
+  if(vi > 255) {
+    vi = 255;
+  }
+  return vi;
+}
+
+// Square root approximates gamma-correct rendering.
 func packColor(r f32, g f32, b f32, a f32) i32 {
-  return (i32(a * 255.0f) & 255) << 24 | (i32(b * 255.0f) & 255) << 16 | (i32(g * 255.0f) & 255) << 8 | (i32(r * 255.0f) & 255);
+  return f2b(a) << 24 | f2b(sqrtF32(b)) << 16 | f2b(sqrtF32(g)) << 8 | f2b(sqrtF32(r));
 }
 
 export func main() void {
