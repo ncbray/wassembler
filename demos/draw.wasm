@@ -1,3 +1,7 @@
+import func sqrtF32(f32) f32;
+import func sinF32(f32) f32;
+import func cosF32(f32) f32;
+
 import func flipBuffer(i32) void;
 
 memory frame_buffer 262144 align 4;
@@ -6,8 +10,9 @@ func shade(x f32, y f32) i32 {
   var xOff f32 = x - 0.5f;
   var yOff f32 = y - 0.5f;
   var rsq f32 = xOff * xOff + yOff * yOff;
-  var r f32 = 1.0f;
-  if (rsq > 0.2f) {
+  var radius f32 = sqrtF32(rsq);
+  var r f32 = cosF32(radius * 100.0f);
+  if (r < 0.0f) {
     r = 0.0f;
   }
   var g f32 = x;

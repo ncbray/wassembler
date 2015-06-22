@@ -48,6 +48,24 @@ define(
     var dataI8 = new Int8Array(imageData.data.buffer);
 
     return {
+      sqrtF32: function(value) {
+	return Math.fround(Math.sqrt(value));
+      },
+      sqrtF64: function(value) {
+	return Math.sqrt(value);
+      },
+      sinF32: function(value) {
+	return Math.fround(Math.sin(value));
+      },
+      sinF64: function(value) {
+	return Math.sin(value);
+      },
+      cosF32: function(value) {
+	return Math.fround(Math.cos(value));
+      },
+      cosF64: function(value) {
+	return Math.cos(value);
+      },
       flipBuffer: function(ptr) {
 	instance._copyOut(ptr, c.width * c.height * 4, dataI8);
 	ctx.putImageData(imageData, 0, 0);
