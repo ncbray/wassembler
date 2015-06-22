@@ -1,5 +1,24 @@
-import func draw(i32, i32, i32) void;
-import func flipBuffer() void;
+import func flipBuffer(i32) void;
+
+memory frame_buffer 262144 align 4;
+
+func shade(x f32, y f32) i32 {
+  var xOff f32 = x - 0.5f;
+  var yOff f32 = y - 0.5f;
+  var rsq f32 = xOff * xOff + yOff * yOff;
+  var r f32 = 1.0f;
+  if (rsq > 0.2f) {
+    r = 0.0f;
+  }
+  var g f32 = x;
+  var b f32 = y;
+  var a f32 = 1.0f;
+  return packColor(r, g, b, a);
+}
+
+func packColor(r f32, g f32, b f32, a f32) i32 {
+  return (i32(a * 255.0f) & 255) << 24 | (i32(b * 255.0f) & 255) << 16 | (i32(g * 255.0f) & 255) << 8 | (i32(r * 255.0f) & 255);
+}
 
 export func main() void {
   var y i32 = 0;
@@ -9,15 +28,11 @@ export func main() void {
     var x i32 = 0;
     while (x < 256) {
       var xAmt f32 = f32(x) / 256.0f;
-      var r i32 = 255;
-      var g i32 = i32(xAmt * 255.0f);
-      var b i32 = i32(yAmt * 255.0f);
-      var a i32 = 255;
-      var color i32 = (a & 255) << 24 | (b & 255) << 16 | (g & 255) << 8 | (r & 255);
-      draw(x, y, color);
+      var color i32 = shade(xAmt, yAmt);
+      storeI32(frame_buffer + (y * 256 + x) * 4, color);
       x = x + 1;
     }
     y = y + 1;
   }
-  flipBuffer();
+  flipBuffer(frame_buffer);
 }

@@ -385,7 +385,7 @@ define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
 	  name: "ArrayBuffer",
 	}),
 	args: [
-	  jast.ConstNum({value: 4096}),
+	  jast.ConstNum({value: 1048576}),
 	],
       }),
     }));
@@ -464,6 +464,38 @@ define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
 	}));
       }
     }
+
+    exports.push(jast.KeyValue({
+      key: "_copyOut",
+      value: jast.FunctionExpr({
+	params: ["src", "size", "dst"],
+	body: [
+	  jast.Call({
+	    expr: jast.GetAttr({
+	      expr: jast.GetName({name: "dst"}),
+	      attr: "set"
+	    }),
+	    args: [
+	      jast.Call({
+		expr: jast.GetAttr({
+		  expr: jast.GetName({name: "I8"}),
+		  attr: "subarray"
+		}),
+		args: [
+		  jast.GetName({name: "src"}),
+		  jast.BinaryOp({
+		    left: jast.GetName({name: "src"}),
+		    op: "+",
+		    right: jast.GetName({name: "size"}),
+		  })
+		],
+	      }),
+	    ],
+	  }),
+	],
+      }),
+    }));
+
 
     body.push(jast.Return({
       expr: jast.CreateObject({

@@ -27,19 +27,20 @@ define(
     document.getElementById(pane).value += text;
   };
 
+  var instance;
+
   var makeExterns = function() {
     var c = document.getElementById("canvas");
     var w = c.width;
     var h = c.height;
     var ctx = c.getContext("2d");
     var imageData = ctx.getImageData(0, 0, w, h);
-    var data = new Int32Array(imageData.data.buffer);
+    var dataI32 = new Int32Array(imageData.data.buffer);
+    var dataI8 = new Int8Array(imageData.data.buffer);
 
     return {
-      draw: function(x, y, color) {
-	data[y * w + x] = color;
-      },
-      flipBuffer: function() {
+      flipBuffer: function(ptr) {
+	instance._copyOut(ptr, c.width * c.height * 4, dataI8);
 	ctx.putImageData(imageData, 0, 0);
       },
       hook: function() {
