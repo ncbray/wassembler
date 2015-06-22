@@ -11,17 +11,18 @@
 <div>
 <div>
 <span><button id="eval">Eval</button></span>
+<span><label><input id="show" type="checkbox" />Show Intermediate</label></span>
 <span><label><input id="desugar" type="checkbox" />Desugar JS</label></span>
 <span><a href="https://github.com/ncbray/wassembler">Repo</a></span>
 <span><a href="tests.html">Tests</a></span>
 </div>
 <div>
 <textarea id="code" cols="80" rows="30"></textarea>
-<textarea id="ast" cols="80" rows="30" readonly="true"></textarea>
-</div>
-<div>
-<textarea id="generated" cols="80" rows="30" readonly="true"></textarea>
 <textarea id="terminal" cols="80" rows="30" readonly="true"></textarea>
+</div>
+<div id="intermediate">
+<textarea id="ast" cols="80" rows="30" readonly="true"></textarea>
+<textarea id="generated" cols="80" rows="30" readonly="true"></textarea>
 </div>
 <div>
 <canvas id="canvas" width="256" height="256" style="background-color: #000"/>

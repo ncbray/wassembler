@@ -10,9 +10,18 @@ define(
     };
 
     document.getElementById("eval").onclick = reeval;
+    document.getElementById("show").onclick = updateVisibility;
     document.getElementById("desugar").onclick = reeval;
-
+    updateVisibility();
     reeval();
+  };
+
+  var updateVisibility = function() {
+    var display = "none";
+    if (document.getElementById("show").checked) {
+      display = "inline-block";
+    }
+    document.getElementById("intermediate").style.display = display;
   };
 
   var getText = function(pane) {
