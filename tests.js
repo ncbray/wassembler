@@ -388,6 +388,12 @@ define(["base", "wasm/desugar", "v8/backend"], function(base, desugar, wasm_back
       assert.equal(m.fact(10), 10*9*8*7*6*5*4*3*2);
     });
 
+    QUnit.test("bitpack", function(assert) {
+      var m = create("export func main(r i32, g i32, b i32, a i32) i32 {return (a & 255) << 24 | (b & 255) << 16 | (g & 255) << 8 | (r & 255);}", assert);
+      assert.equal(m.main(0xff, 0xff, 0xff, 0xff)>>>0, 0xffffffff);
+      assert.equal(m.main(0x112, 0x734, 0x656, 0x378)>>>0, 0x78563412);
+    });
+
     QUnit.test("imports", function(assert) {
       var m = create("import func addI8(i8, i8) i8;  export func main() i8 {return addI8(i8(120), i8(100));}", assert);
       assert.equal(m.main(), -36);

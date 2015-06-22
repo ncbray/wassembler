@@ -44,6 +44,9 @@ define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
       case "==":
       case "!=":
 	return "bool";
+      case "&":
+      case "^":
+      case "|":
       case ">>":
       case "<<":
 	return "i32";

@@ -113,7 +113,13 @@ compareOp = first:shiftOp rest:(S $("<="/"<"/">="/">") S shiftOp)* {return build
 
 equalOp = first:compareOp rest:(S $("=="/"!=") S compareOp)* {return buildBinaryExpr(first, rest);}
 
-expr = equalOp
+bitwiseAndOp = first:equalOp rest:(S $("&") S equalOp)* {return buildBinaryExpr(first, rest);}
+
+bitwiseXorOp = first:bitwiseAndOp rest:(S $("^") S bitwiseAndOp)* {return buildBinaryExpr(first, rest);}
+
+bitwiseOrOp = first:bitwiseXorOp rest:(S $("|") S bitwiseXorOp)* {return buildBinaryExpr(first, rest);}
+
+expr = bitwiseOrOp
 
 exprList = (first:expr rest:(S "," S e:expr {return e;})* {return buildList(first, rest);} / {return [];} )
 

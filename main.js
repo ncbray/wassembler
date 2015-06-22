@@ -33,15 +33,11 @@ define(
     var h = c.height;
     var ctx = c.getContext("2d");
     var imageData = ctx.getImageData(0, 0, w, h);
-    var data = imageData.data;
+    var data = new Int32Array(imageData.data.buffer);
 
     return {
-      draw: function(x, y, r, g, b) {
-	var offset = (y * w + x) * 4;
-	data[offset + 0] = r>>>0 & 0xff;
-	data[offset + 1] = g>>>0 & 0xff;
-	data[offset + 2] = b>>>0 & 0xff;
-	data[offset + 3] = 255;
+      draw: function(x, y, color) {
+	data[y * w + x] = color;
       },
       flipBuffer: function() {
 	ctx.putImageData(imageData, 0, 0);
