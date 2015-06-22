@@ -80,11 +80,14 @@ define(["wasm/ast"], function(wast) {
 
   BottomUp.prototype.processFunc = function(func) {
     func.body = this.processBlock(func.body);
-    this.visitor.processFunc(func);
+    func = this.visitor.processFunc(func);
     return func;
   };
 
   BottomUp.prototype.processModule = function(module) {
+    for (var i = 0; i < module.externs.length; i++) {
+      module.externs[i] = this.visitor.processExtern(module.externs[i]);
+    }
     for (var i = 0; i < module.funcs.length; i++) {
       module.funcs[i] = this.processFunc(module.funcs[i]);
     }
@@ -218,22 +221,34 @@ define(["wasm/ast"], function(wast) {
     out.push(node);
   };
 
+  Desugar.prototype.simplifyType = function(t) {
+    if (t in simplified_type) {
+      return simplified_type[t];
+    }
+    return t;
+  };
+
   Desugar.prototype.processFunc = function(node) {
     if (this.config.simplify_types) {
-      var remap = function(t) {
-	if (t in simplified_type) {
-	  return simplified_type[t];
-	}
-	return t;
-      }
       for (var i = 0; i < node.params.length; i++) {
-	node.params[i].ptype = remap(node.params[i].ptype);
+	node.params[i].ptype = this.simplifyType(node.params[i].ptype);
       }
       for (var i = 0; i < node.locals.length; i++) {
-	node.locals[i].ltype = remap(node.locals[i].ltype);
+	node.locals[i].ltype = this.simplifyType(node.locals[i].ltype);
       }
-      node.returnType = remap(node.returnType);
+      node.returnType = this.simplifyType(node.returnType);
     }
+    return node;
+  };
+
+  Desugar.prototype.processExtern = function(node) {
+    if (this.config.simplify_types) {
+      for (var i = 0; i < node.args.length; i++) {
+	node.args[i] = this.simplifyType(node.args[i]);
+      }
+      node.returnType = this.simplifyType(node.returnType);
+    }
+    return node;
   };
 
   var process = function(module, config) {

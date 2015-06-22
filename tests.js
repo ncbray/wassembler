@@ -1,6 +1,12 @@
 define(["base", "wasm/desugar", "v8/backend"], function(base, desugar, wasm_backend_v8) {
   var parser = null;
 
+  var externs = {
+    addI8: function(a, b) {
+      return (a + b) << 24 >> 24;
+    },
+  };
+
   var createNormal = function(text, assert) {
     var status = new base.Status(function(message) { assert.ok(false, message); });
 
@@ -10,7 +16,7 @@ define(["base", "wasm/desugar", "v8/backend"], function(base, desugar, wasm_back
     var module = base.astToCompiledJS(ast, status);
     assert.notEqual(module, null, "backend");
 
-    return module({});
+    return module(externs);
   };
 
   var createDesugar = function(text, assert) {
@@ -27,7 +33,7 @@ define(["base", "wasm/desugar", "v8/backend"], function(base, desugar, wasm_back
     // Smoke test the V8 backend.
     wasm_backend_v8.generate(ast);
 
-    return module({});
+    return module(externs);
   };
 
 
@@ -366,6 +372,10 @@ define(["base", "wasm/desugar", "v8/backend"], function(base, desugar, wasm_back
       assert.equal(m.fact(10), 10*9*8*7*6*5*4*3*2);
     });
 
+    QUnit.test("imports", function(assert) {
+      var m = create("import func addI8(i8, i8) i8;  export func main() i8 {return addI8(i8(120), i8(100));}", assert);
+      assert.equal(m.main(), -36);
+    });
 
     QUnit.test("exports", function(assert) {
       var m = create("func foo(n f32) f32 {return n * 3.5f;} export func bar(n f32) f32 {return foo(n);}", assert);
