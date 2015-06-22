@@ -279,6 +279,13 @@ define(["base", "wasm/desugar", "v8/backend"], function(base, desugar, wasm_back
 
     QUnit.module(mode_name + " coercion");
 
+    QUnit.test("i32 to i8", function(assert) {
+      var m = create("export func main(n i32) i8 {return i8(n);}", assert);
+      assert.equal(m.main(7), 7);
+      assert.equal(m.main(-7), -7);
+      assert.equal(m.main(128), -128);
+    });
+
     QUnit.test("i32 to f32", function(assert) {
       var m = create("export func amt(a i32, b i32) f32 {return f32(a) / f32(b);}", assert);
       assert.equal(m.amt(3, 15), Math.fround(0.2));
@@ -287,6 +294,15 @@ define(["base", "wasm/desugar", "v8/backend"], function(base, desugar, wasm_back
     QUnit.test("i32 to f64", function(assert) {
       var m = create("export func amt(a i32, b i32) f64 {return f64(a) / f64(b);}", assert);
       assert.equal(m.amt(3, 15), 0.2);
+    });
+
+    QUnit.test("f32 to i8", function(assert) {
+      var m = create("export func trunc(n f32) i8 {return i8(n);}", assert);
+      assert.equal(m.trunc(-7.1), -7);
+      assert.equal(m.trunc(7.1), 7);
+      assert.equal(m.trunc(6.9), 6);
+      assert.equal(m.trunc(256.1), 0);
+      assert.equal(m.trunc(255.1), -1);
     });
 
     QUnit.test("f32 to i32", function(assert) {

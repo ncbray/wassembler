@@ -27,23 +27,42 @@ define(
     document.getElementById(pane).value += text;
   };
 
-  var externs = {
-    hook: function() {
-      appendText("terminal", "hook called.\n");
-    },
-    printI32: function(value) {
-      appendText("terminal", "printI32: " + value + "\n");
-    },
-    printF32: function(value) {
-      appendText("terminal", "printF32: " + value + "\n");
-    },
-    printF64: function(value) {
-      appendText("terminal", "printF64: " + value + "\n");
-    },
+  var makeExterns = function() {
+    var c = document.getElementById("canvas");
+    var w = c.width;
+    var h = c.height;
+    var ctx = c.getContext("2d");
+    var imageData = ctx.getImageData(0, 0, w, h);
+    var data = imageData.data;
+
+    return {
+      draw: function(x, y, r, g, b) {
+	var offset = (y * w + x) * 4;
+	data[offset + 0] = r>>>0 & 0xff;
+	data[offset + 1] = g>>>0 & 0xff;
+	data[offset + 2] = b>>>0 & 0xff;
+	data[offset + 3] = 255;
+      },
+      flipBuffer: function() {
+	ctx.putImageData(imageData, 0, 0);
+      },
+      hook: function() {
+	appendText("terminal", "hook called.\n");
+      },
+      printI32: function(value) {
+	appendText("terminal", "printI32: " + value + "\n");
+      },
+      printF32: function(value) {
+	appendText("terminal", "printF32: " + value + "\n");
+      },
+      printF64: function(value) {
+	appendText("terminal", "printF64: " + value + "\n");
+      },
+    };
   };
 
-  var exampleFile = "demos/example.wasm";
-  //var exampleFile = "demos/draw.wasm";
+  //var exampleFile = "demos/example.wasm";
+  var exampleFile = "demos/draw.wasm";
 
   var parser;
 
@@ -89,7 +108,7 @@ define(
 
     // Bind the module.
     try {
-      instance = compiled(externs);
+      instance = compiled(makeExterns());
     } catch (e) {
       appendText("terminal", "binding failed - " + e.message);
       return;

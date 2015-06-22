@@ -124,6 +124,17 @@ define(["wasm/ast"], function(wast) {
 
   Desugar.prototype.processExpr = function(node) {
     switch (node.type) {
+    case "Coerce":
+      if (this.config.simplify_types) {
+	var simplified = this.simplifyType(node.mtype);
+	if (simplified == node.expr.etype) {
+	  node.expr.etype = node.mtype;
+	  node = node.expr;
+	} else {
+	  node.mtype = simplified;
+	}
+      }
+      break;
     case "PrefixOp":
       switch(node.op) {
       case "!":

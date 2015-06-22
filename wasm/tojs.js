@@ -24,6 +24,7 @@ define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
 
   JSTranslator.prototype.implicitType = function(expr) {
     switch (expr.type) {
+    case "Call":
     case "GetName":
       return "?";
     case "ConstNum":
