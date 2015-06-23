@@ -371,8 +371,33 @@ define(["compilerutil", "wasm/ast"], function(compilerutil, wast) {
     this.generateType(returnType);
   };
 
+  BinaryGenerator.prototype.generateStringRef = function(value) {
+    if (typeof value !== "string") {
+      throw Error(value);
+    }
+    if (!(value in this.strings)) {
+      this.strings[value] = [];
+    }
+    this.strings[value].push(this.writer.allocU32());
+  };
+
+  BinaryGenerator.prototype.generateStringTable = function() {
+    for (var s in this.strings) {
+      var refs = this.strings[s];
+      for (var i = 0; i < refs.length; i++) {
+	this.writer.patchU32(refs[i], this.writer.pos);
+      }
+      var sizePos = this.writer.allocU32();
+      var size = this.writer.utf8(s);
+      this.writer.u8(0); // Null terminate to be paranoid.
+      this.writer.patchU32(sizePos, size);
+    }
+  };
+
   BinaryGenerator.prototype.generateModule = function(module) {
     this.module = module;
+
+    this.strings = {};
 
     this.writer.u8(module.funcs.length);
 
@@ -391,6 +416,9 @@ define(["compilerutil", "wasm/ast"], function(compilerutil, wast) {
 
       // TODO function name.
       this.generateSignature(extern.args, extern.returnType);
+
+      this.generateStringRef(extern.name.text);
+
       this.writer.u32(0); // No offset
       this.writer.u32(0); // No offset
 
@@ -445,12 +473,14 @@ define(["compilerutil", "wasm/ast"], function(compilerutil, wast) {
       this.funcID[i] = uid;
       uid += 1;
 
-      // TODO function name.
       var argTypes = [];
       for(var j in func.params) {
 	argTypes.push(func.params[j].ptype);
       }
       this.generateSignature(argTypes, func.returnType);
+
+      this.generateStringRef(func.name.text);
+
       funcBegin[i] = this.writer.allocU32();
       funcEnd[i] = this.writer.allocU32();
 
@@ -467,6 +497,8 @@ define(["compilerutil", "wasm/ast"], function(compilerutil, wast) {
       this.generateFunc(module.funcs[i]);
       this.writer.patchU32(funcEnd[i], this.writer.pos);
     };
+
+    this.generateStringTable();
   };
 
   var generate = function(module) {
