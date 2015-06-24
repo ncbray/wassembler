@@ -105,7 +105,9 @@ atom
 
 callOp = first:atom rest:(S "(" S args:exprList S ")" {return args;})* {return buildCallExpr(first, rest);}
 
-mulOp = first:callOp rest:(S $("*"/"/"/"%") S callOp)* {return buildBinaryExpr(first, rest);}
+prefixOp = op:("!"/"~"/"+"/"-") S expr:prefixOp {return wast.PrefixOp({op: op, expr: expr});} / callOp
+
+mulOp = first:prefixOp rest:(S $("*"/"/"/"%") S prefixOp)* {return buildBinaryExpr(first, rest);}
 
 addOp = first:mulOp rest:(S $("+"/"-") S mulOp)* {return buildBinaryExpr(first, rest);}
 

@@ -121,11 +121,41 @@ define(["base", "wasm/desugar", "v8/backend"], function(base, desugar, wasm_back
       assert.equal(m.main(2, 13), 0);
     });
 
+    QUnit.test("eq i32", function(assert) {
+      var m = create("export func main(a i32, b i32) i32 {return !(a == b);}", assert);
+      assert.equal(m.main(13, 2), 1);
+      assert.equal(m.main(5, 5), 0);
+      assert.equal(m.main(2, 13), 1);
+    });
+
     QUnit.test("ne i32", function(assert) {
       var m = create("export func main(a i32, b i32) i32 {return a != b;}", assert);
       assert.equal(m.main(13, 2), 1);
       assert.equal(m.main(5, 5), 0);
       assert.equal(m.main(2, 13), 1);
+    });
+
+    QUnit.test("not ne i32", function(assert) {
+      var m = create("export func main(a i32, b i32) i32 {return !(a != b);}", assert);
+      assert.equal(m.main(13, 2), 0);
+      assert.equal(m.main(5, 5), 1);
+      assert.equal(m.main(2, 13), 0);
+    });
+
+    QUnit.test("not i32", function(assert) {
+      var m = create("export func main(n i32) i32 {return !n;}", assert);
+      assert.equal(m.main(0), 1);
+      assert.equal(m.main(1), 0);
+      assert.equal(m.main(2), 0);
+      assert.equal(m.main(-1), 0);
+    });
+
+    QUnit.test("not not i32", function(assert) {
+      var m = create("export func main(n i32) i32 {return !!n;}", assert);
+      assert.equal(m.main(0), 0);
+      assert.equal(m.main(1), 1);
+      assert.equal(m.main(2), 1);
+      assert.equal(m.main(-1), 1);
     });
 
     QUnit.module(mode_name + " basic f32");

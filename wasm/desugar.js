@@ -108,6 +108,27 @@ define(["wasm/ast"], function(wast) {
     "i16": "i32",
   };
 
+  var naturallyBool = function(node) {
+    if (node.etype != "i32") return false;
+    switch (node.type) {
+    case "ConstI32":
+      return node.value === 0 || node.value === 1;
+    case "PrefixOp":
+      return node.op == "!";
+    case "BinaryOp":
+      return node.op in invertedOps; // HACK to idenfity compares.
+    default:
+      return false;
+    }
+  };
+
+  var peelBoolNot = function(node) {
+    if (node.expr.type == "PrefixOp" && node.expr.op == "!" && naturallyBool(node.expr.expr)) {
+      return node.expr.expr;
+    }
+    return node;
+  };
+
   var Desugar = function() {
   };
 
@@ -117,8 +138,7 @@ define(["wasm/ast"], function(wast) {
       expr: expr,
     });
     expr.etype = "i32";
-    expr = this.processExpr(expr);
-    return expr
+    return peelBoolNot(expr);
   };
 
   Desugar.prototype.processExpr = function(node) {
@@ -135,31 +155,16 @@ define(["wasm/ast"], function(wast) {
     case "PrefixOp":
       switch(node.op) {
       case "!":
-	switch (node.expr.type) {
-	case "BinaryOp":
-	  var op = invertedOps[node.expr.op];
-	  if (op !== undefined) {
-	    node.expr.op = op;
-	    return this.processExpr(node.expr);
-	  }
-	  break;
-	}
-	break;
-      }
+	node = peelBoolNot(node);
       break;
+      }
     case "BinaryOp":
       switch (node.op) {
       case ">":
       case ">=":
       case "!=":
 	node.op = invertedOps[node.op]
-	node = wast.PrefixOp({
-	  op: "!",
-	  expr: node,
-	});
-	node.etype = "i32";
-	// Must immedately return to avoid resimplifications.
-	return node;
+	node = this.not(node);
       }
     }
     switch(node.etype) {

@@ -116,6 +116,16 @@ define(["wasm/ast", "wasm/typeinfo"], function(wast, typeinfo) {
       // TODO type check
       this.setExprType(expr, expr.mtype);
       break;
+    case "PrefixOp":
+      expr.expr = this.processExpr(expr.expr);
+      switch(expr.op) {
+      case "!":
+	this.setExprType(expr, "i32");
+	break;
+      default:
+	throw Error(expr.op);
+      }
+      break;
     case "BinaryOp":
       expr.left = this.processExpr(expr.left);
       expr.right = this.processExpr(expr.right);
