@@ -15,11 +15,11 @@ Running `./tools/httpd.py` will serve the current directory at http://localhost:
 
 ### Compiler Pipeline
 
-parse => semantic pass => lower => backend
+parse => semantic pass => desugar => backend
 
 * parse: translate the textual format into an AST.
 * semantic pass: resolve names and check types.
-* lower: convert user-friendly “sugar” into concepts that can be directly represented in the bytecode.  For example converting i8 types into i32 types.
+* desugar: convert user-friendly “sugar” into concepts that can be directly represented in the bytecode.  For example converting i8 types into i32 types.
 * backend: generate JS or bytecode.
 
 ### Design Questions

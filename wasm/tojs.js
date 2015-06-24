@@ -73,34 +73,6 @@ define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
       return expr;
     }
     switch (type) {
-    case "i8":
-      return jast.BinaryOp({
-	left: jast.BinaryOp({
-	  left: expr,
-	  op: "<<",
-	  right: jast.ConstNum({
-	    value: 24
-	  }),
-	}),
-	op: ">>",
-	right: jast.ConstNum({
-	  value: 24
-	}),
-      });
-    case "i16":
-      return jast.BinaryOp({
-	left: jast.BinaryOp({
-	  left: expr,
-	  op: "<<",
-	  right: jast.ConstNum({
-	    value: 16
-	  }),
-	}),
-	op: ">>",
-	right: jast.ConstNum({
-	  value: 16
-	}),
-      });
     case "i32":
       return jast.BinaryOp({
 	left: expr,
@@ -206,9 +178,6 @@ define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
       var needs_coerce = true;
 
       switch (expr.etype) {
-      case "i8":
-      case "i16":
-	break;
       case "i32":
 	switch (expr.op) {
 	case "*":
@@ -272,12 +241,6 @@ define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
 	cond: this.processExpr(stmt.cond),
 	t: this.processBlock(stmt.t, []),
 	f: stmt.f ? this.processBlock(stmt.f, []) : null,
-      }));
-      break;
-    case "While":
-      result.push(jast.While({
-	cond: this.processExpr(stmt.cond),
-	body: this.processBlock(stmt.body, []),
       }));
       break;
     case "Loop":

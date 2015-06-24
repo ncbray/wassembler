@@ -13,19 +13,7 @@ define(["base", "wasm/desugar", "v8/backend"], function(base, desugar, wasm_back
     var ast = base.frontend("test", text, parser, status);
     assert.notEqual(ast, null, "frontend");
 
-    var module = base.astToCompiledJS(ast, status);
-    assert.notEqual(module, null, "backend");
-
-    return module(externs);
-  };
-
-  var createDesugar = function(text, assert) {
-    var status = new base.Status(function(message) { assert.ok(false, message); });
-
-    var ast = base.frontend("test", text, parser, status);
-    assert.notEqual(ast, null, "frontend");
-
-    ast = desugar.process(ast, {simple_loops: true, canonicalize: true, simplify_types: true});
+    ast = desugar.process(ast);
 
     var module = base.astToCompiledJS(ast, status);
     assert.notEqual(module, null, "backend");
@@ -35,7 +23,6 @@ define(["base", "wasm/desugar", "v8/backend"], function(base, desugar, wasm_back
 
     return module(externs);
   };
-
 
   var defineTests = function(mode_name, create) {
 
@@ -408,8 +395,6 @@ define(["base", "wasm/desugar", "v8/backend"], function(base, desugar, wasm_back
   };
 
   defineTests("polyfill", createNormal);
-
-  defineTests("desugar", createDesugar);
 
   var run = function() {
     base.getURL("wasm.pegjs").then(function(text) {

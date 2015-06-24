@@ -108,8 +108,7 @@ define(["wasm/ast"], function(wast) {
     "i16": "i32",
   };
 
-  var Desugar = function(config) {
-    this.config = config;
+  var Desugar = function() {
   };
 
   Desugar.prototype.not = function(expr) {
@@ -125,14 +124,12 @@ define(["wasm/ast"], function(wast) {
   Desugar.prototype.processExpr = function(node) {
     switch (node.type) {
     case "Coerce":
-      if (this.config.simplify_types) {
-	var simplified = this.simplifyType(node.mtype);
-	if (simplified == node.expr.etype) {
-	  node.expr.etype = node.mtype;
-	  node = node.expr;
-	} else {
-	  node.mtype = simplified;
-	}
+      var simplified = this.simplifyType(node.mtype);
+      if (simplified == node.expr.etype) {
+	node.expr.etype = node.mtype;
+	node = node.expr;
+      } else {
+	node.mtype = simplified;
       }
       break;
     case "PrefixOp":
@@ -151,65 +148,61 @@ define(["wasm/ast"], function(wast) {
       }
       break;
     case "BinaryOp":
-      if (this.config.canonicalize) {
-	switch (node.op) {
-	case ">":
-	case ">=":
-	case "!=":
-	  node.op = invertedOps[node.op]
-	  node = wast.PrefixOp({
-	    op: "!",
-	    expr: node,
-	  });
-	  node.etype = "i32";
-	  // Must immedately return to avoid resimplifications.
-	  return node;
-	}
+      switch (node.op) {
+      case ">":
+      case ">=":
+      case "!=":
+	node.op = invertedOps[node.op]
+	node = wast.PrefixOp({
+	  op: "!",
+	  expr: node,
+	});
+	node.etype = "i32";
+	// Must immedately return to avoid resimplifications.
+	return node;
       }
     }
-    if (this.config.simplify_types) {
-      switch(node.etype) {
-      case "i8":
-	node.etype = "i32";
-	node = wast.BinaryOp({
-	  left: wast.BinaryOp({
-	    left: node,
-	    op: "<<",
-	    right: wast.ConstI32({
-	      value: 24
-	    }),
-	  }),
-	  op: ">>",
+    switch(node.etype) {
+    case "i8":
+      node.etype = "i32";
+      node = wast.BinaryOp({
+	left: wast.BinaryOp({
+	  left: node,
+	  op: "<<",
 	  right: wast.ConstI32({
 	    value: 24
 	  }),
-	});
-	node.etype = "i32";
-	node.left.etype = "i32";
-	node.left.right.etype = "i32";
-	node.right.etype = "i32";
-	break;
-      case "i16":
-	node.etype = "i32";
-	node = wast.BinaryOp({
-	  left: wast.BinaryOp({
-	    left: node,
-	    op: "<<",
-	    right: wast.ConstI32({
-	      value: 16
-	    }),
-	  }),
-	  op: ">>",
+	}),
+	op: ">>",
+	right: wast.ConstI32({
+	  value: 24
+	}),
+      });
+      node.etype = "i32";
+      node.left.etype = "i32";
+      node.left.right.etype = "i32";
+      node.right.etype = "i32";
+      break;
+    case "i16":
+      node.etype = "i32";
+      node = wast.BinaryOp({
+	left: wast.BinaryOp({
+	  left: node,
+	  op: "<<",
 	  right: wast.ConstI32({
 	    value: 16
 	  }),
-	});
-	node.etype = "i32";
-	node.left.etype = "i32";
-	node.left.right.etype = "i32";
-	node.right.etype = "i32";
-	break;
-      }
+	}),
+	op: ">>",
+	right: wast.ConstI32({
+	  value: 16
+	}),
+      });
+      node.etype = "i32";
+      node.left.etype = "i32";
+      node.left.right.etype = "i32";
+      node.right.etype = "i32";
+      break;
     }
     return node;
   };
@@ -217,17 +210,16 @@ define(["wasm/ast"], function(wast) {
   Desugar.prototype.processStmt = function(node, out) {
     switch (node.type) {
     case "While":
-      if (this.config.simple_loops) {
-	var body = [wast.If({
-	  cond: this.not(node.cond),
-	  t: [wast.Break({})],
-	  f: null
-	})];
-	body = body.concat(node.body);
-	node = wast.Loop({
-	  body: body,
-	});
-      }
+      var body = [wast.If({
+	cond: this.not(node.cond),
+	t: [wast.Break({})],
+	f: null
+      })];
+      body = body.concat(node.body);
+      node = wast.Loop({
+	body: body,
+      });
+      break;
     }
     out.push(node);
   };
@@ -240,25 +232,21 @@ define(["wasm/ast"], function(wast) {
   };
 
   Desugar.prototype.processFunc = function(node) {
-    if (this.config.simplify_types) {
-      for (var i = 0; i < node.params.length; i++) {
-	node.params[i].ptype = this.simplifyType(node.params[i].ptype);
-      }
-      for (var i = 0; i < node.locals.length; i++) {
-	node.locals[i].ltype = this.simplifyType(node.locals[i].ltype);
-      }
-      node.returnType = this.simplifyType(node.returnType);
+    for (var i = 0; i < node.params.length; i++) {
+      node.params[i].ptype = this.simplifyType(node.params[i].ptype);
     }
+    for (var i = 0; i < node.locals.length; i++) {
+      node.locals[i].ltype = this.simplifyType(node.locals[i].ltype);
+    }
+    node.returnType = this.simplifyType(node.returnType);
     return node;
   };
 
   Desugar.prototype.processExtern = function(node) {
-    if (this.config.simplify_types) {
-      for (var i = 0; i < node.args.length; i++) {
-	node.args[i] = this.simplifyType(node.args[i]);
-      }
-      node.returnType = this.simplifyType(node.returnType);
+    for (var i = 0; i < node.args.length; i++) {
+      node.args[i] = this.simplifyType(node.args[i]);
     }
+    node.returnType = this.simplifyType(node.returnType);
     return node;
   };
 

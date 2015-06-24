@@ -6,12 +6,11 @@ define(
     setText("code", code);
 
     var reeval = function() {
-      parse(getText("code"), document.getElementById("desugar").checked);
+      parse(getText("code"));
     };
 
     document.getElementById("eval").onclick = reeval;
     document.getElementById("show").onclick = updateVisibility;
-    document.getElementById("desugar").onclick = reeval;
     updateVisibility();
     reeval();
   };
@@ -94,7 +93,7 @@ define(
     appendText("terminal", message + "\n");
   });
 
-  var reevaluate = function(text, early_desugar) {
+  var reevaluate = function(text) {
     // Clear the outputs.
     setText("ast", "");
     setText("generated", "");
@@ -117,13 +116,7 @@ define(
       return null;
     }
 
-    var doDesugar = function() {
-      module = desugar.process(module, {simple_loops: true, canonicalize: true, simplify_types: true});
-    }
-
-    if (early_desugar) {
-      doDesugar();
-    }
+    module = desugar.process(module);
 
     var compiled = base.astToCompiledJS(module, status, reportSrc);
     if (status.num_errors > 0) {
@@ -147,10 +140,6 @@ define(
       return;
     }
     appendText("terminal", "\nresult: " + result);
-
-    if (!early_desugar) {
-      doDesugar();
-    }
 
     // Generate binary encoding
     var buffer = wasm_backend_v8.generate(module);
