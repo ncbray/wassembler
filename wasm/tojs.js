@@ -98,11 +98,8 @@ define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
       });
     case "f32":
       return jast.Call({
-	expr: jast.GetAttr({
-	  expr: jast.GetName({
-	    name: "Math",
-	  }),
-	  attr: "fround",
+	expr: jast.GetName({
+	  name: "fround",
 	}),
 	args: [
 	  expr,
@@ -197,11 +194,8 @@ define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
 	switch (expr.op) {
 	case "*":
 	  translated = jast.Call({
-	    expr: jast.GetAttr({
-	      expr: jast.GetName({
-		name: "Math",
-	      }),
-	      attr: "imul",
+	    expr: jast.GetName({
+	      name: "imul",
 	    }),
 	    args: [
 	      this.processExpr(expr.left),
@@ -415,6 +409,32 @@ define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
 	}),
       }));
     }
+
+    body.push(jast.VarDecl({
+      name: "fround",
+      expr: jast.GetAttr({
+	expr: jast.GetAttr({
+	  expr: jast.GetName({
+	    name: "stdlib",
+	  }),
+	  attr: "Math",
+	}),
+	attr: "fround",
+      }),
+    }));
+
+    body.push(jast.VarDecl({
+      name: "imul",
+      expr: jast.GetAttr({
+	expr: jast.GetAttr({
+	  expr: jast.GetName({
+	    name: "stdlib",
+	  }),
+	  attr: "Math",
+	}),
+	attr: "imul",
+      }),
+    }));
 
     for (var i = 0; i < module.externs.length; i++) {
       var extern = module.externs[i];
