@@ -1,11 +1,26 @@
 define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
-  var arrayNames = {
-    'i8': 'I8',
-    'i16': 'I16',
-    'i32': 'I32',
-    'f32': 'F32',
-    'f64': 'F64',
-  };
+  var views = [
+    {type: "u8", array_type: "Uint8Array", array_name: "U8"},
+    {type: "i8", array_type: "Int8Array", array_name: "I8"},
+    {type: "u16", array_type: "Uint16Array", array_name: "U16"},
+    {type: "i16", array_type: "Int16Array", array_name: "I16"},
+    {type: "u32", array_type: "Uint32Array", array_name: "U32"},
+    {type: "i32", array_type: "Int32Array", array_name: "I32"},
+    {type: "f32", array_type: "Float32Array", array_name: "F32"},
+    {type: "f64", array_type: "Float64Array", array_name: "F64"},
+  ];
+
+  var typeToArrayName = {};
+
+  var stdlibNames = [
+    "Math",
+  ];
+
+  for (var i = 0; i < views.length; i++) {
+    var view = views[i];
+    typeToArrayName[view.type] = view.array_name;
+    stdlibNames.push(view.array_type);
+  }
 
   var JSTranslator = function() {
   };
@@ -123,13 +138,13 @@ define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
 	name: this.localName(expr.index),
       });
     case "Load":
-      if (!(expr.mtype in arrayNames)) throw Error(expr.mtype);
+      if (!(expr.mtype in typeToArrayName)) throw Error(expr.mtype);
 
       var shift = Math.log2(typeinfo.sizeOf(expr.mtype));
 
       return jast.GetIndex({
 	expr: jast.GetName({
-	  name: arrayNames[expr.mtype],
+	  name: typeToArrayName[expr.mtype],
 	}),
 	index: jast.BinaryOp({
 	  left: this.processExpr(expr.address),
@@ -138,14 +153,14 @@ define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
 	}),
       });
     case "Store":
-      if (!(expr.mtype in arrayNames)) throw Error(expr.mtype);
+      if (!(expr.mtype in typeToArrayName)) throw Error(expr.mtype);
 
       var shift = Math.log2(typeinfo.sizeOf(expr.mtype));
 
       return jast.Assign({
 	target: jast.GetIndex({
 	  expr: jast.GetName({
-	    name: arrayNames[expr.mtype],
+	    name: typeToArrayName[expr.mtype],
 	  }),
 	  index: jast.BinaryOp({
 	    left: this.processExpr(expr.address),
@@ -324,22 +339,25 @@ define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
     });
   }
 
-  JSTranslator.prototype.processModule = function(module) {
-    this.module = module;
-
+  JSTranslator.prototype.systemWrapper = function(module, config) {
     var body = [];
-    for (var i = 0; i < module.externs.length; i++) {
-      var extern = module.externs[i];
-      body.push(jast.VarDecl({
-	name: extern.name.text,
-	expr: jast.GetAttr({
-	  expr: jast.GetName({
-	    name: "imports",
-	  }),
-	  attr: extern.name.text,
-	}),
+
+    var stdlib = [];
+
+    for (var i = 0; i < stdlibNames.length; i++) {
+      var name = stdlibNames[i];
+      stdlib.push(jast.KeyValue({
+	key: name,
+	value: jast.GetName({name: name}),
       }));
     }
+
+    body.push(jast.VarDecl({
+      name: "stdlib",
+      expr: jast.CreateObject({
+	args: stdlib
+      }),
+    }));
 
     body.push(jast.VarDecl({
       name: "buffer",
@@ -348,70 +366,68 @@ define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
 	  name: "ArrayBuffer",
 	}),
 	args: [
-	  jast.ConstNum({value: module.config.memory.fixed}),
+	  jast.ConstNum({value: config.memory.fixed}),
 	],
       }),
     }));
 
     body.push(jast.VarDecl({
-      name: arrayNames["i8"],
-      expr: jast.New({
-	expr: jast.GetName({
-	  name: "Int8Array",
-	}),
+      name: "module",
+      expr: module,
+    }));
+
+    body.push(jast.Return({
+      expr: jast.Call({
+	expr: jast.GetName({name: "module"}),
 	args: [
+	  jast.GetName({name: "stdlib"}),
+	  jast.GetName({name: "foreign"}),
 	  jast.GetName({name: "buffer"}),
 	],
       }),
     }));
 
-    body.push(jast.VarDecl({
-      name: arrayNames["i16"],
-      expr: jast.New({
-	expr: jast.GetName({
-	  name: "Int16Array",
-	}),
-	args: [
-	  jast.GetName({name: "buffer"}),
-	],
-      }),
-    }));
+    return jast.FunctionExpr({
+      params: ["foreign"],
+      body: body,
+    });
+  };
 
-    body.push(jast.VarDecl({
-      name: arrayNames["i32"],
-      expr: jast.New({
-	expr: jast.GetName({
-	  name: "Int32Array",
-	}),
-	args: [
-	  jast.GetName({name: "buffer"}),
-	],
-      }),
-    }));
+  JSTranslator.prototype.processModule = function(module) {
+    this.module = module;
 
-    body.push(jast.VarDecl({
-      name: arrayNames["f32"],
-      expr: jast.New({
-	expr: jast.GetName({
-	  name: "Float32Array",
-	}),
-	args: [
-	  jast.GetName({name: "buffer"}),
-	],
-      }),
-    }));
+    var body = [];
 
-    body.push(jast.VarDecl({
-      name: arrayNames["f64"],
-      expr: jast.New({
-	expr: jast.GetName({
-	  name: "Float64Array",
+    for (var i = 0; i < views.length; i++) {
+      var view = views[i];
+      body.push(jast.VarDecl({
+	name: view.array_name,
+	expr: jast.New({
+	  expr: jast.GetAttr({
+	    expr: jast.GetName({
+	      name: "stdlib",
+	    }),
+	    attr: view.array_type,
+	  }),
+	  args: [
+	    jast.GetName({name: "buffer"}),
+	  ],
 	}),
-	args: [
-	  jast.GetName({name: "buffer"}),
-	],
-      }),
-    }));
+      }));
+    }
+
+    for (var i = 0; i < module.externs.length; i++) {
+      var extern = module.externs[i];
+      body.push(jast.VarDecl({
+	name: extern.name.text,
+	expr: jast.GetAttr({
+	  expr: jast.GetName({
+	    name: "foreign",
+	  }),
+	  attr: extern.name.text,
+	}),
+      }));
+    }
 
     var exports = [];
 
@@ -466,10 +482,10 @@ define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
       }),
     }));
 
-    return jast.FunctionExpr({
-      params: ["imports"],
+    return this.systemWrapper(jast.FunctionExpr({
+      params: ["stdlib", "foreign", "buffer"],
       body: body,
-    });
+    }), module.config);
   };
 
   var translate = function(module) {
