@@ -1,5 +1,26 @@
 define(["wasm/ast", "wasm/typeinfo"], function(wast, typeinfo) {
 
+  var configDefaults = {
+    memory: {
+      fixed: 65536,
+    },
+  };
+
+  var setConfigDefaults = function(config, defaults) {
+    for (var name in defaults) {
+      if (typeof defaults[name] === "object") {
+	if (!(name in config)) {
+          config[name] = {};
+	}
+	setConfigDefaults(config[name], defaults[name]);
+      } else {
+	if (!(name in config)) {
+          config[name] = defaults[name];
+	}
+      }
+    }
+  };
+
   var SemanticPass = function(status) {
     this.status = status;
   };
@@ -369,6 +390,15 @@ define(["wasm/ast", "wasm/typeinfo"], function(wast, typeinfo) {
     }
   };
 
+  SemanticPass.prototype.evalConstExpr = function(node) {
+    switch (node.type) {
+    case "ConstI32":
+      return node.value;
+    default:
+      throw Error(node.type);
+    }
+  };
+
   SemanticPass.prototype.processModule = function(module) {
     if (module.type != "ParsedModule") {
       console.log(module);
@@ -379,6 +409,9 @@ define(["wasm/ast", "wasm/typeinfo"], function(wast, typeinfo) {
     var externs = [];
     var funcs = [];
     var memory = [];
+
+    var config = {};
+
     for (var i in module.decls) {
       var decl = module.decls[i];
       switch (decl.type) {
@@ -391,13 +424,30 @@ define(["wasm/ast", "wasm/typeinfo"], function(wast, typeinfo) {
       case "MemoryDecl":
 	memory.push(decl);
 	break;
+      case "ConfigDecl":
+	for (var i = 0; i < decl.items.length; i++) {
+	  var item = decl.items[i];
+          var current = config;
+          for (var p = 0; p < item.path.length - 1; p++) {
+	    var name = item.path[p];
+            if (!(name in current)) {
+              current[name] = {};
+            }
+	    current = current[name];
+	  }
+          current[item.path[item.path.length - 1]] = this.evalConstExpr(item.value);
+	}
+	break;
       default:
 	console.log(decl);
 	throw decl.type;
       }
     }
 
+    setConfigDefaults(config, configDefaults);
+
     module = wast.Module({
+      config: config,
       externs: externs,
       funcs: funcs,
       memory: memory,

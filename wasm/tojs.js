@@ -385,7 +385,7 @@ define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
 	  name: "ArrayBuffer",
 	}),
 	args: [
-	  jast.ConstNum({value: 1048576}),
+	  jast.ConstNum({value: module.config.memory.fixed}),
 	],
       }),
     }));

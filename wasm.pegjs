@@ -46,7 +46,9 @@ EOT = ![a-zA-Z0-9_]
 
 keyword = ("if" / "func" / "memory" / "return" / "export" / "import" / "var") EOT
 
-ident "identifier" = !keyword text:$([a-zA-Z_][a-zA-Z0-9_]*) {
+identText = $([a-zA-Z_][a-zA-Z0-9_]*)
+
+ident "identifier" = !keyword text: identText {
   return wast.Identifier({
     text: text,
     pos: getPos(),
@@ -191,6 +193,23 @@ funcdecl = e:optionalExport S "func" EOT S name:ident S "(" S params:paramList S
   })
 }
 
+constExpr = constant
+
+configItem = path:(first:identText rest:(S "." S i:identText {return i;})* {return buildList(first, rest);} / {return [];} ) S ":" S value: constExpr {
+  return wast.ConfigItem({
+    path: path,
+    value: value
+  })
+}
+
+configItemList = (first:configItem rest:(S "," S i:configItem {return i;})* {return buildList(first, rest);} / {return [];} )
+
+config = "config" EOT S "{" S items:configItemList S "}" {
+  return wast.ConfigDecl({
+    items:items
+  })
+}
+
 typeList = (first:typeRef rest:(S "," S t:typeRef {return t;})* {return buildList(first, rest);} / {return [];} )
 
 import = "import" EOT S "func" EOT S name:ident S "(" S args:typeList S ")" S r:returnType S ";" {
@@ -209,7 +228,7 @@ memorydecl = "memory" EOT S name:ident S size:number S "align" EOT S align:numbe
   });
 }
 
-decl = funcdecl / import / memorydecl
+decl = funcdecl / import / memorydecl / config
 
 declList = (first:decl rest:(S d:decl {return d;})* {return buildList(first, rest);}) / {return [];}
 
