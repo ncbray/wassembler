@@ -370,7 +370,9 @@ define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
       expr: module,
     }));
 
-    body.push(jast.Return({
+    // Create an instance.
+    body.push(jast.VarDecl({
+      name: "instance",
       expr: jast.Call({
 	expr: jast.GetName({name: "module"}),
 	args: [
@@ -379,6 +381,56 @@ define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
 	  jast.GetName({name: "buffer"}),
 	],
       }),
+    }));
+
+
+    // Non-asm utility functions exported to JS.
+
+
+
+    body.push(jast.Assign({
+      target: jast.GetAttr({
+	expr: jast.GetName({
+	  name: "instance",
+	}),
+	attr: "_copyOut",
+      }),
+      value: jast.FunctionExpr({
+	params: ["srcOff", "size", "dst", "dstOff"],
+	body: [
+	  jast.Call({
+	    expr: jast.GetAttr({
+	      expr: jast.New({
+		expr: jast.GetName({
+		  name: "Uint8Array",
+		}),
+		args: [
+		  jast.GetName({name: "dst"}),
+		  jast.GetName({name: "dstOff"}),
+		  jast.GetName({name: "size"}),
+		],
+	      }),
+	      attr: "set",
+	    }),
+	    args: [
+	      jast.New({
+		expr: jast.GetName({
+		  name: "Uint8Array",
+		}),
+		args: [
+		  jast.GetName({name: "buffer"}),
+		  jast.GetName({name: "srcOff"}),
+		  jast.GetName({name: "size"}),
+		],
+	      }),
+	    ],
+	  }),
+	],
+      }),
+    }));
+
+    body.push(jast.Return({
+      expr: jast.GetName({name: "instance"}),
     }));
 
     return jast.FunctionExpr({
@@ -463,38 +515,6 @@ define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
 	}));
       }
     }
-
-    exports.push(jast.KeyValue({
-      key: "_copyOut",
-      value: jast.FunctionExpr({
-	params: ["src", "size", "dst"],
-	body: [
-	  jast.Call({
-	    expr: jast.GetAttr({
-	      expr: jast.GetName({name: "dst"}),
-	      attr: "set"
-	    }),
-	    args: [
-	      jast.Call({
-		expr: jast.GetAttr({
-		  expr: jast.GetName({name: "I8"}),
-		  attr: "subarray"
-		}),
-		args: [
-		  jast.GetName({name: "src"}),
-		  jast.BinaryOp({
-		    left: jast.GetName({name: "src"}),
-		    op: "+",
-		    right: jast.GetName({name: "size"}),
-		  })
-		],
-	      }),
-	    ],
-	  }),
-	],
-      }),
-    }));
-
 
     body.push(jast.Return({
       expr: jast.CreateObject({

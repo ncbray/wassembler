@@ -61,8 +61,6 @@ define(
     var h = c.height;
     var ctx = c.getContext("2d");
     var imageData = ctx.getImageData(0, 0, w, h);
-    var dataI32 = new Int32Array(imageData.data.buffer);
-    var dataI8 = new Int8Array(imageData.data.buffer);
 
     return {
       sqrtF32: function(value) {
@@ -84,7 +82,7 @@ define(
 	return Math.cos(value);
       },
       flipBuffer: function(ptr) {
-	instance._copyOut(ptr, c.width * c.height * 4, dataI8);
+	instance._copyOut(ptr, c.width * c.height * 4, imageData.data.buffer, 0);
 	ctx.putImageData(imageData, 0, 0);
       },
       hook: function() {
