@@ -8,9 +8,14 @@ import func cosF32(f32) f32;
 
 import func flipBuffer(i32) void;
 
-memory phase 4 align 4;
 
-memory frame_buffer 262144 align 4;
+memory {
+  align 4;
+  phase: zero 4;
+
+  align 4;
+  frame_buffer: zero 262144;
+}
 
 func shade(x f32, y f32, t f32) i32 {
   var xOff f32 = x - 0.5f;

@@ -88,7 +88,7 @@ define(["wasm/ast", "wasm/typeinfo"], function(wast, typeinfo) {
           case "Extern":
 	    expr = wast.GetExtern({index: ref.index, pos: getPos(expr)});
 	    break;
-          case "MemoryDecl":
+          case "MemoryLabel":
 	    expr = wast.ConstI32({
 	      value: ref.ptr,
 	      pos: getPos(expr),
@@ -96,8 +96,7 @@ define(["wasm/ast", "wasm/typeinfo"], function(wast, typeinfo) {
 	    this.setExprType(expr, "i32");
 	    break;
 	  default:
-	    console.log(ref);
-	    throw ref;
+	    throw Error(ref.type);
 	  }
 	  break;
 	} else {
@@ -389,6 +388,29 @@ define(["wasm/ast", "wasm/typeinfo"], function(wast, typeinfo) {
     }
   };
 
+  SemanticPass.prototype.indexMemoryDecl = function(node) {
+    for (var i = 0; i < node.directives.length; i++) {
+      var m = node.directives[i];
+      m.ptr = this.ptr;
+      switch(m.type) {
+      case "MemoryAlign":
+	var offset = this.ptr % m.size;
+	if (offset != 0) {
+	  this.ptr += m.size - offset;
+	}
+	break;
+      case "MemoryLabel":
+	this.registerInModule(m.name, m);
+	break;
+      case "MemoryZero":
+	this.ptr += m.size;
+	break;
+      default:
+	throw Error(m.type);
+      }
+    }
+  };
+
   SemanticPass.prototype.indexModule = function(module) {
     this.moduleScope = {};
     for (var i = 0; i < module.externs.length; i++) {
@@ -405,22 +427,9 @@ define(["wasm/ast", "wasm/typeinfo"], function(wast, typeinfo) {
     }
 
     // Zero is null, so don't use that.
-    var ptr = 8;
+    this.ptr = 8;
     for (var i in module.memory) {
-      var mem = module.memory[i];
-      var size = mem.size;
-      var align = mem.align;
-
-      // Align
-      if (ptr % align != 0) {
-	ptr += align - ptr % align;
-      }
-
-      // Allocate
-      mem.ptr = ptr;
-      ptr += size;
-
-      this.registerInModule(mem.name, mem);
+      this.indexMemoryDecl(module.memory[i]);
     }
   };
 

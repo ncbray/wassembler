@@ -349,27 +349,27 @@ define(["base", "wasm/desugar", "v8/backend"], function(base, desugar, wasm_back
     QUnit.module(mode_name + " memory");
 
     QUnit.test("i8", function(assert) {
-      var m = create("memory temp 1 align 1; export func main(n i8) i8 {storeI32(temp, n); return loadI8(temp);}", assert);
+      var m = create("memory {align 1; temp: zero 1;} export func main(n i8) i8 {storeI32(temp, n); return loadI8(temp);}", assert);
       assert.equal(m.main(7), 7);
     });
 
     QUnit.test("i16", function(assert) {
-      var m = create("memory temp 2 align 2; export func main(n i16) i16 {storeI16(temp, n); return loadI16(temp);}", assert);
+      var m = create("memory {align 2; temp: zero 2;} export func main(n i16) i16 {storeI16(temp, n); return loadI16(temp);}", assert);
       assert.equal(m.main(7), 7);
     });
 
     QUnit.test("i32", function(assert) {
-      var m = create("memory temp 4 align 4; export func main(n i32) i32 {storeI32(temp, n); return loadI32(temp);}", assert);
+      var m = create("memory {align 4; temp: zero 4;} export func main(n i32) i32 {storeI32(temp, n); return loadI32(temp);}", assert);
       assert.equal(m.main(7), 7);
     });
 
     QUnit.test("f32", function(assert) {
-      var m = create("memory temp 4 align 4; export func main(n f32) f32 {storeF32(temp, n); return loadF32(temp);}", assert);
+      var m = create("memory {align 4; temp: zero 4;} export func main(n f32) f32 {storeF32(temp, n); return loadF32(temp);}", assert);
       assert.equal(m.main(7.5), 7.5);
     });
 
     QUnit.test("f64", function(assert) {
-      var m = create("memory temp 8 align 8; export func main(n f64) f64 {storeF64(temp, n); return loadF64(temp);}", assert);
+      var m = create("memory {align 8; temp: zero 8;} export func main(n f64) f64 {storeF64(temp, n); return loadF64(temp);}", assert);
       assert.equal(m.main(7.5), 7.5);
     });
 

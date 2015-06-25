@@ -216,12 +216,27 @@ define(['astutil'], function(astutil) {
       ],
     },
     {
-      name: "MemoryDecl",
+      name: "MemoryAlign",
+      fields: [
+	{name: "size"},
+      ],
+    },
+    {
+      name: "MemoryLabel",
       fields: [
 	{name: "name"},
+      ],
+    },
+    {
+      name: "MemoryZero",
+      fields: [
 	{name: "size"},
-	{name: "align"},
-	{name: "pos"},
+      ],
+    },
+    {
+      name: "MemoryDecl",
+      fields: [
+	{name: "directives"},
       ],
     },
     {

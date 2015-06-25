@@ -45,7 +45,7 @@ S = (whitespace / comment)*
 
 EOT = ![a-zA-Z0-9_]
 
-keyword = ("if" / "func" / "memory" / "return" / "export" / "import" / "var") EOT
+keyword = ("if" / "func" / "memory" / "return" / "export" / "import" / "var" / "align" / "config") EOT
 
 identText = $([a-zA-Z_][a-zA-Z0-9_]*)
 
@@ -247,16 +247,31 @@ import = "import" EOT S "func" EOT S name:ident S "(" S args:typeList S ")" S r:
   });
 }
 
-memorydecl = "memory" EOT S name:ident S size:number S "align" EOT S align:number ";" {
+
+memoryAlign = "align" EOT S size:number S ";" {
+  return wast.MemoryAlign({size: size})
+}
+
+memoryLabel = name:ident S ":" {
+  return wast.MemoryLabel({name: name})
+}
+
+memoryZero = "zero" EOT S size:number S ";" {
+  return wast.MemoryZero({size: size})
+}
+
+
+memoryDirective = memoryAlign / memoryZero / memoryLabel
+
+memoryDirectiveList = (first:memoryDirective rest:(S d:memoryDirective {return d;})* {return buildList(first, rest);}) / {return [];}
+
+memoryDecl = "memory" EOT S "{" S d:memoryDirectiveList S "}" {
   return wast.MemoryDecl({
-    name: name,
-    size: size,
-    align: align,
-    pos: getPos(),
+    directives: d,
   });
 }
 
-decl = funcdecl / import / memorydecl / config
+decl = funcdecl / import / memoryDecl / config
 
 declList = (first:decl rest:(S d:decl {return d;})* {return buildList(first, rest);}) / {return [];}
 
