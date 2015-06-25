@@ -1,4 +1,4 @@
-define(["wasm/ast", "wasm/typeinfo"], function(wast, typeinfo) {
+define(["compilerutil", "wasm/ast", "wasm/typeinfo"], function(compilerutil, wast, typeinfo) {
 
   var configDefaults = {
     memory: {
@@ -389,26 +389,39 @@ define(["wasm/ast", "wasm/typeinfo"], function(wast, typeinfo) {
   };
 
   SemanticPass.prototype.indexMemoryDecl = function(node) {
+    var base = this.ptr;
+    node.ptr = base;
+
+    var writer = new compilerutil.BinaryWriter();
+
     for (var i = 0; i < node.directives.length; i++) {
       var m = node.directives[i];
-      m.ptr = this.ptr;
+      m.ptr = base + writer.pos;
       switch(m.type) {
       case "MemoryAlign":
 	var offset = this.ptr % m.size;
 	if (offset != 0) {
-	  this.ptr += m.size - offset;
+	  var padding = m.size - offset;
+	  writer.zeros(padding);
 	}
 	break;
       case "MemoryLabel":
 	this.registerInModule(m.name, m);
 	break;
       case "MemoryZero":
-	this.ptr += m.size;
+	writer.zeros(m.size);
+	break;
+      case "MemoryHex":
+	writer.expect(m.data.length);
+	for (var i = 0; i < m.data.length; i++) {
+	  writer.u8(m.data[i]);
+	}
 	break;
       default:
 	throw Error(m.type);
       }
     }
+    node.buffer = writer.getOutput();
   };
 
   SemanticPass.prototype.indexModule = function(module) {

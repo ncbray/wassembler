@@ -234,6 +234,12 @@ define(['astutil'], function(astutil) {
       ],
     },
     {
+      name: "MemoryHex",
+      fields: [
+	{name: "data"},
+      ],
+    },
+    {
       name: "MemoryDecl",
       fields: [
 	{name: "directives"},

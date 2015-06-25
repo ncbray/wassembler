@@ -353,6 +353,18 @@ define(["base", "wasm/desugar", "v8/backend"], function(base, desugar, wasm_back
       assert.equal(m.main(7), 7);
     });
 
+    QUnit.test("i8 init", function(assert) {
+      var m = create("memory {align 1; table: hex 1234567890abcdef;} export func main(n i32) i8 {return loadI8(table + n);}", assert);
+      assert.equal(m.main(0), 0x12);
+      assert.equal(m.main(1), 0x34);
+      assert.equal(m.main(2), 0x56);
+      assert.equal(m.main(3), 0x78);
+      assert.equal(m.main(4), 0x90 << 24 >> 24);
+      assert.equal(m.main(5), 0xab << 24 >> 24);
+      assert.equal(m.main(6), 0xcd << 24 >> 24);
+      assert.equal(m.main(7), 0xef << 24 >> 24);
+    });
+
     QUnit.test("i16", function(assert) {
       var m = create("memory {align 2; temp: zero 2;} export func main(n i16) i16 {storeI16(temp, n); return loadI16(temp);}", assert);
       assert.equal(m.main(7), 7);

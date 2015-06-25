@@ -260,8 +260,15 @@ memoryZero = "zero" EOT S size:number S ";" {
   return wast.MemoryZero({size: size})
 }
 
+hexDigit "hex digit" = [0-9a-fA-F]
 
-memoryDirective = memoryAlign / memoryZero / memoryLabel
+hexByte = text:$(hexDigit hexDigit) {return parseInt(text, 16);}
+
+hexData = (first:hexByte rest:(S d:hexByte {return d;})* {return buildList(first, rest);}) / {return [];}
+
+memoryHex = "hex" EOT S data:hexData S ";" {return wast.MemoryHex({data: data});}
+
+memoryDirective = memoryAlign / memoryZero / memoryHex / memoryLabel
 
 memoryDirectiveList = (first:memoryDirective rest:(S d:memoryDirective {return d;})* {return buildList(first, rest);}) / {return [];}
 

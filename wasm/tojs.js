@@ -333,7 +333,7 @@ define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
     });
   }
 
-  JSTranslator.prototype.systemWrapper = function(module, config) {
+  JSTranslator.prototype.systemWrapper = function(module, generated) {
     var body = [];
 
     var stdlib = [];
@@ -360,14 +360,16 @@ define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
 	  name: "ArrayBuffer",
 	}),
 	args: [
-	  jast.ConstNum({value: config.memory.fixed}),
+	  jast.ConstNum({value: module.config.memory.fixed}),
 	],
       }),
     }));
 
+    body = body.concat(this.initMemory(module));
+
     body.push(jast.VarDecl({
       name: "module",
-      expr: module,
+      expr: generated,
     }));
 
     // Create an instance.
@@ -385,7 +387,6 @@ define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
 
 
     // Non-asm utility functions exported to JS.
-
 
 
     body.push(jast.Assign({
@@ -437,6 +438,42 @@ define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
       params: ["foreign"],
       body: body,
     });
+  };
+
+  JSTranslator.prototype.initMemory = function(module) {
+    var body = [];
+
+
+    body.push(jast.VarDecl({
+      name: "U8",
+      expr: jast.New({
+	expr: jast.GetName({
+	  name: "Uint8Array",
+	}),
+	args: [
+	  jast.GetName({name: "buffer"}),
+	],
+      }),
+    }));
+
+    for (var i = 0; i < module.memory.length; i++) {
+      var memory = module.memory[i];
+      var u8 = new Uint8Array(memory.buffer);
+      for(var o = 0; o < u8.byteLength; o++) {
+	if (u8[o] == 0) continue;
+
+	body.push(jast.Assign({
+	  target: jast.GetIndex({
+	    expr: jast.GetName({
+	      name: "U8",
+	    }),
+	    index: jast.ConstNum({value: memory.ptr + o}),
+	  }),
+	  value: jast.ConstNum({value: u8[o]}),
+	}));
+      }
+    }
+    return body;
   };
 
   JSTranslator.prototype.processModule = function(module) {
@@ -522,10 +559,10 @@ define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
       }),
     }));
 
-    return this.systemWrapper(jast.FunctionExpr({
+    return this.systemWrapper(module, jast.FunctionExpr({
       params: ["stdlib", "foreign", "buffer"],
       body: body,
-    }), module.config);
+    }));
   };
 
   var translate = function(module) {

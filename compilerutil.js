@@ -50,14 +50,16 @@ define([], function() {
 
   BinaryWriter.prototype.expect = function(size) {
     var n = this.data.buffer.byteLength;
-    if (this.pos + size > this.data.buffer.byteLength) {
-      // Reallocate
-      var replace = new DataView(new ArrayBuffer(n * 2));
-      // Copy
-      new Uint8Array(replace.buffer).set(new Uint8Array(this.data.buffer));
-      // Replace
-      this.data = replace;
+    if (this.pos + size <= n) return;
+    while (this.pos + size > n) {
+      n *= 2;
     }
+    // Reallocate
+    var replace = new DataView(new ArrayBuffer(n));
+    // Copy
+    new Uint8Array(replace.buffer).set(new Uint8Array(this.data.buffer));
+    // Replace
+    this.data = replace;
   };
 
   BinaryWriter.prototype.getOutput = function() {
@@ -116,6 +118,12 @@ define([], function() {
     this.expect(8);
     this.data.setFloat64(this.pos, data, true);
     this.pos += 8;
+  };
+
+  BinaryWriter.prototype.zeros = function(count) {
+    checkRange(count, 0x0, 0xffffffff);
+    this.expect(count);
+    this.pos += count;
   };
 
   BinaryWriter.prototype.allocU32 = function() {
