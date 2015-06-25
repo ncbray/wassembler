@@ -3,9 +3,16 @@ define([], function() {
     var exports = {};
     for (var i in config) {
       var decl = config[i];
+      if (decl.name in exports) {
+	throw Error("Attempted to redefine " + decl.name);
+      }
+
       decl.fieldIndex = {};
       for (var i in decl.fields) {
 	var field = decl.fields[i];
+	if (field.name in decl.fieldIndex) {
+	  throw Error("Attempted to redefine " + decl.name + "." + field.name);
+	}
 	decl.fieldIndex[field.name] = field;
       }
 

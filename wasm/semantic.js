@@ -21,6 +21,24 @@ define(["wasm/ast", "wasm/typeinfo"], function(wast, typeinfo) {
     }
   };
 
+  var getPos = function(node) {
+    switch (node.type) {
+    case "Call":
+      return getPos(node.expr);
+    case "BinaryOp":
+      return getPos(node.left);
+    case "GetName":
+      return node.name.pos;
+    case "SetName":
+      return node.name.pos;
+    default:
+      if (node.pos) {
+	return node.pos;
+      }
+      throw Error(node.type);
+    }
+  };
+
   var SemanticPass = function(status) {
     this.status = status;
   };
@@ -57,7 +75,7 @@ define(["wasm/ast", "wasm/typeinfo"], function(wast, typeinfo) {
       var name = expr.name.text;
       var ref = this.localScope[name];
       if (ref !== undefined) {
-	var expr = wast.GetLocal({index: ref.index});
+	var expr = wast.GetLocal({index: ref.index, pos: getPos(expr)});
 	this.setExprType(expr, ref.ltype);
 	break;
       } else {
@@ -65,14 +83,15 @@ define(["wasm/ast", "wasm/typeinfo"], function(wast, typeinfo) {
 	if (ref !== undefined) {
 	  switch(ref.type) {
 	  case "Function":
-	    expr = wast.GetFunction({index: ref.index});
+	    expr = wast.GetFunction({index: ref.index, pos: getPos(expr)});
 	    break;
           case "Extern":
-	    expr = wast.GetExtern({index: ref.index});
+	    expr = wast.GetExtern({index: ref.index, pos: getPos(expr)});
 	    break;
           case "MemoryDecl":
 	    expr = wast.ConstI32({
-	      value: ref.ptr
+	      value: ref.ptr,
+	      pos: getPos(expr),
 	    });
 	    this.setExprType(expr, "i32");
 	    break;
@@ -92,7 +111,8 @@ define(["wasm/ast", "wasm/typeinfo"], function(wast, typeinfo) {
       if (ref !== undefined) {
 	expr = wast.SetLocal({
 	  index: ref.index,
-	  value: this.processExpr(expr.value)
+	  value: this.processExpr(expr.value),
+	  pos: getPos(expr),
 	});
 	this.setExprType(expr, "void");
 	break;
@@ -131,7 +151,8 @@ define(["wasm/ast", "wasm/typeinfo"], function(wast, typeinfo) {
       expr.right = this.processExpr(expr.right);
       if (!this.dead) {
 	if (expr.left.etype != expr.right.etype) {
-	  this.error("binary op type error - " + expr.left.etype + expr.op + expr.right.etype + " = ???");
+	  // TODO position of operator?
+	  this.error("binary op type error - " + expr.left.etype + expr.op + expr.right.etype + " = ???", getPos(expr));
 	}
 	switch (expr.op) {
 	case "<":
@@ -155,12 +176,14 @@ define(["wasm/ast", "wasm/typeinfo"], function(wast, typeinfo) {
 	  expr = wast.CallDirect({
 	    func: expr.expr.index,
 	    args: expr.args,
+	    pos: getPos(expr),
 	  });
 	  break;
 	case "GetExtern":
 	  expr = wast.CallExternal({
 	    func: expr.expr.index,
 	    args: expr.args,
+	    pos: getPos(expr),
 	  });
 	  break;
 	default:
@@ -180,7 +203,7 @@ define(["wasm/ast", "wasm/typeinfo"], function(wast, typeinfo) {
 	  var target = this.module.funcs[expr.func];
 
 	  if (expr.args.length != target.params.length) {
-	    this.error("argument count mismatch - got " + expr.args.length + ", but expected " + target.params.length);
+	    this.error("argument count mismatch - got " + expr.args.length + ", but expected " + target.params.length, getPos(expr));
 	  }
 
 	  this.setExprType(expr, target.returnType);
@@ -189,7 +212,7 @@ define(["wasm/ast", "wasm/typeinfo"], function(wast, typeinfo) {
 	    for (var i = 0; i < expr.args.length; i++) {
 	      var arg = expr.args[i];
 	      if (arg.etype != target.params[i].ptype) {
-		this.error("arg " + i + " - got " + arg.etype + ", but expected " + target.params[i].ptype);
+		this.error("arg " + i + " - got " + arg.etype + ", but expected " + target.params[i].ptype, getPos(arg));
 	      }
 	    }
 	  }
@@ -198,7 +221,7 @@ define(["wasm/ast", "wasm/typeinfo"], function(wast, typeinfo) {
 	  var target = this.module.externs[expr.func];
 
 	  if (expr.args.length != target.args.length) {
-	    this.error("argument count mismatch - got " + expr.args.length + ", but expected " + target.args.length);
+	    this.error("argument count mismatch - got " + expr.args.length + ", but expected " + target.args.length, getPos(expr));
 	  }
 
 	  this.setExprType(expr, target.returnType);
@@ -207,7 +230,7 @@ define(["wasm/ast", "wasm/typeinfo"], function(wast, typeinfo) {
 	    for (var i = 0; i < expr.args.length; i++) {
 	      var arg = expr.args[i];
 	      if (arg.etype != target.args[i]) {
-		this.error("arg " + i + " - got " + arg.etype + ", but expected " + target.args[i]);
+		this.error("arg " + i + " - got " + arg.etype + ", but expected " + target.args[i], getPos(arg));
 	      }
 	    }
 	  }
@@ -225,14 +248,14 @@ define(["wasm/ast", "wasm/typeinfo"], function(wast, typeinfo) {
 	actual = expr.expr.etype;
       }
       if (!this.dead && actual != this.func.returnType) {
-	this.error("return type mismatch - " + actual + " vs. " + this.func.returnType);
+	this.error("return type mismatch - " + actual + " vs. " + this.func.returnType, getPos(expr));
       }
       this.setExprType(expr, "void");
       break;
     case "If":
       expr.cond = this.processExpr(expr.cond);
       if (!this.dead && expr.cond.etype != "i32") {
-	this.error("condition type mismatch - " + expr.cond.etype + " vs. i32");
+	this.error("condition type mismatch - " + expr.cond.etype + ", expected i32", getPos(expr));
       }
 
       expr.t = this.processBlock(expr.t);
@@ -244,7 +267,7 @@ define(["wasm/ast", "wasm/typeinfo"], function(wast, typeinfo) {
     case "While":
       expr.cond = this.processExpr(expr.cond);
       if (!this.dead && expr.cond.etype != "i32") {
-	this.error("condition type mismatch - " + expr.cond.etype + " vs. i32");
+	this.error("condition type mismatch - " + expr.cond.etype + ", expected i32", getPos(expr));
       }
       expr.body = this.processBlock(expr.body);
       this.setExprType(expr, "void");
@@ -306,6 +329,7 @@ define(["wasm/ast", "wasm/typeinfo"], function(wast, typeinfo) {
 	node = wast.SetLocal({
 	  index: index,
 	  value: this.processExpr(node.value),
+	  pos: getPos(node),
 	});
 	this.setExprType(node, "void");
 	block.push(node);

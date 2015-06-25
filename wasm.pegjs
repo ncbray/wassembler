@@ -29,8 +29,9 @@
     return e;
   }
 
+  // Line 1 indexed, column 0 indexed.
   function getPos() {
-    return {line: line(), column: column()};
+    return {line: line(), column: column() - 1};
   }
 }
 
@@ -64,7 +65,8 @@ loadOp
   = "load" t:mtypeU S "(" S addr:expr S ")" {
     return wast.Load({
       mtype: t,
-      address: addr
+      address: addr,
+      pos: getPos(),
     });
   }
 
@@ -73,7 +75,8 @@ storeOp
     return wast.Store({
       mtype: t,
       address: addr,
-      value: value
+      value: value,
+      pos: getPos(),
     });
   }
 
@@ -82,6 +85,7 @@ coerceOp
     return wast.Coerce({
       mtype: t,
       expr: expr,
+      pos: getPos(),
     });
   }
 
@@ -91,9 +95,24 @@ number "number" = digits:$([0-9]+) {
 }
 
 constant
-  = digits:($([0-9]+ "." [0-9]*)) "f" {return wast.ConstF32({value: Math.fround(+digits)})}
-  / digits:($([0-9]+ "." [0-9]*)) {return wast.ConstF64({value: +digits})}
-  / n:number {return wast.ConstI32({value: n})}
+  = digits:($([0-9]+ "." [0-9]*)) "f" {
+    return wast.ConstF32({
+      value: Math.fround(+digits),
+      pos: getPos(),
+    })
+  }
+  / digits:($([0-9]+ "." [0-9]*)) {
+    return wast.ConstF64({
+      value: +digits,
+      pos: getPos(),
+    })
+  }
+  / n:number {
+    return wast.ConstI32({
+      value: n,
+      pos: getPos(),
+    })
+  }
 
 atom
   = constant
@@ -105,7 +124,7 @@ atom
 
 callOp = first:atom rest:(S "(" S args:exprList S ")" {return args;})* {return buildCallExpr(first, rest);}
 
-prefixOp = op:("!"/"~"/"+"/"-") S expr:prefixOp {return wast.PrefixOp({op: op, expr: expr});} / callOp
+prefixOp = op:("!"/"~"/"+"/"-") S expr:prefixOp {return wast.PrefixOp({op: op, expr: expr, pos: getPos()});} / callOp
 
 mulOp = first:prefixOp rest:(S $("*"/"/"/"%") S prefixOp)* {return buildBinaryExpr(first, rest);}
 
@@ -135,19 +154,22 @@ stmt
       return wast.If({
         cond:cond,
         t: t,
-	f: f
+	f: f,
+	pos: getPos(),
       });
     })
     /("while" EOT S "(" S cond:expr S ")"
       S "{" S b:body S "}" {
       return wast.While({
         cond:cond,
-        body: b
+        body: b,
+	pos: getPos(),
       });
     })
     /("return" EOT S e:(expr/{return null}) S ";" {
       return wast.Return({
-        expr: e
+        expr: e,
+	pos: getPos(),
       });
     })
     / ("var" EOT S name:ident S type:typeRef
@@ -156,6 +178,7 @@ stmt
         name: name,
         vtype: type,
         value: value,
+	pos: getPos(),
       });
     })
     / (name:ident S "=" S value:expr S ";" {
@@ -192,6 +215,7 @@ funcdecl = e:optionalExport S "func" EOT S name:ident S "(" S params:paramList S
     returnType: returnType,
     locals: [],
     body: body,
+    pos: getPos(),
   })
 }
 
@@ -219,6 +243,7 @@ import = "import" EOT S "func" EOT S name:ident S "(" S args:typeList S ")" S r:
     name: name,
     args: args,
     returnType: r,
+    pos: getPos(),
   });
 }
 
@@ -227,6 +252,7 @@ memorydecl = "memory" EOT S name:ident S size:number S "align" EOT S align:numbe
     name: name,
     size: size,
     align: align,
+    pos: getPos(),
   });
 }
 

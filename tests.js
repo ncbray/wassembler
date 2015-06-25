@@ -51,7 +51,8 @@ define(["base", "wasm/desugar", "v8/backend"], function(base, desugar, wasm_back
       var m = create("export func main(a i16, b i16) i16 {return a + b;}", assert);
       assert.equal(m.main(13, 2), 15);
       assert.equal(m.main(13, -2), 11);
-      assert.equal(m.main(0x7fff, 0x7fff), -2);
+      assert.equal(m.main(0x7fff, 0x7fff), -2)
+      assert.equal(m.main(0x7fff, 1), -0x8000);
     });
 
     QUnit.module(mode_name + " basic i32");

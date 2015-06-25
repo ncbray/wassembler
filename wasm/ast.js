@@ -4,18 +4,21 @@ define(['astutil'], function(astutil) {
       name: "ConstI32",
       fields: [
 	{name: "value"},
+	{name: "pos"},
       ],
     },
     {
       name: "ConstF32",
       fields: [
 	{name: "value"},
+	{name: "pos"},
       ],
     },
     {
       name: "ConstF64",
       fields: [
 	{name: "value"},
+	{name: "pos"},
       ],
     },
     {
@@ -42,18 +45,21 @@ define(['astutil'], function(astutil) {
       name: "GetFunction",
       fields: [
 	{name: "index"},
+	{name: "pos"},
       ],
     },
     {
       name: "GetExtern",
       fields: [
 	{name: "index"},
+	{name: "pos"},
       ],
     },
     {
       name: "GetLocal",
       fields: [
 	{name: "index"},
+	{name: "pos"},
       ],
     },
     {
@@ -61,6 +67,7 @@ define(['astutil'], function(astutil) {
       fields: [
 	{name: "index"},
 	{name: "value"},
+	{name: "pos"},
       ],
     },
     {
@@ -68,6 +75,7 @@ define(['astutil'], function(astutil) {
       fields: [
 	{name: "mtype"},
 	{name: "address"},
+	{name: "pos"},
       ],
     },
     {
@@ -76,6 +84,7 @@ define(['astutil'], function(astutil) {
 	{name: "mtype"},
 	{name: "address"},
 	{name: "value"},
+	{name: "pos"},
       ],
     },
     {
@@ -83,6 +92,7 @@ define(['astutil'], function(astutil) {
       fields: [
 	{name: "mtype"},
 	{name: "expr"},
+	{name: "pos"},
       ],
     },
     {
@@ -90,6 +100,7 @@ define(['astutil'], function(astutil) {
       fields: [
 	{name: "op"},
 	{name: "expr"},
+	{name: "pos"},
       ],
     },
     {
@@ -112,6 +123,7 @@ define(['astutil'], function(astutil) {
       fields: [
 	{name: "func"},
 	{name: "args"},
+	{name: "pos"},
       ],
     },
     {
@@ -119,6 +131,7 @@ define(['astutil'], function(astutil) {
       fields: [
 	{name: "func"},
 	{name: "args"},
+	{name: "pos"},
       ],
     },
     {
@@ -127,17 +140,20 @@ define(['astutil'], function(astutil) {
 	{name: "name"},
 	{name: "vtype"},
 	{name: "value"},
+	{name: "pos"},
       ],
     },
     {
       name: "Return",
       fields: [
 	{name: "expr"},
+	{name: "pos"},
       ],
     },
     {
       name: "Break",
       fields: [
+	{name: "pos"},
       ],
     },
     {
@@ -146,6 +162,7 @@ define(['astutil'], function(astutil) {
 	{name: "cond"},
 	{name: "t"},
 	{name: "f"},
+	{name: "pos"},
       ],
     },
     {
@@ -153,6 +170,7 @@ define(['astutil'], function(astutil) {
       fields: [
 	{name: "cond"},
 	{name: "body"},
+	{name: "pos"},
       ],
     },
     {
@@ -185,6 +203,7 @@ define(['astutil'], function(astutil) {
 	{name: "returnType"},
 	{name: "locals"},
 	{name: "body"},
+	{name: "pos"},
       ],
     },
     {
@@ -193,6 +212,7 @@ define(['astutil'], function(astutil) {
 	{name: "name"},
 	{name: "args"},
 	{name: "returnType"},
+	{name: "pos"},
       ],
     },
     {
@@ -201,14 +221,7 @@ define(['astutil'], function(astutil) {
 	{name: "name"},
 	{name: "size"},
 	{name: "align"},
-      ],
-    },
-    {
-      name: "MemoryDecl",
-      fields: [
-	{name: "name"},
-	{name: "size"},
-	{name: "align"},
+	{name: "pos"},
       ],
     },
     {

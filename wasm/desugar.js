@@ -136,9 +136,19 @@ define(["wasm/ast"], function(wast) {
     expr = wast.PrefixOp({
       op: "!",
       expr: expr,
+      pos: null,
     });
     expr.etype = "i32";
     return peelBoolNot(expr);
+  };
+
+  Desugar.prototype.constI32 = function(value) {
+    var node = wast.ConstI32({
+      value: value,
+      pos: null,
+    });
+    node.etype = "i32";
+    return node;
   };
 
   Desugar.prototype.processExpr = function(node) {
@@ -174,19 +184,13 @@ define(["wasm/ast"], function(wast) {
 	left: wast.BinaryOp({
 	  left: node,
 	  op: "<<",
-	  right: wast.ConstI32({
-	    value: 24
-	  }),
+	  right: this.constI32(24),
 	}),
 	op: ">>",
-	right: wast.ConstI32({
-	  value: 24
-	}),
+	right: this.constI32(24),
       });
       node.etype = "i32";
       node.left.etype = "i32";
-      node.left.right.etype = "i32";
-      node.right.etype = "i32";
       break;
     case "i16":
       node.etype = "i32";
@@ -194,19 +198,13 @@ define(["wasm/ast"], function(wast) {
 	left: wast.BinaryOp({
 	  left: node,
 	  op: "<<",
-	  right: wast.ConstI32({
-	    value: 16
-	  }),
+	  right: this.constI32(16),
 	}),
 	op: ">>",
-	right: wast.ConstI32({
-	  value: 16
-	}),
+	right: this.constI32(16),
       });
       node.etype = "i32";
       node.left.etype = "i32";
-      node.left.right.etype = "i32";
-      node.right.etype = "i32";
       break;
     }
     return node;
@@ -217,8 +215,9 @@ define(["wasm/ast"], function(wast) {
     case "While":
       var body = [wast.If({
 	cond: this.not(node.cond),
-	t: [wast.Break({})],
-	f: null
+	t: [wast.Break({pos: null})],
+	f: null,
+	pos: null,
       })];
       body = body.concat(node.body);
       node = wast.Loop({
