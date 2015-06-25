@@ -143,14 +143,25 @@ define(["compilerutil", "wasm/ast"], function(compilerutil, wast) {
   };
 
   BinaryGenerator.prototype.generateLocalRef = function(index) {
+    if (!(index in this.func.locals)) {
+      throw Error(index);
+    }
     this.writer.u8(this.func.locals[index].remappedIndex);
   };
 
   BinaryGenerator.prototype.generateFuncRef = function(index) {
+    if (!(index in this.funcID)) {
+      console.log(this.funcID);
+      throw Error(index);
+    }
     this.writer.u8(this.funcID[index]);
   };
 
   BinaryGenerator.prototype.generateExternRef = function(index) {
+    if (!(index in this.externID)) {
+      console.log(this.externID);
+      throw Error(index);
+    }
     this.writer.u8(this.externID[index]);
   };
 
@@ -298,7 +309,7 @@ define(["compilerutil", "wasm/ast"], function(compilerutil, wast) {
       break;
       break;
     case "Break":
-      this.writer.u8(ops.getlocal.break_);
+      this.writer.u8(ops.break_.bytecode);
       this.writer.u8(0);
       break;
     default:
@@ -430,8 +441,8 @@ define(["compilerutil", "wasm/ast"], function(compilerutil, wast) {
       this.writer.u8(1); // Not an extern.
     };
 
-    for (var i in module.funcs) {
-      var func = module.funcs[i];
+    for (var f = 0; f < module.funcs.length; f++) {
+      var func = module.funcs[f];
 
       // Bucket locals by type.
       var i32Locals = [];
@@ -470,7 +481,7 @@ define(["compilerutil", "wasm/ast"], function(compilerutil, wast) {
 	localIndex += 1;
       }
 
-      this.funcID[i] = uid;
+      this.funcID[f] = uid;
       uid += 1;
 
       var argTypes = [];
@@ -481,21 +492,21 @@ define(["compilerutil", "wasm/ast"], function(compilerutil, wast) {
 
       this.generateStringRef(func.name.text);
 
-      funcBegin[i] = this.writer.allocU32();
-      funcEnd[i] = this.writer.allocU32();
+      funcBegin[f] = this.writer.allocU32();
+      funcEnd[f] = this.writer.allocU32();
 
       this.writer.u16(i32Locals.length);
       this.writer.u16(f32Locals.length);
       this.writer.u16(f64Locals.length);
 
-      this.writer.u8(func.exportFunc);
+      this.writer.u8(func.exportFunc | 0);
       this.writer.u8(0); // Not an extern.
     };
 
-    for (var i in module.funcs) {
-      this.writer.patchU32(funcBegin[i], this.writer.pos);
-      this.generateFunc(module.funcs[i]);
-      this.writer.patchU32(funcEnd[i], this.writer.pos);
+    for (var f in module.funcs) {
+      this.writer.patchU32(funcBegin[f], this.writer.pos);
+      this.generateFunc(module.funcs[f]);
+      this.writer.patchU32(funcEnd[f], this.writer.pos);
     };
 
     this.generateStringTable();
