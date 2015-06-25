@@ -9,10 +9,28 @@ define(
       parse(getText("code"));
     };
 
+    document.getElementById("animate").onclick = pumpAnimation;
     document.getElementById("eval").onclick = reeval;
     document.getElementById("show").onclick = updateVisibility;
     updateVisibility();
     reeval();
+  };
+
+  var last = 0;
+
+  var pumpAnimation = function() {
+    if (document.getElementById("animate").checked && instance.frame !== undefined) {
+      if (last == 0) {
+	last = Date.now();
+      }
+      var current = Date.now();
+      var dt = (current - last) / 1000;
+      last = current;
+      instance.frame(dt);
+      requestAnimationFrame(pumpAnimation);
+    } else {
+      last = 0;
+    }
   };
 
   var updateVisibility = function() {
@@ -145,6 +163,8 @@ define(
     var buffer = wasm_backend_v8.generate(module);
     console.log(new Uint8Array(buffer));
     console.log(buffer.byteLength);
+
+    pumpAnimation();
   };
 
   var run = function() {

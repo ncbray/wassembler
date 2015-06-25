@@ -8,14 +8,16 @@ import func cosF32(f32) f32;
 
 import func flipBuffer(i32) void;
 
+memory phase 4 align 4;
+
 memory frame_buffer 262144 align 4;
 
-func shade(x f32, y f32) i32 {
+func shade(x f32, y f32, t f32) i32 {
   var xOff f32 = x - 0.5f;
   var yOff f32 = y - 0.5f;
   var rsq f32 = xOff * xOff + yOff * yOff;
   var radius f32 = sqrtF32(rsq);
-  var r f32 = cosF32(radius * 100.0f);
+  var r f32 = cosF32(radius * 100.0f - t * 3.0f);
   var g f32 = x;
   var b f32 = y;
   var a f32 = 1.0f;
@@ -38,7 +40,8 @@ func packColor(r f32, g f32, b f32, a f32) i32 {
   return f2b(a) << 24 | f2b(sqrtF32(b)) << 16 | f2b(sqrtF32(g)) << 8 | f2b(sqrtF32(r));
 }
 
-export func main() void {
+func render() void {
+  var p f32 = loadF32(phase);
   var y i32 = 0;
 
   while (y < 256) {
@@ -46,11 +49,20 @@ export func main() void {
     var x i32 = 0;
     while (x < 256) {
       var xAmt f32 = f32(x) / 256.0f;
-      var color i32 = shade(xAmt, yAmt);
+      var color i32 = shade(xAmt, yAmt, p);
       storeI32(frame_buffer + (y * 256 + x) * 4, color);
       x = x + 1;
     }
     y = y + 1;
   }
   flipBuffer(frame_buffer);
+}
+
+export func frame(dt f32) void {
+  storeF32(phase, loadF32(phase) + dt);
+  render();
+}
+
+export func main() void {
+  render();
 }
