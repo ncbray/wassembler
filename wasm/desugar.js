@@ -151,6 +151,24 @@ define(["wasm/ast"], function(wast) {
     return node;
   };
 
+  Desugar.prototype.constF32 = function(value) {
+    var node = wast.ConstF32({
+      value: value,
+      pos: null,
+    });
+    node.etype = "f32";
+    return node;
+  };
+
+  Desugar.prototype.constF64 = function(value) {
+    var node = wast.ConstF64({
+      value: value,
+      pos: null,
+    });
+    node.etype = "f64";
+    return node;
+  };
+
   Desugar.prototype.processExpr = function(node) {
     switch (node.type) {
     case "Coerce":
@@ -165,7 +183,24 @@ define(["wasm/ast"], function(wast) {
     case "PrefixOp":
       switch(node.op) {
       case "!":
-	node = peelBoolNot(node);
+	// No floating point "not" operation, lower into a compare.
+	if (node.expr.etype == "f32") {
+	  node = wast.BinaryOp({
+	    left: node.expr,
+	    op: "==",
+	    right: this.constF32(0.0),
+	  });
+	  node.etype = "i32";
+	} else if (node.expr.etype == "f64") {
+	  node = wast.BinaryOp({
+	    left: node.expr,
+	    op: "==",
+	    right: this.constF64(0.0),
+	  });
+	  node.etype = "i32";
+	} else {
+          node = peelBoolNot(node);
+        }
       break;
       }
     case "BinaryOp":
