@@ -7,7 +7,7 @@ define(["base", "wasm/desugar", "v8/backend"], function(base, desugar, wasm_back
     },
   };
 
-  var createNormal = function(text, assert) {
+  var createNormal = function(text, assert, suppress_v8) {
     var status = new base.Status(function(message) { assert.ok(false, message); });
 
     var ast = base.frontend("test", text, parser, status);
@@ -18,8 +18,10 @@ define(["base", "wasm/desugar", "v8/backend"], function(base, desugar, wasm_back
     var module = base.astToCompiledJS(ast, status);
     assert.notEqual(module, null, "backend");
 
-    // Smoke test the V8 backend.
-    wasm_backend_v8.generate(ast);
+    if (!suppress_v8) {
+      // Smoke test the V8 backend.
+      wasm_backend_v8.generate(ast);
+    }
 
     return module(externs);
   };
@@ -465,6 +467,16 @@ define(["base", "wasm/desugar", "v8/backend"], function(base, desugar, wasm_back
       assert.notOk("foo" in m);
       assert.ok("bar" in m);
       assert.equal(m.bar(11), 38.5);
+    });
+
+
+    QUnit.module(mode_name + " tls");
+
+    QUnit.test("simple", function(assert) {
+      // HACK suppress the v8 backend.
+      var m = create("tls temp i32; export func main(n i32) i32 {temp = n; temp = temp + 1; return temp;}", assert, true);
+      assert.equal(m.main(11), 12);
+      assert.equal(m.main(-2), -1);
     });
   };
 

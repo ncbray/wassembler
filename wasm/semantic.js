@@ -78,31 +78,34 @@ define(["compilerutil", "wasm/ast", "wasm/typeinfo"], function(compilerutil, was
 	var expr = wast.GetLocal({index: ref.index, pos: getPos(expr)});
 	this.setExprType(expr, ref.ltype);
 	break;
-      } else {
-	var ref = this.moduleScope[name];
-	if (ref !== undefined) {
-	  switch(ref.type) {
-	  case "Function":
-	    expr = wast.GetFunction({index: ref.index, pos: getPos(expr)});
-	    break;
-          case "Extern":
-	    expr = wast.GetExtern({index: ref.index, pos: getPos(expr)});
-	    break;
-          case "MemoryLabel":
-	    expr = wast.ConstI32({
-	      value: ref.ptr,
-	      pos: getPos(expr),
-	    });
-	    this.setExprType(expr, "i32");
-	    break;
-	  default:
-	    throw Error(ref.type);
-	  }
-	  break;
-	} else {
-	  this.error("cannot resolve name - " + name, expr.name.pos);
-	}
       }
+
+      var ref = this.moduleScope[name];
+      if (ref !== undefined) {
+	switch(ref.type) {
+	case "Function":
+	  expr = wast.GetFunction({index: ref.index, pos: getPos(expr)});
+	  break;
+        case "Extern":
+	  expr = wast.GetExtern({index: ref.index, pos: getPos(expr)});
+	  break;
+        case "TlsDecl":
+	  expr = wast.GetTls({index: ref.index, pos: getPos(expr)});
+	  this.setExprType(expr, ref.mtype);
+	  break;
+        case "MemoryLabel":
+	  expr = wast.ConstI32({
+	    value: ref.ptr,
+	    pos: getPos(expr),
+	  });
+	  this.setExprType(expr, "i32");
+	  break;
+	default:
+	  throw Error(ref.type);
+	}
+	break;
+      }
+      this.error("cannot resolve name - " + name, expr.name.pos);
       break;
     case "SetName":
       var name = expr.name.text;
@@ -115,9 +118,24 @@ define(["compilerutil", "wasm/ast", "wasm/typeinfo"], function(compilerutil, was
 	});
 	this.setExprType(expr, "void");
 	break;
-      } else {
-	this.error("cannot assign to name - " + name, expr.name.pos);
       }
+      var ref = this.moduleScope[name];
+      if (ref !== undefined) {
+	switch(ref.type) {
+	case "TlsDecl":
+	  expr = wast.SetTls({
+	    index: ref.index,
+	    value: this.processExpr(expr.value),
+	    pos: getPos(expr),
+	  });
+	  this.setExprType(expr, "void");
+	  break;
+	default:
+	  this.error("cannot assign to name - " + name, expr.name.pos);
+	}
+        break;
+      }
+      this.error("assigning to unknown name - " + name, expr.name.pos);
       break;
     case "Load":
       expr.address = this.processExpr(expr.address);
@@ -380,6 +398,10 @@ define(["compilerutil", "wasm/ast", "wasm/typeinfo"], function(compilerutil, was
     func.returnType = this.processType(func.returnType);
   };
 
+  SemanticPass.prototype.processTlsDecl = function(node) {
+    node.mtype = this.processType(node.mtype);
+  };
+
   SemanticPass.prototype.registerInModule = function(name, decl) {
     if (name.text in this.moduleScope) {
       this.error("attempted to redefine name - " + name.text, name.pos);
@@ -444,6 +466,13 @@ define(["compilerutil", "wasm/ast", "wasm/typeinfo"], function(compilerutil, was
     for (var i in module.memory) {
       this.indexMemoryDecl(module.memory[i]);
     }
+
+    for (var i = 0; i < module.tls.length; i++) {
+      var v = module.tls[i];
+      v.index = i;
+      this.registerInModule(v.name, v);
+      this.processTlsDecl(v);
+    }
   };
 
   SemanticPass.prototype.evalConstExpr = function(node) {
@@ -465,6 +494,7 @@ define(["compilerutil", "wasm/ast", "wasm/typeinfo"], function(compilerutil, was
     var externs = [];
     var funcs = [];
     var memory = [];
+    var tls = [];
 
     var config = {};
 
@@ -494,6 +524,9 @@ define(["compilerutil", "wasm/ast", "wasm/typeinfo"], function(compilerutil, was
           current[item.path[item.path.length - 1]] = this.evalConstExpr(item.value);
 	}
 	break;
+      case "TlsDecl":
+	tls.push(decl);
+	break;
       default:
 	console.log(decl);
 	throw decl.type;
@@ -507,6 +540,7 @@ define(["compilerutil", "wasm/ast", "wasm/typeinfo"], function(compilerutil, was
       externs: externs,
       funcs: funcs,
       memory: memory,
+      tls: tls,
     });
 
     this.module = module;

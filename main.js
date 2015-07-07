@@ -157,12 +157,12 @@ define(
     }
     appendText("terminal", "\nresult: " + result);
 
-    // Generate binary encoding
-    var buffer = wasm_backend_v8.generate(module);
-    console.log(new Uint8Array(buffer));
-    console.log(buffer.byteLength);
-
     pumpAnimation();
+
+    // Generate binary encoding
+    //var buffer = wasm_backend_v8.generate(module);
+    //console.log(new Uint8Array(buffer));
+    //console.log(buffer.byteLength);
   };
 
   var run = function() {

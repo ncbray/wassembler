@@ -71,6 +71,21 @@ define(['astutil'], function(astutil) {
       ],
     },
     {
+      name: "GetTls",
+      fields: [
+	{name: "index"},
+	{name: "pos"},
+      ],
+    },
+    {
+      name: "SetTls",
+      fields: [
+	{name: "index"},
+	{name: "value"},
+	{name: "pos"},
+      ],
+    },
+    {
       name: "Load",
       fields: [
 	{name: "mtype"},
@@ -216,6 +231,13 @@ define(['astutil'], function(astutil) {
       ],
     },
     {
+      name: "TlsDecl",
+      fields: [
+	{name: "name"},
+	{name: "mtype"},
+      ],
+    },
+    {
       name: "MemoryAlign",
       fields: [
 	{name: "size"},
@@ -265,6 +287,7 @@ define(['astutil'], function(astutil) {
 	{name: "externs"},
 	{name: "funcs"},
 	{name: "memory"},
+        {name: "tls"},
       ],
     },
     {

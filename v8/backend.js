@@ -183,6 +183,8 @@ define(["compilerutil", "wasm/ast"], function(compilerutil, wast) {
       this.writer.u8(ops.getlocal.bytecode);
       this.generateLocalRef(expr.index);
       break;
+    case "GetTls":
+      throw Error("TLS not supported in V8 backend.");
     case "Load":
       this.writer.u8(ops.getheap.bytecode);
       this.generateMemType(expr.mtype);
@@ -341,6 +343,8 @@ define(["compilerutil", "wasm/ast"], function(compilerutil, wast) {
       this.generateLocalRef(expr.index);
       this.generateExpr(expr.value);
       break;
+    case "SetTls":
+      throw Error("TLS not supported in V8 backend.");
     default:
       this.generateExpr(expr);
     };

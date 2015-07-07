@@ -247,6 +247,12 @@ import = "import" EOT S "func" EOT S name:ident S "(" S args:typeList S ")" S r:
   });
 }
 
+tls = "tls" EOT S name:ident S t:typeRef S ";" {
+  return wast.TlsDecl({
+    name: name,
+    mtype: t,
+  });
+}
 
 memoryAlign = "align" EOT S size:number S ";" {
   return wast.MemoryAlign({size: size})
@@ -278,7 +284,7 @@ memoryDecl = "memory" EOT S "{" S d:memoryDirectiveList S "}" {
   });
 }
 
-decl = funcdecl / import / memoryDecl / config
+decl = funcdecl / import / memoryDecl / tls / config
 
 declList = (first:decl rest:(S d:decl {return d;})* {return buildList(first, rest);}) / {return [];}
 

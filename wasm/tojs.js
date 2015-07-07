@@ -37,6 +37,10 @@ define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
     return this.module.externs[index].name.text;
   };
 
+  JSTranslator.prototype.tlsName = function(index) {
+    return this.module.tls[index].name.text;
+  };
+
   JSTranslator.prototype.implicitType = function(expr) {
     switch (expr.type) {
     case "Call":
@@ -133,6 +137,10 @@ define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
     case "GetLocal":
       return jast.GetName({
 	name: this.localName(expr.index),
+      });
+    case "GetTls":
+      return jast.GetName({
+	name: this.tlsName(expr.index),
       });
     case "Load":
       if (!(expr.mtype in typeToArrayName)) throw Error(expr.mtype);
@@ -262,6 +270,14 @@ define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
       result.push(jast.Assign({
 	target: jast.GetName({
 	  name: this.localName(stmt.index),
+	}),
+	value: this.processExpr(stmt.value),
+      }));
+      break;
+    case "SetTls":
+      result.push(jast.Assign({
+	target: jast.GetName({
+	  name: this.tlsName(stmt.index),
 	}),
 	value: this.processExpr(stmt.value),
       }));
@@ -525,6 +541,7 @@ define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
       }),
     }));
 
+    // Foreign functions.
     for (var i = 0; i < module.externs.length; i++) {
       var extern = module.externs[i];
       body.push(jast.VarDecl({
@@ -535,6 +552,15 @@ define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
 	  }),
 	  attr: extern.name.text,
 	}),
+      }));
+    }
+
+    // Thread local storage (globals).
+    for (var i = 0; i < module.tls.length; i++) {
+      var v = module.tls[i];
+      body.push(jast.VarDecl({
+	name: v.name.text,
+	expr: jast.ConstNum({value: 0}), // TODO type coercion.
       }));
     }
 

@@ -7,6 +7,7 @@ define(["wasm/ast"], function(wast) {
   BottomUp.prototype.processExpr = function(node) {
     switch (node.type) {
     case "GetLocal":
+    case "GetTls":
     case "ConstI32":
     case "ConstF32":
     case "ConstF64":
@@ -44,6 +45,7 @@ define(["wasm/ast"], function(wast) {
   BottomUp.prototype.processStmt = function(node, out) {
     switch (node.type) {
     case "SetLocal":
+    case "SetTls":
       node.value = this.processExpr(node.value);
       break;
     case "Return":
