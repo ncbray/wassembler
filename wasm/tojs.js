@@ -352,23 +352,13 @@ define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
   JSTranslator.prototype.systemWrapper = function(module, generated) {
     var body = [];
 
-    var stdlib = [];
-
-    for (var i = 0; i < stdlibNames.length; i++) {
-      var name = stdlibNames[i];
-      stdlib.push(jast.KeyValue({
-	key: name,
-	value: jast.GetName({name: name}),
-      }));
-    }
-
+    // The asm(ish) code.
     body.push(jast.VarDecl({
-      name: "stdlib",
-      expr: jast.CreateObject({
-	args: stdlib
-      }),
+      name: "module",
+      expr: generated,
     }));
 
+    // Create and initialize memory.
     body.push(jast.VarDecl({
       name: "buffer",
       expr: jast.New({
@@ -380,13 +370,25 @@ define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
 	],
       }),
     }));
-
     body = body.concat(this.initMemory(module));
 
+    // Create stdlib structure.
+    var stdlib = [];
+    for (var i = 0; i < stdlibNames.length; i++) {
+      var name = stdlibNames[i];
+      stdlib.push(jast.KeyValue({
+	key: name,
+	value: jast.GetName({name: name}),
+      }));
+    }
     body.push(jast.VarDecl({
-      name: "module",
-      expr: generated,
+      name: "stdlib",
+      expr: jast.CreateObject({
+	args: stdlib
+      }),
     }));
+
+    // TODO foreign dictionary rewriting.
 
     // Create an instance.
     body.push(jast.VarDecl({
@@ -402,9 +404,7 @@ define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
     }));
 
 
-    // Non-asm utility functions exported to JS.
-
-
+    // Export non-asm utility functions to JS.
     body.push(jast.Assign({
       target: jast.GetAttr({
 	expr: jast.GetName({
@@ -446,6 +446,7 @@ define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
       }),
     }));
 
+    // Return the instance.
     body.push(jast.Return({
       expr: jast.GetName({name: "instance"}),
     }));
@@ -458,7 +459,6 @@ define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
 
   JSTranslator.prototype.initMemory = function(module) {
     var body = [];
-
 
     body.push(jast.VarDecl({
       name: "U8",
@@ -585,15 +585,15 @@ define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
       }),
     }));
 
-    return this.systemWrapper(module, jast.FunctionExpr({
+    return jast.FunctionExpr({
       params: ["stdlib", "foreign", "buffer"],
       body: body,
-    }));
+    });
   };
 
   var translate = function(module) {
     var translator = new JSTranslator();
-    return translator.processModule(module);
+    return translator.systemWrapper(module, translator.processModule(module));
   };
 
   return {
