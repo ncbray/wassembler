@@ -431,7 +431,52 @@ define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
       }),
     }));
 
-    // TODO foreign dictionary rewriting.
+    // Foreign dictionary rewriting.
+    var wrapped_foreign = [];
+    for (var i = 0; i < module.externs.length; i++) {
+      var extern = module.externs[i];
+
+      var wrapper =  jast.GetAttr({
+	expr: jast.GetName({
+	  name: "foreign",
+	}),
+	attr: extern.name.text,
+      });
+
+      var wrapper = jast.FunctionExpr({
+	params: [],
+	body: [
+	  jast.Return({
+	    expr: jast.Call({
+	      expr: jast.GetAttr({
+		expr: jast.GetAttr({
+		  expr: jast.GetName({
+		    name: "foreign",
+		  }),
+		  attr: extern.name.text,
+		}),
+		attr: "apply",
+	      }),
+	      args: [
+		jast.GetName({name: "instance"}),
+		jast.GetName({name: "arguments"}),
+	      ],
+	    }),
+	  }),
+	],
+      });
+
+      wrapped_foreign.push(jast.KeyValue({
+	key: extern.name.text,
+	value: wrapper,
+      }));
+    }
+    body.push(jast.VarDecl({
+      name: "wrapped_foreign",
+      expr: jast.CreateObject({
+	args: wrapped_foreign,
+      }),
+    }));
 
     // Create an instance.
     body.push(jast.VarDecl({
@@ -440,7 +485,7 @@ define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
 	expr: jast.GetName({name: "module"}),
 	args: [
 	  jast.GetName({name: "stdlib"}),
-	  jast.GetName({name: "foreign"}),
+	  jast.GetName({name: "wrapped_foreign"}),
 	  jast.GetName({name: "buffer"}),
 	],
       }),

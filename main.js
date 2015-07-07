@@ -86,7 +86,7 @@ define(
 	return Math.cos(value);
       },
       flipBuffer: function(ptr) {
-	instance._copyOut(ptr, c.width * c.height * 4, imageData.data.buffer, 0);
+	this._copyOut(ptr, c.width * c.height * 4, imageData.data.buffer, 0);
 	ctx.putImageData(imageData, 0, 0);
       },
       hook: function() {
