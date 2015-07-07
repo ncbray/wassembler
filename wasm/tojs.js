@@ -1,28 +1,55 @@
 define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
   var views = [
-    {type: "u8", array_type: "Uint8Array", array_name: "U8"},
-    {type: "i8", array_type: "Int8Array", array_name: "I8"},
-    {type: "u16", array_type: "Uint16Array", array_name: "U16"},
-    {type: "i16", array_type: "Int16Array", array_name: "I16"},
-    {type: "u32", array_type: "Uint32Array", array_name: "U32"},
-    {type: "i32", array_type: "Int32Array", array_name: "I32"},
-    {type: "f32", array_type: "Float32Array", array_name: "F32"},
-    {type: "f64", array_type: "Float64Array", array_name: "F64"},
+    {
+      type: "u8",
+      array_type: "Uint8Array",
+      array_name: "U8",
+    },
+    {
+      type: "i8",
+      array_type: "Int8Array",
+      array_name: "I8",
+    },
+    {
+      type: "u16",
+      array_type: "Uint16Array",
+      array_name: "U16",
+    },
+    {
+      type: "i16",
+      array_type: "Int16Array",
+      array_name: "I16",
+    },
+    {
+      type: "u32",
+      array_type: "Uint32Array",
+      array_name: "U32",
+    },
+    {
+      type: "i32",
+      array_type: "Int32Array",
+      array_name: "I32",
+    },
+    {
+      type: "f32",
+      array_type: "Float32Array",
+      array_name: "F32"
+    },
+    {
+      type: "f64",
+      array_type: "Float64Array",
+      array_name: "F64",
+    },
   ];
 
   var typeToArrayName = {};
-
-  var stdlibNames = [
-    "Math",
-  ];
-
   for (var i = 0; i < views.length; i++) {
     var view = views[i];
     typeToArrayName[view.type] = view.array_name;
-    stdlibNames.push(view.array_type);
   }
 
-  var JSTranslator = function() {
+  var JSTranslator = function(use_shared_memory) {
+    this.use_shared_memory = use_shared_memory;
   };
 
   JSTranslator.prototype.localName = function(index) {
@@ -40,6 +67,13 @@ define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
   JSTranslator.prototype.tlsName = function(index) {
     return this.module.tls[index].name.text;
   };
+
+  JSTranslator.prototype.arrayViewName = function(name) {
+    if (this.use_shared_memory) {
+      name = "Shared" + name;
+    }
+    return name;
+  }
 
   JSTranslator.prototype.implicitType = function(expr) {
     switch (expr.type) {
@@ -363,7 +397,7 @@ define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
       name: "buffer",
       expr: jast.New({
 	expr: jast.GetName({
-	  name: "ArrayBuffer",
+	  name: this.arrayViewName("ArrayBuffer"),
 	}),
 	args: [
 	  jast.ConstNum({value: module.config.memory.fixed}),
@@ -371,6 +405,15 @@ define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
       }),
     }));
     body = body.concat(this.initMemory(module));
+
+    // Derive stdlib names.
+    var stdlibNames = [
+      "Math",
+    ];
+
+    for (var i = 0; i < views.length; i++) {
+      stdlibNames.push(this.arrayViewName(views[i].array_type));
+    }
 
     // Create stdlib structure.
     var stdlib = [];
@@ -432,7 +475,7 @@ define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
 	    args: [
 	      jast.New({
 		expr: jast.GetName({
-		  name: "Uint8Array",
+		  name: this.arrayViewName("Uint8Array"),
 		}),
 		args: [
 		  jast.GetName({name: "buffer"}),
@@ -464,7 +507,7 @@ define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
       name: "U8",
       expr: jast.New({
 	expr: jast.GetName({
-	  name: "Uint8Array",
+	  name: this.arrayViewName("Uint8Array"),
 	}),
 	args: [
 	  jast.GetName({name: "buffer"}),
@@ -506,7 +549,7 @@ define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
 	    expr: jast.GetName({
 	      name: "stdlib",
 	    }),
-	    attr: view.array_type,
+	    attr: this.arrayViewName(view.array_type),
 	  }),
 	  args: [
 	    jast.GetName({name: "buffer"}),
@@ -591,8 +634,8 @@ define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
     });
   };
 
-  var translate = function(module) {
-    var translator = new JSTranslator();
+  var translate = function(module, use_shared_memory) {
+    var translator = new JSTranslator(use_shared_memory);
     return translator.systemWrapper(module, translator.processModule(module));
   };
 

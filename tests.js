@@ -15,7 +15,7 @@ define(["base", "wasm/desugar", "v8/backend"], function(base, desugar, wasm_back
 
     ast = desugar.process(ast);
 
-    var module = base.astToCompiledJS(ast, status);
+    var module = base.astToCompiledJS(ast, {}, status);
     assert.notEqual(module, null, "backend");
 
     if (!suppress_v8) {

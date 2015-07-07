@@ -64,8 +64,8 @@ define(
     return module;
   };
 
-  var astToCompiledJS = function(module, status, reportSrc) {
-    var translated = tojs.translate(module);
+  var astToCompiledJS = function(module, config, status, reportSrc) {
+    var translated = tojs.translate(module, config.use_shared_memory);
 
     var src = js_backend.generateExpr(translated)
     if (reportSrc) reportSrc(src);

@@ -5,3 +5,7 @@ body {
 textarea {
   font-family: monospace;
 }
+
+input:disabled + label {
+    color: #aaa;
+}

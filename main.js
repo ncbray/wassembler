@@ -12,6 +12,10 @@ define(
     document.getElementById("animate").onclick = pumpAnimation;
     document.getElementById("eval").onclick = reeval;
     document.getElementById("show").onclick = updateVisibility;
+    document.getElementById("shared_memory").onclick = reeval;
+
+    document.getElementById("shared_memory").disabled = window.SharedArrayBuffer === undefined;
+
     updateVisibility();
     reeval();
   };
@@ -19,7 +23,7 @@ define(
   var last = 0;
 
   var pumpAnimation = function() {
-    if (document.getElementById("animate").checked && instance.frame !== undefined) {
+    if (document.getElementById("animate").checked && instance && instance.frame !== undefined) {
       if (last == 0) {
 	last = Date.now();
       }
@@ -115,6 +119,8 @@ define(
     setText("generated", "");
     setText("terminal", "");
 
+    instance = null;
+
     status = new base.Status(function(message) {
       appendText("terminal", message + "\n");
     });
@@ -134,7 +140,11 @@ define(
 
     module = desugar.process(module);
 
-    var compiled = base.astToCompiledJS(module, status, reportSrc);
+    var config = {
+      use_shared_memory: document.getElementById("shared_memory").checked,
+    };
+
+    var compiled = base.astToCompiledJS(module, config, status, reportSrc);
     if (status.num_errors > 0) {
       return null;
     }
@@ -160,9 +170,9 @@ define(
     pumpAnimation();
 
     // Generate binary encoding
-    //var buffer = wasm_backend_v8.generate(module);
-    //console.log(new Uint8Array(buffer));
-    //console.log(buffer.byteLength);
+    var buffer = wasm_backend_v8.generate(module);
+    console.log(new Uint8Array(buffer));
+    console.log(buffer.byteLength);
   };
 
   var run = function() {
