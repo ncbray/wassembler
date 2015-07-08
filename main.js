@@ -66,24 +66,6 @@ define(
     var imageData = ctx.getImageData(0, 0, c.width, c.height);
 
     return {
-      sqrtF32: function(value) {
-	return Math.fround(Math.sqrt(value));
-      },
-      sqrtF64: function(value) {
-	return Math.sqrt(value);
-      },
-      sinF32: function(value) {
-	return Math.fround(Math.sin(value));
-      },
-      sinF64: function(value) {
-	return Math.sin(value);
-      },
-      cosF32: function(value) {
-	return Math.fround(Math.cos(value));
-      },
-      cosF64: function(value) {
-	return Math.cos(value);
-      },
       flipBuffer: function(ptr) {
 	var out = imageData.data.buffer;
 	this._copyOut(ptr, out.byteLength, out, 0);

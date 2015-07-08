@@ -450,6 +450,12 @@ define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
 
     // Foreign dictionary rewriting.
     var system_funcs = {
+      sqrtF32: true,
+      sqrtF64: true,
+      sinF32: true,
+      sinF64: true,
+      cosF32: true,
+      cosF64: true,
       alloc: true,
     };
     var wrapped_foreign = [];
