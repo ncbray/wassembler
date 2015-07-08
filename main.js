@@ -61,10 +61,8 @@ define(
 
   var makeExterns = function() {
     var c = document.getElementById("canvas");
-    var w = c.width;
-    var h = c.height;
     var ctx = c.getContext("2d");
-    var imageData = ctx.getImageData(0, 0, w, h);
+    var imageData = ctx.getImageData(0, 0, c.width, c.height);
 
     return {
       sqrtF32: function(value) {
@@ -86,11 +84,9 @@ define(
 	return Math.cos(value);
       },
       flipBuffer: function(ptr) {
-	this._copyOut(ptr, c.width * c.height * 4, imageData.data.buffer, 0);
+	var out = imageData.data.buffer;
+	this._copyOut(ptr, out.byteLength, out, 0);
 	ctx.putImageData(imageData, 0, 0);
-      },
-      hook: function() {
-	appendText("terminal", "hook called.\n");
       },
       printI32: function(value) {
 	appendText("terminal", "printI32: " + value + "\n");
