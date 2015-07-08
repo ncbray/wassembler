@@ -2,6 +2,8 @@ config {
   memory.fixed: 1048576
 }
 
+import func alloc(i32) i32;
+
 import func sqrtF32(f32) f32;
 import func sinF32(f32) f32;
 import func cosF32(f32) f32;
@@ -14,7 +16,7 @@ memory {
   phase: zero 4;
 
   align 4;
-  frame_buffer: zero 262144;
+  frame_buffer: zero 4;
 
   bitmap: hex
     0000000000000000
@@ -71,6 +73,7 @@ func packColor(r f32, g f32, b f32, a f32) i32 {
 }
 
 func render() void {
+  var buffer i32 = loadI32(frame_buffer);
   var p f32 = loadF32(phase);
   var y i32 = 0;
 
@@ -80,12 +83,12 @@ func render() void {
     while (x < 256) {
       var xAmt f32 = f32(x) / 256.0f;
       var color i32 = shade(xAmt, yAmt, p);
-      storeI32(frame_buffer + (y * 256 + x) * 4, color);
+      storeI32(buffer + (y * 256 + x) * 4, color);
       x = x + 1;
     }
     y = y + 1;
   }
-  flipBuffer(frame_buffer);
+  flipBuffer(buffer);
 }
 
 export func frame(dt f32) void {
@@ -94,5 +97,9 @@ export func frame(dt f32) void {
 }
 
 export func main() void {
+  // Allocate the frame buffer.
+  storeI32(frame_buffer, alloc(256 * 256 * 4));
+
+  // Render the first frame.
   render();
 }

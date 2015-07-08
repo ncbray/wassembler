@@ -443,6 +443,7 @@ define(["compilerutil", "wasm/ast", "wasm/typeinfo"], function(compilerutil, was
 	throw Error(m.type);
       }
     }
+    this.ptr = base + writer.pos;
     node.buffer = writer.getOutput();
   };
 
@@ -539,8 +540,9 @@ define(["compilerutil", "wasm/ast", "wasm/typeinfo"], function(compilerutil, was
       config: config,
       externs: externs,
       funcs: funcs,
-      memory: memory,
       tls: tls,
+      memory: memory,
+      top: 0,
     });
 
     this.module = module;
@@ -550,6 +552,7 @@ define(["compilerutil", "wasm/ast", "wasm/typeinfo"], function(compilerutil, was
 	this.processFunction(module.funcs[i]);
       }
     }
+    module.top = this.ptr;
     return module;
   };
 

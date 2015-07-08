@@ -286,8 +286,9 @@ define(['astutil'], function(astutil) {
 	{name: "config"},
 	{name: "externs"},
 	{name: "funcs"},
-	{name: "memory"},
         {name: "tls"},
+	{name: "memory"},
+	{name: "top"},
       ],
     },
     {

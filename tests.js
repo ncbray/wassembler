@@ -1,5 +1,6 @@
 define(["base", "wasm/desugar", "v8/backend"], function(base, desugar, wasm_backend_v8) {
   var parser = null;
+  var systemSrc = null;
 
   var externs = {
     addI8: function(a, b) {
@@ -15,7 +16,7 @@ define(["base", "wasm/desugar", "v8/backend"], function(base, desugar, wasm_back
 
     ast = desugar.process(ast);
 
-    var module = base.astToCompiledJS(ast, {}, status);
+    var module = base.astToCompiledJS(ast, systemSrc, {}, status);
     assert.notEqual(module, null, "backend");
 
     if (!suppress_v8) {
@@ -483,9 +484,13 @@ define(["base", "wasm/desugar", "v8/backend"], function(base, desugar, wasm_back
   defineTests("polyfill", createNormal);
 
   var run = function() {
-    base.getURL("wasm.pegjs").then(function(text) {
+    Promise.all([
+      base.getURL("wasm.pegjs"),
+      base.getURL("system.js"),
+    ]).then(function(values) {
       var status = new base.Status(function(message) { throw message; });
-      parser = base.createParser(text, status);
+      parser = base.createParser(values[0], status);
+      systemSrc = values[1];
       QUnit.start();
     });
   };

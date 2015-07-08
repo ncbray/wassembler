@@ -193,6 +193,18 @@ define(["compilerutil"], function(compilerutil) {
       this.writer.dedent();
       this.writer.out("}").eol();
       break;
+    case "InjectSource":
+      var lines = stmt.source.split("\n");
+      while (lines.length && lines[lines.length - 1] == "") {
+	lines.pop();
+      }
+      for (var i = 0; i < lines.length; i++) {
+	if (lines[i]) {
+          this.writer.out(lines[i]);
+        }
+        this.writer.eol();
+      }
+      break;
     default:
       this.generateExpr(stmt, 0);
       this.writer.out(";").eol();

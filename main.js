@@ -57,6 +57,7 @@ define(
     document.getElementById(pane).value += text;
   };
 
+  var systemSrc;
   var instance;
 
   var makeExterns = function() {
@@ -140,7 +141,7 @@ define(
       use_shared_memory: document.getElementById("shared_memory").checked,
     };
 
-    var compiled = base.astToCompiledJS(module, config, status, reportSrc);
+    var compiled = base.astToCompiledJS(module, systemSrc, config, status, reportSrc);
     if (status.num_errors > 0) {
       return null;
     }
@@ -174,7 +175,8 @@ define(
   var run = function() {
     Promise.all([
       base.getURL("wasm.pegjs"),
-      base.getURL(exampleFile)
+      base.getURL(exampleFile),
+      base.getURL("system.js"),
     ]).then(function(values) {
       status.setFilename("wasm.pegjs");
       parser = base.createParser(values[0], status);
@@ -184,6 +186,7 @@ define(
       }
 
       var code = values[1];
+      systemSrc = values[2];
       setupUI(code, reevaluate);
     }, function(err){
       setText("code", err);

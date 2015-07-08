@@ -383,13 +383,17 @@ define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
     });
   }
 
-  JSTranslator.prototype.systemWrapper = function(module, generated) {
+  JSTranslator.prototype.systemWrapper = function(module, system, generated) {
     var body = [];
 
     // The asm(ish) code.
     body.push(jast.VarDecl({
       name: "module",
       expr: generated,
+    }));
+
+    body.push(jast.InjectSource({
+      source: system,
     }));
 
     // Create and initialize memory.
@@ -405,6 +409,19 @@ define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
       }),
     }));
     body = body.concat(this.initMemory(module));
+
+    body.push(jast.Call({
+      expr: jast.GetAttr({
+	expr: jast.GetName({
+	  name: "system",
+	}),
+	attr: "setTop",
+      }),
+      args: [
+	jast.ConstNum({value: module.top}),
+      ],
+    }));
+
 
     // Derive stdlib names.
     var stdlibNames = [
@@ -432,39 +449,45 @@ define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
     }));
 
     // Foreign dictionary rewriting.
+    var system_funcs = {
+      alloc: true,
+    };
     var wrapped_foreign = [];
     for (var i = 0; i < module.externs.length; i++) {
       var extern = module.externs[i];
+      var wrapper;
 
-      var wrapper =  jast.GetAttr({
-	expr: jast.GetName({
-	  name: "foreign",
-	}),
-	attr: extern.name.text,
-      });
-
-      var wrapper = jast.FunctionExpr({
-	params: [],
-	body: [
-	  jast.Return({
-	    expr: jast.Call({
-	      expr: jast.GetAttr({
-		expr: jast.GetAttr({
-		  expr: jast.GetName({
-		    name: "foreign",
-		  }),
-		  attr: extern.name.text,
-		}),
-		attr: "apply",
-	      }),
-	      args: [
-		jast.GetName({name: "instance"}),
-		jast.GetName({name: "arguments"}),
-	      ],
-	    }),
+      if (extern.name.text in system_funcs) {
+	wrapper = jast.GetAttr({
+	  expr: jast.GetName({
+	    name: "system",
 	  }),
-	],
-      });
+	  attr: extern.name.text,
+	});
+      } else {
+	wrapper = jast.FunctionExpr({
+	  params: [],
+	  body: [
+	    jast.Return({
+	      expr: jast.Call({
+		expr: jast.GetAttr({
+		  expr: jast.GetAttr({
+		    expr: jast.GetName({
+		      name: "foreign",
+		    }),
+		    attr: extern.name.text,
+		  }),
+		  attr: "apply",
+		}),
+		args: [
+		  jast.GetName({name: "instance"}),
+		  jast.GetName({name: "arguments"}),
+		],
+	      }),
+	    }),
+	  ],
+	});
+      }
 
       wrapped_foreign.push(jast.KeyValue({
 	key: extern.name.text,
@@ -679,9 +702,9 @@ define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
     });
   };
 
-  var translate = function(module, use_shared_memory) {
+  var translate = function(module, system, use_shared_memory) {
     var translator = new JSTranslator(use_shared_memory);
-    return translator.systemWrapper(module, translator.processModule(module));
+    return translator.systemWrapper(module, system, translator.processModule(module));
   };
 
   return {

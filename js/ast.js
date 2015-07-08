@@ -115,6 +115,12 @@ define(["astutil"], function(astutil) {
 	{name: "body"},
       ],
     },
+    {
+      name: "InjectSource",
+      fields: [
+	{name: "source"},
+      ],
+    },
   ];
 
   return astutil.makeASTBuilder(schema);
