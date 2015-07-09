@@ -43,13 +43,22 @@ define(
     return result;
   };
 
-  var frontend = function(filename, text, parser, status, reportAST) {
-    status.setFilename(filename);
+  var frontend = function(systemWASMSrc, filename, text, parser, status, reportAST) {
+    status.setFilename("system.wasm");
+    var system = parse(systemWASMSrc, parser, status);
+    if (status.num_errors > 0) {
+      return null;
+    }
 
+    status.setFilename(filename);
     var parsed = parse(text, parser, status);
     if (status.num_errors > 0) {
       return null;
     }
+
+    parsed = wast.ParsedModule({
+      decls: system.decls.concat(parsed.decls),
+    });
 
     if (reportAST) reportAST(parsed);
 
@@ -68,8 +77,8 @@ define(
     return module;
   };
 
-  var astToCompiledJS = function(module, system, config, status, reportSrc) {
-    var translated = tojs.translate(module, system, config.use_shared_memory);
+  var astToCompiledJS = function(module, systemJSSrc, config, status, reportSrc) {
+    var translated = tojs.translate(module, systemJSSrc, config.use_shared_memory);
 
     var src = js_backend.generateExpr(translated)
     if (reportSrc) reportSrc(src);

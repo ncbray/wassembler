@@ -1,0 +1,9 @@
+config {
+  memory.fixed: 1048576
+}
+
+import func alloc(i32) i32;
+
+import func sqrtF32(f32) f32;
+import func sinF32(f32) f32;
+import func cosF32(f32) f32;
