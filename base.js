@@ -1,6 +1,6 @@
 define(
-    ["wasm/ast", "wasm/semantic", "wasm/tojs", "js/backend"],
-    function(wast, semantic, tojs, js_backend) {
+    ["wasm/ast", "wasm/semantic", "wasm/dce", "wasm/tojs", "js/backend"],
+  function(wast, semantic, dce, tojs, js_backend) {
   var getURL = function(url) {
     return new Promise(function(resolve, reject) {
       var req = new XMLHttpRequest();
@@ -58,6 +58,10 @@ define(
       return null;
     }
     status.setFilename("");
+
+    if (reportAST) reportAST(module);
+
+    module = dce.process(module);
 
     if (reportAST) reportAST(module);
 
