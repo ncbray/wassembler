@@ -75,7 +75,7 @@ define(["compilerutil", "wasm/ast", "wasm/typeinfo"], function(compilerutil, was
       var name = expr.name.text;
       var ref = this.localScope[name];
       if (ref !== undefined) {
-	var expr = wast.GetLocal({index: ref.index, pos: getPos(expr)});
+	var expr = wast.GetLocal({local: ref, pos: getPos(expr)});
 	this.setExprType(expr, ref.ltype);
 	break;
       }
@@ -84,13 +84,13 @@ define(["compilerutil", "wasm/ast", "wasm/typeinfo"], function(compilerutil, was
       if (ref !== undefined) {
 	switch(ref.type) {
 	case "Function":
-	  expr = wast.GetFunction({index: ref.index, pos: getPos(expr)});
+	  expr = wast.GetFunction({func: ref, pos: getPos(expr)});
 	  break;
         case "Extern":
-	  expr = wast.GetExtern({index: ref.index, pos: getPos(expr)});
+	  expr = wast.GetExtern({func: ref, pos: getPos(expr)});
 	  break;
         case "TlsDecl":
-	  expr = wast.GetTls({index: ref.index, pos: getPos(expr)});
+	  expr = wast.GetTls({tls: ref, pos: getPos(expr)});
 	  this.setExprType(expr, ref.mtype);
 	  break;
         case "MemoryLabel":
@@ -112,7 +112,7 @@ define(["compilerutil", "wasm/ast", "wasm/typeinfo"], function(compilerutil, was
       var ref = this.localScope[name];
       if (ref !== undefined) {
 	expr = wast.SetLocal({
-	  index: ref.index,
+	  local: ref,
 	  value: this.processExpr(expr.value),
 	  pos: getPos(expr),
 	});
@@ -124,7 +124,7 @@ define(["compilerutil", "wasm/ast", "wasm/typeinfo"], function(compilerutil, was
 	switch(ref.type) {
 	case "TlsDecl":
 	  expr = wast.SetTls({
-	    index: ref.index,
+	    tls: ref,
 	    value: this.processExpr(expr.value),
 	    pos: getPos(expr),
 	  });
@@ -191,14 +191,14 @@ define(["compilerutil", "wasm/ast", "wasm/typeinfo"], function(compilerutil, was
 	switch (expr.expr.type) {
 	case "GetFunction":
 	  expr = wast.CallDirect({
-	    func: expr.expr.index,
+	    func: expr.expr.func,
 	    args: expr.args,
 	    pos: getPos(expr),
 	  });
 	  break;
 	case "GetExtern":
 	  expr = wast.CallExternal({
-	    func: expr.expr.index,
+	    func: expr.expr.func,
 	    args: expr.args,
 	    pos: getPos(expr),
 	  });
@@ -217,8 +217,7 @@ define(["compilerutil", "wasm/ast", "wasm/typeinfo"], function(compilerutil, was
       if (!this.dead) {
 	switch (expr.type) {
 	case "CallDirect":
-	  var target = this.module.funcs[expr.func];
-
+	  var target = expr.func;
 	  if (expr.args.length != target.params.length) {
 	    this.error("argument count mismatch - got " + expr.args.length + ", but expected " + target.params.length, getPos(expr));
 	  }
@@ -235,8 +234,7 @@ define(["compilerutil", "wasm/ast", "wasm/typeinfo"], function(compilerutil, was
 	  }
 	  break;
 	case "CallExternal":
-	  var target = this.module.externs[expr.func];
-
+	  var target = expr.func;
 	  if (expr.args.length != target.args.length) {
 	    this.error("argument count mismatch - got " + expr.args.length + ", but expected " + target.args.length, getPos(expr));
 	  }
@@ -334,17 +332,17 @@ define(["compilerutil", "wasm/ast", "wasm/typeinfo"], function(compilerutil, was
     });
     this.func.locals.push(lcl);
     this.localScope[name] = lcl;
-    return lcl.index;
+    return lcl;
   };
 
   SemanticPass.prototype.processStmt = function(node, block) {
     switch (node.type) {
     case "VarDecl":
       var t = this.processType(node.vtype);
-      var index = this.createLocal(node.name.text, t);
+      var lcl = this.createLocal(node.name.text, t);
       if (node.value) {
 	node = wast.SetLocal({
-	  index: index,
+	  local: lcl,
 	  value: this.processExpr(node.value),
 	  pos: getPos(node),
 	});
@@ -378,7 +376,7 @@ define(["compilerutil", "wasm/ast", "wasm/typeinfo"], function(compilerutil, was
 
     for (var i in func.params) {
       var p = func.params[i];
-      p.index = this.createLocal(p.name.text, p.ptype);
+      p.local = this.createLocal(p.name.text, p.ptype);
     }
     func.body = this.processBlock(func.body);
   };

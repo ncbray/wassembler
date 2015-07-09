@@ -52,20 +52,20 @@ define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
     this.use_shared_memory = use_shared_memory;
   };
 
-  JSTranslator.prototype.localName = function(index) {
-    return this.func.locals[index].name;
+  JSTranslator.prototype.localName = function(local) {
+    return local.name;
   };
 
-  JSTranslator.prototype.funcName = function(index) {
-    return this.module.funcs[index].name.text;
+  JSTranslator.prototype.funcName = function(func) {
+    return func.name.text;
   };
 
-  JSTranslator.prototype.externName = function(index) {
-    return this.module.externs[index].name.text;
+  JSTranslator.prototype.externName = function(func) {
+    return func.name.text;
   };
 
-  JSTranslator.prototype.tlsName = function(index) {
-    return this.module.tls[index].name.text;
+  JSTranslator.prototype.tlsName = function(tls) {
+    return tls.name.text;
   };
 
   JSTranslator.prototype.arrayViewName = function(name) {
@@ -170,11 +170,11 @@ define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
       });
     case "GetLocal":
       return jast.GetName({
-	name: this.localName(expr.index),
+	name: this.localName(expr.local),
       });
     case "GetTls":
       return jast.GetName({
-	name: this.tlsName(expr.index),
+	name: this.tlsName(expr.tls),
       });
     case "Load":
       if (!(expr.mtype in typeToArrayName)) throw Error(expr.mtype);
@@ -303,7 +303,7 @@ define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
     case "SetLocal":
       result.push(jast.Assign({
 	target: jast.GetName({
-	  name: this.localName(stmt.index),
+	  name: this.localName(stmt.local),
 	}),
 	value: this.processExpr(stmt.value),
       }));
@@ -311,7 +311,7 @@ define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
     case "SetTls":
       result.push(jast.Assign({
 	target: jast.GetName({
-	  name: this.tlsName(stmt.index),
+	  name: this.tlsName(stmt.tls),
 	}),
 	value: this.processExpr(stmt.value),
       }));

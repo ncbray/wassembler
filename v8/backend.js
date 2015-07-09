@@ -142,27 +142,16 @@ define(["compilerutil", "wasm/ast"], function(compilerutil, wast) {
     this.writer = new compilerutil.BinaryWriter();
   };
 
-  BinaryGenerator.prototype.generateLocalRef = function(index) {
-    if (!(index in this.func.locals)) {
-      throw Error(index);
-    }
-    this.writer.u8(this.func.locals[index].remappedIndex);
+  BinaryGenerator.prototype.generateLocalRef = function(local) {
+    this.writer.u8(local.remappedIndex);
   };
 
-  BinaryGenerator.prototype.generateFuncRef = function(index) {
-    if (!(index in this.funcID)) {
-      console.log(this.funcID);
-      throw Error(index);
-    }
-    this.writer.u8(this.funcID[index]);
+  BinaryGenerator.prototype.generateFuncRef = function(func) {
+    this.writer.u8(this.funcID[func.index]);
   };
 
-  BinaryGenerator.prototype.generateExternRef = function(index) {
-    if (!(index in this.externID)) {
-      console.log(this.externID);
-      throw Error(index);
-    }
-    this.writer.u8(this.externID[index]);
+  BinaryGenerator.prototype.generateExternRef = function(func) {
+    this.writer.u8(this.externID[func.index]);
   };
 
   BinaryGenerator.prototype.generateExpr = function(expr) {
@@ -181,7 +170,7 @@ define(["compilerutil", "wasm/ast"], function(compilerutil, wast) {
       break;
     case "GetLocal":
       this.writer.u8(ops.getlocal.bytecode);
-      this.generateLocalRef(expr.index);
+      this.generateLocalRef(expr.local);
       break;
     case "GetTls":
       throw Error("TLS not supported in V8 backend.");
@@ -340,7 +329,7 @@ define(["compilerutil", "wasm/ast"], function(compilerutil, wast) {
       break;
     case "SetLocal":
       this.writer.u8(ops.setlocal.bytecode);
-      this.generateLocalRef(expr.index);
+      this.generateLocalRef(expr.local);
       this.generateExpr(expr.value);
       break;
     case "SetTls":

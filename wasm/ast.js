@@ -44,28 +44,28 @@ define(['astutil'], function(astutil) {
     {
       name: "GetFunction",
       fields: [
-	{name: "index"},
+	{name: "func"},
 	{name: "pos"},
       ],
     },
     {
       name: "GetExtern",
       fields: [
-	{name: "index"},
+	{name: "func"},
 	{name: "pos"},
       ],
     },
     {
       name: "GetLocal",
       fields: [
-	{name: "index"},
+	{name: "local"},
 	{name: "pos"},
       ],
     },
     {
       name: "SetLocal",
       fields: [
-	{name: "index"},
+	{name: "local"},
 	{name: "value"},
 	{name: "pos"},
       ],
@@ -73,14 +73,14 @@ define(['astutil'], function(astutil) {
     {
       name: "GetTls",
       fields: [
-	{name: "index"},
+	{name: "tls"},
 	{name: "pos"},
       ],
     },
     {
       name: "SetTls",
       fields: [
-	{name: "index"},
+	{name: "tls"},
 	{name: "value"},
 	{name: "pos"},
       ],
