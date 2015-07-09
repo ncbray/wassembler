@@ -383,13 +383,18 @@ define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
     });
   }
 
-  JSTranslator.prototype.systemWrapper = function(module, system, generated) {
+  JSTranslator.prototype.systemWrapper = function(module, system, use_shared_memory, generated) {
     var body = [];
 
     // The asm(ish) code.
     body.push(jast.VarDecl({
       name: "module",
       expr: generated,
+    }));
+
+    body.push(jast.VarDecl({
+      name: "threading_supported",
+      expr: jast.ConstNum({value: use_shared_memory | 0}),
     }));
 
     body.push(jast.InjectSource({
@@ -450,13 +455,16 @@ define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
 
     // Foreign dictionary rewriting.
     var system_funcs = {
+      alloc: true,
+
       sqrtF32: true,
       sqrtF64: true,
       sinF32: true,
       sinF64: true,
       cosF32: true,
       cosF64: true,
-      alloc: true,
+
+      threadingSupported: true,
     };
     var wrapped_foreign = [];
     for (var i = 0; i < module.externs.length; i++) {
@@ -710,7 +718,7 @@ define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
 
   var translate = function(module, system, use_shared_memory) {
     var translator = new JSTranslator(use_shared_memory);
-    return translator.systemWrapper(module, system, translator.processModule(module));
+    return translator.systemWrapper(module, system, use_shared_memory, translator.processModule(module));
   };
 
   return {

@@ -30,3 +30,8 @@ system.cosF32 = function(value) {
 system.cosF64 = function(value) {
   return Math.cos(value);
 };
+
+// Threading
+system.threadingSupported = function() {
+  return threading_supported;
+};
