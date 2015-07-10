@@ -7,3 +7,9 @@ import func alloc(i32) i32;
 import func sqrtF32(f32) f32;
 import func sinF32(f32) f32;
 import func cosF32(f32) f32;
+
+import func threadingSupported() i32;
+
+import func atomicLoadI32(i32) i32;
+import func atomicStoreI32(i32, i32) void;
+import func atomicCompareExchangeI32(i32, i32, i32) i32;

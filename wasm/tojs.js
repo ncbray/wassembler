@@ -392,16 +392,7 @@ define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
       expr: generated,
     }));
 
-    body.push(jast.VarDecl({
-      name: "threading_supported",
-      expr: jast.ConstNum({value: use_shared_memory | 0}),
-    }));
-
-    body.push(jast.InjectSource({
-      source: system,
-    }));
-
-    // Create and initialize memory.
+    // Create memory.
     body.push(jast.VarDecl({
       name: "buffer",
       expr: jast.New({
@@ -413,8 +404,19 @@ define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
 	],
       }),
     }));
-    body = body.concat(this.initMemory(module));
 
+    // JS System functions.
+    body.push(jast.VarDecl({
+      name: "threading_supported",
+      expr: jast.ConstNum({value: use_shared_memory | 0}),
+    }));
+    body.push(jast.InjectSource({
+      source: system,
+    }));
+
+
+    // Initialize memory.
+    body = body.concat(this.initMemory(module));
     body.push(jast.Call({
       expr: jast.GetAttr({
 	expr: jast.GetName({
@@ -426,7 +428,6 @@ define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
 	jast.ConstNum({value: module.top}),
       ],
     }));
-
 
     // Derive stdlib names.
     var stdlibNames = [
@@ -453,25 +454,19 @@ define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
       }),
     }));
 
+    // Determine the names of system functions.
+    var system_externs = {};
+    for (var i = 0; i < module.system_externs.length; i++) {
+      system_externs[module.system_externs[i]] = true;
+    }
+
     // Foreign dictionary rewriting.
-    var system_funcs = {
-      alloc: true,
-
-      sqrtF32: true,
-      sqrtF64: true,
-      sinF32: true,
-      sinF64: true,
-      cosF32: true,
-      cosF64: true,
-
-      threadingSupported: true,
-    };
     var wrapped_foreign = [];
     for (var i = 0; i < module.externs.length; i++) {
       var extern = module.externs[i];
       var wrapper;
 
-      if (extern.name.text in system_funcs) {
+      if (extern.name.text in system_externs) {
 	wrapper = jast.GetAttr({
 	  expr: jast.GetName({
 	    name: "system",

@@ -33,6 +33,17 @@ define(
     return parser;
   };
 
+  var getExternNames = function(module) {
+    var names = [];
+    for (var i = 0; i < module.decls.length; i++) {
+      var decl = module.decls[i];
+      if (decl.type == "Extern") {
+	names.push(decl.name.text);
+      }
+    }
+    return names;
+  };
+
   var parse = function(text, parser, status) {
     var result = null;
     try {
@@ -49,6 +60,8 @@ define(
     if (status.num_errors > 0) {
       return null;
     }
+
+    var system_externs = getExternNames(system);
 
     status.setFilename(filename);
     var parsed = parse(text, parser, status);
@@ -73,6 +86,9 @@ define(
     module = dce.process(module);
 
     if (reportAST) reportAST(module);
+
+    // HACK
+    module.system_externs = system_externs;
 
     return module;
   };
