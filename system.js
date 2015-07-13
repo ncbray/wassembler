@@ -1,11 +1,8 @@
-var system = {};
+var createSystem = function(buffer, initial_top) {
+  var system = {};
 
-(function(system) {
   // Memory management
-  var top = 0;
-  system.setTop = function(ptr) {
-    top = ptr;
-  };
+  var top = initial_top;
   system.alloc = function(amt) {
     var temp = top;
     top += amt;
@@ -59,9 +56,10 @@ var system = {};
     };
   }
 
-})(system);
+  return system;
+};
 
-var augmentInstance = function(instance) {
+var augmentInstance = function(instance, buffer) {
   if (threading_supported) {
     instance._copyOut = function(srcOff, size, dst, dstOff) {
       new Uint8Array(dst, dstOff, size).set(new SharedUint8Array(buffer, srcOff, size));
@@ -72,3 +70,10 @@ var augmentInstance = function(instance) {
     };
   }
 };
+
+// Instantiate
+var buffer = createMemory();
+var system = createSystem(buffer, initial_top);
+var wrapped_foreign = wrap_foreign(system, foreign);
+var instance = module(stdlib, wrapped_foreign, buffer);
+augmentInstance(instance, buffer);

@@ -392,48 +392,10 @@ define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
       expr: generated,
     }));
 
-    // Create memory.
-    body.push(jast.VarDecl({
-      name: "buffer",
-      expr: jast.New({
-	expr: jast.GetName({
-	  name: this.arrayViewName("ArrayBuffer"),
-	}),
-	args: [
-	  jast.ConstNum({value: module.config.memory.fixed}),
-	],
-      }),
-    }));
-
-    // JS System functions.
-    body.push(jast.VarDecl({
-      name: "threading_supported",
-      expr: jast.ConstNum({value: use_shared_memory | 0}),
-    }));
-    body.push(jast.InjectSource({
-      source: system,
-    }));
-
-
-    // Initialize memory.
-    body = body.concat(this.initMemory(module));
-    body.push(jast.Call({
-      expr: jast.GetAttr({
-	expr: jast.GetName({
-	  name: "system",
-	}),
-	attr: "setTop",
-      }),
-      args: [
-	jast.ConstNum({value: module.top}),
-      ],
-    }));
-
     // Derive stdlib names.
     var stdlibNames = [
       "Math",
     ];
-
     for (var i = 0; i < views.length; i++) {
       stdlibNames.push(this.arrayViewName(views[i].array_type));
     }
@@ -453,6 +415,9 @@ define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
 	args: stdlib
       }),
     }));
+
+    // Initialize memory.
+    body = body.concat(this.initMemory(module));
 
     // Determine the names of system functions.
     var system_externs = {};
@@ -504,31 +469,26 @@ define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
       }));
     }
     body.push(jast.VarDecl({
-      name: "wrapped_foreign",
-      expr: jast.CreateObject({
-	args: wrapped_foreign,
-      }),
-    }));
-
-    // Create an instance.
-    body.push(jast.VarDecl({
-      name: "instance",
-      expr: jast.Call({
-	expr: jast.GetName({name: "module"}),
-	args: [
-	  jast.GetName({name: "stdlib"}),
-	  jast.GetName({name: "wrapped_foreign"}),
-	  jast.GetName({name: "buffer"}),
+      name: "wrap_foreign",
+      expr: jast.FunctionExpr({
+	params: ["system", "foreign"],
+	body: [
+	  jast.Return({
+	    expr: jast.CreateObject({
+	      args: wrapped_foreign,
+	    }),
+	  }),
 	],
       }),
     }));
 
-    // Export non-asm utility functions to JS.
-    body.push(jast.Call({
-      expr: jast.GetName({name: "augmentInstance"}),
-      args: [
-	jast.GetName({name: "instance"}),
-      ],
+    // JS System functions.
+    body.push(jast.VarDecl({
+      name: "threading_supported",
+      expr: jast.ConstNum({value: use_shared_memory | 0}),
+    }));
+    body.push(jast.InjectSource({
+      source: system,
     }));
 
     // Return the instance.
@@ -545,6 +505,20 @@ define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
   JSTranslator.prototype.initMemory = function(module) {
     var body = [];
 
+    // Create memory.
+    body.push(jast.VarDecl({
+      name: "buffer",
+      expr: jast.New({
+	expr: jast.GetName({
+	  name: this.arrayViewName("ArrayBuffer"),
+	}),
+	args: [
+	  jast.ConstNum({value: module.config.memory.fixed}),
+	],
+      }),
+    }));
+
+    // View for initializing memory.
     body.push(jast.VarDecl({
       name: "U8",
       expr: jast.New({
@@ -557,6 +531,7 @@ define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
       }),
     }));
 
+    // Initialize memory.
     for (var i = 0; i < module.memory.length; i++) {
       var memory = module.memory[i];
       var u8 = new Uint8Array(memory.buffer);
@@ -574,7 +549,27 @@ define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
 	}));
       }
     }
-    return body;
+
+    body.push(jast.Return({
+      expr: jast.GetName({
+	name: "buffer",
+      }),
+    }));
+
+
+    return [
+      jast.VarDecl({
+	name: "initial_top",
+	expr: jast.ConstNum({value: module.top}),
+      }),
+      jast.VarDecl({
+	name: "createMemory",
+	expr: jast.FunctionExpr({
+	  params: [],
+	  body: body,
+	}),
+      }),
+    ];
   };
 
   JSTranslator.prototype.processModule = function(module) {
