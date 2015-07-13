@@ -45,6 +45,7 @@ func shade(x f32, y f32, t f32) i32 {
   return packColor(r, g, b, a);
 }
 
+// Convert [0.0, 1.0] to [0, 255].
 func f2b(v f32) i32 {
   var vi i32 = i32(v * 255.0f);
   if (vi < 0) {
@@ -56,16 +57,18 @@ func f2b(v f32) i32 {
   return vi;
 }
 
+// Convert a linear color value to a gamma-space byte.
 // Square root approximates gamma-correct rendering.
-func packColor(r f32, g f32, b f32, a f32) i32 {
-  return f2b(a) << 24 | f2b(sqrtF32(b)) << 16 | f2b(sqrtF32(g)) << 8 | f2b(sqrtF32(r));
+func l2g(v f32) i32 {
+  return f2b(sqrtF32(v));
 }
 
-func render() void {
-  var buffer i32 = loadI32(frame_buffer);
-  var p f32 = loadF32(phase);
-  var y i32 = 0;
+func packColor(r f32, g f32, b f32, a f32) i32 {
+  return f2b(a) << 24 | l2g(b) << 16 | l2g(g) << 8 | l2g(r);
+}
 
+func renderBuffer(buffer i32, p f32) void {
+  var y i32 = 0;
   while (y < 256) {
     var yAmt f32 = f32(y) / 256.0f;
     var x i32 = 0;
@@ -77,6 +80,12 @@ func render() void {
     }
     y = y + 1;
   }
+}
+
+func render() void {
+  var buffer i32 = loadI32(frame_buffer);
+  var p f32 = loadF32(phase);
+  renderBuffer(buffer, p);
   flipBuffer(buffer);
 }
 
@@ -88,6 +97,11 @@ export func frame(dt f32) void {
 export func main() void {
   // Allocate the frame buffer.
   storeI32(frame_buffer, alloc(256 * 256 * 4));
+
+  // Modify the bitmap to show we can use atomics.
+  if (threadingSupported()) {
+    atomicStoreI32(bitmap, 0xff);
+  }
 
   // Render the first frame.
   render();

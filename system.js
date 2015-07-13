@@ -16,17 +16,23 @@ var system = {};
   system.sqrtF32 = function(value) {
     return Math.fround(Math.sqrt(value));
   };
-  system.sqrtF64 = function(value) {
-    return Math.sqrt(value);
+  system.powF32 = function(base, exponent) {
+    return Math.fround(Math.pow(base, exponent));
   };
   system.sinF32 = function(value) {
     return Math.fround(Math.sin(value));
   };
-  system.sinF64 = function(value) {
-    return Math.sin(value);
-  };
   system.cosF32 = function(value) {
     return Math.fround(Math.cos(value));
+  };
+  system.sqrtF64 = function(value) {
+    return Math.sqrt(value);
+  };
+  system.powF64 = function(base, exponent) {
+    return Math.pow(base, exponent);
+  };
+  system.sinF64 = function(value) {
+    return Math.sin(value);
   };
   system.cosF64 = function(value) {
     return Math.cos(value);
