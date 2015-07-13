@@ -523,47 +523,12 @@ define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
       }),
     }));
 
-
     // Export non-asm utility functions to JS.
-    body.push(jast.Assign({
-      target: jast.GetAttr({
-	expr: jast.GetName({
-	  name: "instance",
-	}),
-	attr: "_copyOut",
-      }),
-      value: jast.FunctionExpr({
-	params: ["srcOff", "size", "dst", "dstOff"],
-	body: [
-	  jast.Call({
-	    expr: jast.GetAttr({
-	      expr: jast.New({
-		expr: jast.GetName({
-		  name: "Uint8Array",
-		}),
-		args: [
-		  jast.GetName({name: "dst"}),
-		  jast.GetName({name: "dstOff"}),
-		  jast.GetName({name: "size"}),
-		],
-	      }),
-	      attr: "set",
-	    }),
-	    args: [
-	      jast.New({
-		expr: jast.GetName({
-		  name: this.arrayViewName("Uint8Array"),
-		}),
-		args: [
-		  jast.GetName({name: "buffer"}),
-		  jast.GetName({name: "srcOff"}),
-		  jast.GetName({name: "size"}),
-		],
-	      }),
-	    ],
-	  }),
-	],
-      }),
+    body.push(jast.Call({
+      expr: jast.GetName({name: "augmentInstance"}),
+      args: [
+	jast.GetName({name: "instance"}),
+      ],
     }));
 
     // Return the instance.

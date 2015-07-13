@@ -58,4 +58,17 @@ var system = {};
       return Atomics.store(I32, addr >> 2, expected, value);
     };
   }
+
 })(system);
+
+var augmentInstance = function(instance) {
+  if (threading_supported) {
+    instance._copyOut = function(srcOff, size, dst, dstOff) {
+      new Uint8Array(dst, dstOff, size).set(new SharedUint8Array(buffer, srcOff, size));
+    };
+  } else {
+    instance._copyOut = function(srcOff, size, dst, dstOff) {
+      new Uint8Array(dst, dstOff, size).set(new Uint8Array(buffer, srcOff, size));
+    };
+  }
+};
