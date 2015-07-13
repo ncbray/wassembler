@@ -94,8 +94,16 @@ number "number" = digits:$([0-9]+) {
        return +digits;
 }
 
+hexDigit "hex digit" = [0-9a-fA-F]
+
 constant
-  = digits:($([0-9]+ "." [0-9]*)) "f" {
+  = "0x" digits:$(hexDigit+) {
+    return wast.ConstI32({
+      value: parseInt(digits, 16),
+      pos: getPos(),
+    });
+  }
+  / digits:($([0-9]+ "." [0-9]*)) "f" {
     return wast.ConstF32({
       value: Math.fround(+digits),
       pos: getPos(),
@@ -265,8 +273,6 @@ memoryLabel = name:ident S ":" {
 memoryZero = "zero" EOT S size:number S ";" {
   return wast.MemoryZero({size: size})
 }
-
-hexDigit "hex digit" = [0-9a-fA-F]
 
 hexByte = text:$(hexDigit hexDigit) {return parseInt(text, 16);}
 

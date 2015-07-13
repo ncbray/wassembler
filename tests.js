@@ -66,6 +66,11 @@ define(["base", "wasm/desugar", "v8/backend"], function(base, desugar, wasm_back
       assert.equal(m.main(), 11);
     });
 
+    QUnit.test("simple hex", function(assert) {
+      var m = create("export func main() i32 {return 0x123456;}", assert);
+      assert.equal(m.main(), 1193046);
+    });
+
     QUnit.test("add i32", function(assert) {
       var m = create("export func main(a i32, b i32) i32 {return a + b;}", assert);
       assert.equal(m.main(13, 2), 15);
