@@ -491,13 +491,8 @@ define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
       source: system,
     }));
 
-    // Return the instance.
-    body.push(jast.Return({
-      expr: jast.GetName({name: "instance"}),
-    }));
-
     return jast.FunctionExpr({
-      params: ["foreign"],
+      params: [],
       body: body,
     });
   };

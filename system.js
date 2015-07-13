@@ -71,9 +71,15 @@ var augmentInstance = function(instance, buffer) {
   }
 };
 
-// Instantiate
-var buffer = createMemory();
-var system = createSystem(buffer, initial_top);
-var wrapped_foreign = wrap_foreign(system, foreign);
-var instance = module(stdlib, wrapped_foreign, buffer);
-augmentInstance(instance, buffer);
+var instance;
+
+var createInstance = function(foreign) {
+  var buffer = createMemory();
+  var system = createSystem(buffer, initial_top);
+  var wrapped_foreign = wrap_foreign(system, foreign);
+  instance = module(stdlib, wrapped_foreign, buffer);
+  augmentInstance(instance, buffer);
+  return instance;
+}
+
+return createInstance;

@@ -96,7 +96,7 @@ define(
   var astToCompiledJS = function(module, systemJSSrc, config, status, reportSrc) {
     var translated = tojs.translate(module, systemJSSrc, config.use_shared_memory);
 
-    var src = js_backend.generateExpr(translated)
+    var src = js_backend.generateExpr(translated) + "()";
     if (reportSrc) reportSrc(src);
 
     // Compile the module. (Does not bind.)
