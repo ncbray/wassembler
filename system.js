@@ -1,8 +1,14 @@
-var createSystem = function(buffer, initial_top) {
+var createSystem = function(buffer) {
   var system = {};
+  var is_main_thread = false;
+
+  system.initMainThread = function(initial_top) {
+    top = initial_top;
+    is_main_thread = true;
+  };
 
   // Memory management
-  var top = initial_top;
+  var top = 0;
   system.alloc = function(amt) {
     var temp = top;
     top += amt;
@@ -75,10 +81,11 @@ var instance;
 
 var createInstance = function(foreign) {
   var buffer = createMemory();
-  var system = createSystem(buffer, initial_top);
+  var system = createSystem(buffer);
   var wrapped_foreign = wrap_foreign(system, foreign);
   instance = module(stdlib, wrapped_foreign, buffer);
   augmentInstance(instance, buffer);
+  system.initMainThread(initial_top);
   return instance;
 }
 
