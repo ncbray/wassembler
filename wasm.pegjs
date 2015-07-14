@@ -248,11 +248,17 @@ config = "config" EOT S "{" S items:configItemList S "}" {
 
 typeList = (first:typeRef rest:(S "," S t:typeRef {return t;})* {return buildList(first, rest);} / {return [];} )
 
-import = "import" EOT S "func" EOT S name:ident S "(" S args:typeList S ")" S r:returnType S ";" {
+funcType =  "(" S params:typeList S ")" S r:returnType {
+  return wast.FuncType({
+    paramTypes: params,
+    returnType: r,
+  });
+}
+
+import = "import" EOT S "func" EOT S name:ident S ftype:funcType S ";" {
   return wast.Extern({
     name: name,
-    args: args,
-    returnType: r,
+    ftype: ftype,
     pos: getPos(),
   });
 }

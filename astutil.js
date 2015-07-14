@@ -29,7 +29,11 @@ define([], function() {
 	    if (!(field.name in args)) {
 	      throw Error("Required AST field: " + decl.name + "." + field.name);
 	    }
-	    node[field.name] = args[field.name];
+	    var value = args[field.name];
+	    if (value === undefined) {
+	      throw Error("Undefined AST field: " + decl.name + "." + field.name);
+	    }
+	    node[field.name] = value;
 	  }
 	  return node;
         }

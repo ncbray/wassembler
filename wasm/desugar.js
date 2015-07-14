@@ -170,6 +170,9 @@ define(["wasm/ast", "wasm/traverse"], function(wast, traverse) {
   };
 
   Desugar.prototype.simplifyType = function(t) {
+    if (typeof t !== "string") {
+      throw Error(t);
+    }
     if (t in simplified_type) {
       return simplified_type[t];
     }
@@ -186,11 +189,16 @@ define(["wasm/ast", "wasm/traverse"], function(wast, traverse) {
     node.returnType = this.simplifyType(node.returnType);
   };
 
-  Desugar.prototype.processExtern = function(node) {
-    for (var i = 0; i < node.args.length; i++) {
-      node.args[i] = this.simplifyType(node.args[i]);
+  Desugar.prototype.simplifyFuncType = function(node) {
+    for (var i = 0; i < node.paramTypes.length; i++) {
+      node.paramTypes[i] = this.simplifyType(node.paramTypes[i]);
     }
     node.returnType = this.simplifyType(node.returnType);
+    return node;
+  };
+
+  Desugar.prototype.processExtern = function(node) {
+    node.ftype = this.simplifyFuncType(node.ftype);
   };
 
   var process = function(module, config) {

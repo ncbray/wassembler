@@ -235,17 +235,19 @@ define(["compilerutil", "wasm/ast", "wasm/typeinfo"], function(compilerutil, was
 	  break;
 	case "CallExternal":
 	  var target = expr.func;
-	  if (expr.args.length != target.args.length) {
-	    this.error("argument count mismatch - got " + expr.args.length + ", but expected " + target.args.length, getPos(expr));
+	  var ft = target.ftype;
+	  if (expr.args.length != ft.paramTypes.length) {
+	    this.error("argument count mismatch - got " + expr.args.length + ", but expected " + ft.paramTypes.length, getPos(expr));
 	  }
 
-	  this.setExprType(expr, target.returnType);
+	  this.setExprType(expr, ft.returnType);
 
 	  if (!this.dead) {
 	    for (var i = 0; i < expr.args.length; i++) {
 	      var arg = expr.args[i];
-	      if (arg.etype != target.args[i]) {
-		this.error("arg " + i + " - got " + arg.etype + ", but expected " + target.args[i], getPos(arg));
+	      var expected = ft.paramTypes[i];
+	      if (arg.etype != expected) {
+		this.error("arg " + i + " - got " + arg.etype + ", but expected " + expected, getPos(arg));
 	      }
 	    }
 	  }
@@ -386,11 +388,16 @@ define(["compilerutil", "wasm/ast", "wasm/typeinfo"], function(compilerutil, was
     func.body = this.processBlock(func.body);
   };
 
-  SemanticPass.prototype.processExternSig = function(extern) {
-    for (var i in extern.args) {
-      extern.args[i] = this.processType(extern.args[i]);
+  SemanticPass.prototype.processFunctionType = function(node) {
+    for (var i = 0; i < node.paramTypes.length; i++) {
+      node.paramTypes[i] = this.processType(node.paramTypes[i]);
     }
-    extern.returnType = this.processType(extern.returnType);
+    node.returnType = this.processType(node.returnType);
+    return node;
+  };
+
+  SemanticPass.prototype.processExternSig = function(extern) {
+    extern.ftype = this.processFunctionType(extern.ftype);
   };
 
   SemanticPass.prototype.processFuncSig = function(func) {

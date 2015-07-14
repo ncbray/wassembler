@@ -228,11 +228,17 @@ define(['astutil'], function(astutil) {
       ],
     },
     {
+      name: "FuncType",
+      fields: [
+	{name: "paramTypes"},
+	{name: "returnType"},
+      ],
+    },
+    {
       name: "Extern",
       fields: [
 	{name: "name"},
-	{name: "args"},
-	{name: "returnType"},
+	{name: "ftype"},
 	{name: "pos"},
       ],
     },

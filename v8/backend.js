@@ -415,11 +415,12 @@ define(["compilerutil", "wasm/ast"], function(compilerutil, wast) {
 
     for (var i in module.externs) {
       var extern = module.externs[i];
+      var ft = extern.ftype;
       this.externID[i] = uid;
       uid += 1;
 
       // TODO function name.
-      this.generateSignature(extern.args, extern.returnType);
+      this.generateSignature(ft.paramTypes, ft.returnType);
 
       this.generateStringRef(extern.name.text);
 
