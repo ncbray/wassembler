@@ -122,8 +122,18 @@ constant
     })
   }
 
+indirectCall = ftype:funcType S "(" S expr:expr S ")" S "(" S args:exprList S ")" {
+  return wast.CallIndirect({
+    ftype: ftype,
+    expr: expr,
+    args: args,
+    pos: getPos(),
+  });
+}
+
 atom
   = constant
+  / indirectCall
   / "(" S e:expr S ")" {return e;}
   / loadOp
   / storeOp

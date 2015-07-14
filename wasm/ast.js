@@ -156,6 +156,15 @@ define(['astutil'], function(astutil) {
       ],
     },
     {
+      name: "CallIndirect",
+      fields: [
+	{name: "ftype"},
+	{name: "expr"},
+	{name: "args"},	
+	{name: "pos"},
+      ],
+    },
+    {
       name: "VarDecl",
       fields: [
 	{name: "name"},

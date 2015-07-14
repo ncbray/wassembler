@@ -6,6 +6,8 @@ define([], function() {
   BottomUp.prototype.processExpr = function(node) {
     switch (node.type) {
     case "GetLocal":
+    case "GetFunction":
+    case "GetExtern":
     case "GetTls":
     case "ConstI32":
     case "ConstF32":
@@ -30,6 +32,12 @@ define([], function() {
       break;
     case "CallDirect":
     case "CallExternal":
+      for (var i = 0; i < node.args.length; i++) {
+	node.args[i] = this.processExpr(node.args[i]);
+      }
+      break;
+    case "CallIndirect":
+      node.expr = this.processExpr(node.expr);
       for (var i = 0; i < node.args.length; i++) {
 	node.args[i] = this.processExpr(node.args[i]);
       }

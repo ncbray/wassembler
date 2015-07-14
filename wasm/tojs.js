@@ -176,6 +176,10 @@ define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
       return jast.GetName({
 	name: this.tlsName(expr.tls),
       });
+    case "GetFunction":
+      return jast.ConstNum({
+	value: expr.func.funcPtr,
+      });
     case "Load":
       if (!(expr.mtype in typeToArrayName)) throw Error(expr.mtype);
 
@@ -279,9 +283,22 @@ define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
 	expr: jast.GetName({name: this.externName(expr.func)}),
 	args: args,
       });
+    case "CallIndirect":
+      var index = this.processExpr(expr.expr);
+      var args = [];
+      for (var i = 0; i < expr.args.length; i++) {
+	args.push(this.processExpr(expr.args[i]));
+      }
+      return jast.Call({
+	expr:  jast.GetIndex({
+	  expr: jast.GetName({name: "ftable"}),
+	  index: index,
+	}),
+	args: args,
+      });
     default:
       console.log(expr);
-      throw expr.type;
+      throw Error(expr.type);
     }
   };
 
@@ -567,6 +584,33 @@ define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
     ];
   };
 
+  JSTranslator.prototype.calcFuncInfo = function(module) {
+    var funcPtr = 0;
+    var funcTable = [];
+
+    for (var i = 0; i < module.externs.length; i++) {
+      var extern = module.externs[i];
+      extern.funcPtr = funcPtr;
+      funcPtr += 1;
+
+      funcTable.push(jast.GetName({
+	name: extern.name.text,
+      }));
+    }
+
+    for (var i = 0; i < module.funcs.length; i++) {
+      var func = module.funcs[i];
+      func.funcPtr = funcPtr;
+      funcPtr += 1;
+
+      funcTable.push(jast.GetName({
+	name: func.name.text,
+      }));
+    }
+
+    this.funcTable = funcTable;
+  };
+
   JSTranslator.prototype.processModule = function(module) {
     this.module = module;
 
@@ -654,6 +698,14 @@ define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
       }
     }
 
+    // Indrect function call table.
+    body.push(jast.VarDecl({
+      name: "ftable",
+      expr: jast.CreateArray({
+	args: this.funcTable,
+      }),
+    }));
+
     body.push(jast.Return({
       expr: jast.CreateObject({
 	args: exports,
@@ -668,6 +720,7 @@ define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
 
   var translate = function(module, system, use_shared_memory) {
     var translator = new JSTranslator(use_shared_memory);
+    translator.calcFuncInfo(module);
     return translator.systemWrapper(module, system, use_shared_memory, translator.processModule(module));
   };
 

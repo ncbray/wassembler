@@ -56,6 +56,20 @@ define(["compilerutil", "wasm/ast", "wasm/typeinfo"], function(compilerutil, was
     expr.etype = t;
   };
 
+  SemanticPass.prototype.checkCall = function(expr, ft) {
+    if (expr.args.length != ft.paramTypes.length) {
+      this.error("argument count mismatch - got " + expr.args.length + ", but expected " + ft.paramTypes.length, getPos(expr));
+    } else {
+      for (var i = 0; i < expr.args.length; i++) {
+	var arg = expr.args[i];
+	var expected = ft.paramTypes[i];
+	if (arg.etype != expected) {
+	  this.error("arg " + i + " - got " + arg.etype + ", but expected " + expected, getPos(arg));
+	}
+      }
+    }
+  };
+
   SemanticPass.prototype.processExpr = function(expr) {
     var old_dead = this.dead;
     this.dead = false;
@@ -85,9 +99,11 @@ define(["compilerutil", "wasm/ast", "wasm/typeinfo"], function(compilerutil, was
 	switch(ref.type) {
 	case "Function":
 	  expr = wast.GetFunction({func: ref, pos: getPos(expr)});
+	this.setExprType(expr, "i32");
 	  break;
         case "Extern":
 	  expr = wast.GetExtern({func: ref, pos: getPos(expr)});
+	  this.setExprType(expr, "i32");
 	  break;
         case "TlsDecl":
 	  expr = wast.GetTls({tls: ref, pos: getPos(expr)});
@@ -236,21 +252,8 @@ define(["compilerutil", "wasm/ast", "wasm/typeinfo"], function(compilerutil, was
 	case "CallExternal":
 	  var target = expr.func;
 	  var ft = target.ftype;
-	  if (expr.args.length != ft.paramTypes.length) {
-	    this.error("argument count mismatch - got " + expr.args.length + ", but expected " + ft.paramTypes.length, getPos(expr));
-	  }
-
 	  this.setExprType(expr, ft.returnType);
-
-	  if (!this.dead) {
-	    for (var i = 0; i < expr.args.length; i++) {
-	      var arg = expr.args[i];
-	      var expected = ft.paramTypes[i];
-	      if (arg.etype != expected) {
-		this.error("arg " + i + " - got " + arg.etype + ", but expected " + expected, getPos(arg));
-	      }
-	    }
-	  }
+	  this.checkCall(expr, ft);
 	  break;
 	default:
 	  console.log(expr);
@@ -258,6 +261,20 @@ define(["compilerutil", "wasm/ast", "wasm/typeinfo"], function(compilerutil, was
 	}
       }
       break;
+
+    case "CallIndirect":
+      expr.ftype = this.processFunctionType(expr.ftype);
+      expr.expr = this.processExpr(expr.expr);
+      if (!this.dead && expr.expr.etype != "i32") {
+	this.error("type mismatch - " + expr.expr.etype + ", expected i32", getPos(expr.expr));
+      }
+      for (var i = 0; i < expr.args.length; i++) {
+	expr.args[i] = this.processExpr(expr.args[i]);
+      }
+      this.setExprType(expr, expr.ftype.returnType);
+      this.checkCall(expr, expr.ftype);
+      break;
+
     case "Return":
       var actual = "void";
       if (expr.expr) {

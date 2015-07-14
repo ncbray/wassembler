@@ -26,6 +26,8 @@ define(["compilerutil"], function(compilerutil) {
     case "FunctionExpr":
     case "GetName":
     case "ConstNum":
+    case "CreateArray":
+      return 19;
     case "CreateObject":
       return 19;
     case "GetIndex":
@@ -123,6 +125,18 @@ define(["compilerutil"], function(compilerutil) {
       this.writer.out(") {").eol().indent();
       this.generateBlock(expr.body);
       this.writer.dedent().out("}");
+      break;
+    case "CreateArray":
+      this.writer.out("[").eol().indent();
+      for (var i = 0; i < expr.args.length; i++) {
+	if (i != 0) {
+	  this.writer.out(",").eol();
+	}
+	var arg = expr.args[i];
+	this.generateExpr(arg, 0);
+      }
+      this.writer.eol();
+      this.writer.dedent().out("]");
       break;
     case "CreateObject":
       this.writer.out("{").eol().indent();

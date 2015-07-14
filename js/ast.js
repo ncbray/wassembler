@@ -56,6 +56,12 @@ define(["astutil"], function(astutil) {
       ],
     },
     {
+      name: "CreateArray",
+      fields: [
+	{name: "args"},
+      ],
+    },
+    {
       name: "KeyValue",
       fields: [
 	{name: "key"},

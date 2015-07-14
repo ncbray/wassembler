@@ -36,7 +36,9 @@ define(["compilerutil", "wasm/ast"], function(compilerutil, wast) {
     getlocal: {bytecode: 0x14},
 
     getheap: {bytecode: 0x16},
-    callfunc: {bytecode: 0x17},
+    callfunc: {bytecode: 0x19},
+    callindirect: {bytecode: 0x1a},
+
 
     not: {bytecode: 0x1b},
 
@@ -174,6 +176,10 @@ define(["compilerutil", "wasm/ast"], function(compilerutil, wast) {
       break;
     case "GetTls":
       throw Error("TLS not supported in V8 backend.");
+    case "GetFunction":
+      this.writer.u8(ops.i32const.bytecode);
+      this.writer.i32(this.funcID[expr.func.index]);
+      break;
     case "Load":
       this.writer.u8(ops.getheap.bytecode);
       this.generateMemType(expr.mtype);
@@ -291,6 +297,17 @@ define(["compilerutil", "wasm/ast"], function(compilerutil, wast) {
 	this.generateExpr(expr.args[i]);
       }
       break;
+    case "CallIndirect":
+      this.writer.u8(ops.callindirect.bytecode);
+      var ft = expr.ftype;
+      // TODO is there a better way to determine the signature of the function?
+      this.generateSignature(ft.paramTypes, ft.returnType);
+      this.generateExpr(expr.expr);
+      // Number of arguments infered from target signature.
+      for (var i in expr.args) {
+	this.generateExpr(expr.args[i]);
+      }
+      break;
     case "Return":
       // Count infered from the function signature.
       this.writer.u8(ops.getlocal.bytecode);
@@ -305,7 +322,7 @@ define(["compilerutil", "wasm/ast"], function(compilerutil, wast) {
       break;
     default:
       console.log(expr);
-      throw expr.type;
+      throw Error(expr.type);
     };
   };
 
@@ -419,9 +436,7 @@ define(["compilerutil", "wasm/ast"], function(compilerutil, wast) {
       this.externID[i] = uid;
       uid += 1;
 
-      // TODO function name.
       this.generateSignature(ft.paramTypes, ft.returnType);
-
       this.generateStringRef(extern.name.text);
 
       this.writer.u32(0); // No offset

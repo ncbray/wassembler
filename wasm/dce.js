@@ -17,6 +17,12 @@ define(["wasm/traverse"], function(traverse) {
 
   FindLive.prototype.processExpr = function(node) {
     switch(node.type) {
+    case "GetFunction":
+      this.markLiveFunc(node.func);
+      break;
+    case "GetExtern":
+      this.markLiveExtern(node.func);
+      break;
     case "CallDirect":
       this.markLiveFunc(node.func);
       break;

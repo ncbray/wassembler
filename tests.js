@@ -476,6 +476,12 @@ define(["base", "wasm/desugar", "v8/backend"], function(base, desugar, wasm_back
       assert.equal(m.bar(11), 38.5);
     });
 
+    QUnit.test("indirect", function(assert) {
+      var m = create("func foo(n f32) f32 {return n * 3.5f;} export func bar(n f32) f32 {var f i32 = foo; return (f32)f32(f)(n);}", assert);
+      assert.notOk("foo" in m);
+      assert.ok("bar" in m);
+      assert.equal(m.bar(11), 38.5);
+    });
 
     QUnit.module(mode_name + " tls");
 
