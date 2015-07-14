@@ -1,5 +1,11 @@
 define(['astutil'], function(astutil) {
-  var schema =[
+  var schema = [
+    {
+      name: "TypeName",
+      fields: [
+	{name: "name"},
+      ],
+    },
     {
       name: "ConstI32",
       fields: [

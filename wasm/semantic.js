@@ -296,20 +296,25 @@ define(["compilerutil", "wasm/ast", "wasm/typeinfo"], function(compilerutil, was
     return expr;
   };
 
-  SemanticPass.prototype.processType = function(type) {
-    var t = type.text;
-    switch (t) {
-    case "i8":
-    case "i16":
-    case "i32":
-    case "f32":
-    case "f64":
-    case "void":
-      break;
+  SemanticPass.prototype.processType = function(node) {
+    switch (node.type) {
+    case "TypeName":
+      var t = node.name.text;
+      switch (t) {
+      case "i8":
+      case "i16":
+      case "i32":
+      case "f32":
+      case "f64":
+      case "void":
+	break;
+      default:
+	this.error("unknown type name - " + type.text, type.pos);
+      }
+      return t;
     default:
-      this.error("unknown type - " + type.text, type.pos);
+      throw Error(node.type);
     }
-    return t;
   };
 
   SemanticPass.prototype.createLocal = function(name, type) {

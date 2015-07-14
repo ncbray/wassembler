@@ -200,7 +200,9 @@ stmt
 
 body = (S stmt:stmt {return stmt})*
 
-typeRef = ident
+typeRef = name:ident {
+  return wast.TypeName({name: name});
+}
 
 returnType = typeRef
 
