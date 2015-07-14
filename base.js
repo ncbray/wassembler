@@ -1,6 +1,8 @@
 define(
     ["wasm/ast", "wasm/semantic", "wasm/dce", "wasm/tojs", "js/backend"],
   function(wast, semantic, dce, tojs, js_backend) {
+
+  // Promisified XMLHttpRequest.
   var getURL = function(url) {
     return new Promise(function(resolve, reject) {
       var req = new XMLHttpRequest();
@@ -19,10 +21,6 @@ define(
     });
   };
 
-  var syntaxError = function(prefix, e) {
-    return new Error(prefix + " " + e.line + ":" + e.column + " - " + e.message);
-  };
-
   var createParser = function(grammar, status) {
     var parser = null;
     try {
@@ -33,6 +31,8 @@ define(
     return parser;
   };
 
+  // Scrape a parsed module the the names of the externs it declares.
+  // This is used to infer which externs are provided by the system.
   var getExternNames = function(module) {
     var names = [];
     for (var i = 0; i < module.decls.length; i++) {
@@ -99,6 +99,7 @@ define(
     return src;
   };
 
+  // Eval JS src, but convert any errors into a compiler error.
   var evalJSSrc = function(src, status) {
     // Compile the module. (Does not bind.)
     try {
@@ -115,7 +116,7 @@ define(
     return evalJSSrc(src, status);
   }
 
-
+  // Display errors and keep track if any error have occured.
   var Status = function(logger) {
     this.logger = logger;
     this.filename = "";

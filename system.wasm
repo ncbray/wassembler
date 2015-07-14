@@ -1,3 +1,6 @@
+// This file is effectively prepended to any .wasm file being compiled.
+// Imports in this file are provided by the system.
+
 config {
   memory.fixed: 1048576
 }
