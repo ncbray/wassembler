@@ -1,4 +1,4 @@
-var createSystem = function(buffer) {
+var createSystem = function(buffer, srcURL) {
   var system = {};
   var is_main_thread = false;
 
@@ -60,6 +60,11 @@ var createSystem = function(buffer) {
     system.atomicCompareExchangeI32 = function(addr, expected, value) {
       return Atomics.store(I32, addr >> 2, expected, value);
     };
+
+    system.createThread = function() {
+      var worker = new Worker(srcURL);
+      worker.postMessage({buffer: buffer}, [buffer]);
+    };
   }
 
   return system;
@@ -79,14 +84,34 @@ var augmentInstance = function(instance, buffer) {
 
 var instance;
 
-var createInstance = function(foreign) {
-  var buffer = createMemory();
-  var system = createSystem(buffer);
-  var wrapped_foreign = wrap_foreign(system, foreign);
-  instance = module(stdlib, wrapped_foreign, buffer);
-  augmentInstance(instance, buffer);
-  system.initMainThread(initial_top);
-  return instance;
-}
+if (typeof window === 'object') {
+  return function(foreign, srcURL) {
+    var buffer = createMemory();
+    var system = createSystem(buffer, srcURL);
+    var wrapped_foreign = wrap_foreign(system, foreign);
+    instance = module(stdlib, wrapped_foreign, buffer);
+    augmentInstance(instance, buffer);
+    system.initMainThread(initial_top);
+    return instance;
+  }
+} else {
+  var init = function(evt) {
+    self.removeEventListener("message", init, false);
 
-return createInstance;
+    var buffer = evt.data.buffer;
+
+    // HACK
+    var foreign = {};
+    var srcURL = null;
+
+    var system = createSystem(buffer, srcURL);
+    var wrapped_foreign = wrap_foreign(system, foreign);
+    instance = module(stdlib, wrapped_foreign, buffer);
+    augmentInstance(instance, buffer);
+    if (instance.thread_main) {
+      console.log("thread exit", instance.thread_main());
+    }
+    self.close();
+  };
+  self.addEventListener("message", init, false);
+}

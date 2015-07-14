@@ -89,6 +89,10 @@ func render() void {
   flipBuffer(buffer);
 }
 
+export func thread_main() i32 {
+  return 12345;
+}
+
 export func frame(dt f32) void {
   storeF32(phase, loadF32(phase) + dt);
   render();
@@ -101,6 +105,7 @@ export func main() void {
   // Modify the bitmap to show we can use atomics.
   if (threadingSupported()) {
     atomicStoreI32(bitmap, 0xff);
+    createThread();
   }
 
   // Render the first frame.

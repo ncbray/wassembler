@@ -59,7 +59,8 @@ define(
 
   var systemJSSrc;
   var systemWASMSrc;
-  var instance;
+  var instance = null;
+  var srcURL = null;
 
   var makeExterns = function() {
     var c = document.getElementById("canvas");
@@ -100,6 +101,10 @@ define(
     setText("terminal", "");
 
     instance = null;
+    if (srcURL) {
+      URL.revokeObjectURL(srcURL);
+      srcURL = null;
+    }
 
     status = new base.Status(function(message) {
       appendText("terminal", message + "\n");
@@ -124,14 +129,22 @@ define(
       use_shared_memory: document.getElementById("shared_memory").checked,
     };
 
-    var compiled = base.astToCompiledJS(module, systemJSSrc, config, status, reportSrc);
+    var src = base.astToJSSrc(module, systemJSSrc, config);
+
+    if (reportSrc) reportSrc(src);
+
+    var compiled = base.evalJSSrc(src, status);
     if (status.num_errors > 0) {
       return null;
     }
 
+    if (config.use_shared_memory) {
+      srcURL = URL.createObjectURL(new Blob([src], {type: 'text/javascript'}));
+    }
+
     // Bind the module.
     try {
-      instance = compiled(makeExterns());
+      instance = compiled(makeExterns(), srcURL);
     } catch (e) {
       appendText("terminal", "binding failed - " + e.message);
       return;

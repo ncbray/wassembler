@@ -93,12 +93,13 @@ define(
     return module;
   };
 
-  var astToCompiledJS = function(module, systemJSSrc, config, status, reportSrc) {
+  var astToJSSrc = function(module, systemJSSrc, config) {
     var translated = tojs.translate(module, systemJSSrc, config.use_shared_memory);
-
     var src = js_backend.generateExpr(translated) + "()";
-    if (reportSrc) reportSrc(src);
+    return src;
+  };
 
+  var evalJSSrc = function(src, status) {
     // Compile the module. (Does not bind.)
     try {
       return eval(src);
@@ -106,6 +107,12 @@ define(
       status.error("JS compile - " + e.message);
       return null;
     }
+  };
+
+  var astToCompiledJS = function(module, systemJSSrc, config, status, reportSrc) {
+    var src = astToJSSrc(module, systemJSSrc, config);
+    if (reportSrc) reportSrc(src);
+    return evalJSSrc(src, status);
   }
 
 
@@ -137,6 +144,8 @@ define(
     getURL: getURL,
     createParser: createParser,
     frontend: frontend,
+    astToJSSrc: astToJSSrc,
+    evalJSSrc: evalJSSrc,
     astToCompiledJS: astToCompiledJS,
     Status: Status,
   };
