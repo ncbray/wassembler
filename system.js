@@ -61,9 +61,13 @@ var createSystem = function(buffer, srcURL) {
       return Atomics.store(I32, addr >> 2, expected, value);
     };
 
-    system.createThread = function() {
+    system.threadCreate = function(f, context) {
       var worker = new Worker(srcURL);
-      worker.postMessage({buffer: buffer}, [buffer]);
+      worker.postMessage({buffer: buffer, f: f, context: context}, [buffer]);
+    };
+
+    system.consoleI32 = function(value) {
+      console.log(value);
     };
   }
 
@@ -108,8 +112,8 @@ if (typeof window === 'object') {
     var wrapped_foreign = wrap_foreign(system, foreign);
     instance = module(stdlib, wrapped_foreign, buffer);
     augmentInstance(instance, buffer);
-    if (instance.thread_main) {
-      console.log("thread exit", instance.thread_main());
+    if (instance.threadStart) {
+      instance.threadStart(evt.data.f, evt.data.context);
     }
     self.close();
   };
