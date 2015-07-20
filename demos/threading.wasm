@@ -1,0 +1,12 @@
+export func thread_main(context i32) void {
+  consoleI32(context);
+  consoleI32(12345);
+}
+
+export func main() void {
+  if (threadingSupported()) {
+    threadCreate(thread_main, 0);
+  } else {
+    // TODO
+  }
+}

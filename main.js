@@ -2,6 +2,39 @@ define(
   ["base", "wasm/desugar", "v8/backend"],
   function(base, desugar, wasm_backend_v8) {
 
+  var queryDefaults = {
+    file: "draw.wasm",
+  };
+
+  var parseQuery = function(defaults) {
+    var raw = document.location.search.substring(1);
+    var parts = raw.split("&");
+    var query = {};
+    for (var key in defaults) {
+      query[key] = defaults[key];
+    }
+    for (var i = 0; i < parts.length; i++) {
+      var keyvalue = parts[i].split("=");
+      var key = decodeURIComponent(keyvalue[0]);
+      var value = decodeURIComponent(keyvalue[1]);
+      query[key] = value;
+    }
+    return query;
+  };
+
+  var sanitizeFileName = function(filename) {
+    var parts = filename.split(".");
+    var ext = parts.pop();
+    var base = parts.join("_");
+    base = base.replace(/\W+/g, '_');
+    ext = ext.replace(/\W+/g, '_');
+    if (base) {
+      return base + "." + ext;
+    } else {
+      return ext;
+    }
+  };
+
   var setupUI = function(code, parse) {
     setText("code", code);
 
@@ -85,8 +118,7 @@ define(
     };
   };
 
-  //var exampleFile = "demos/example.wasm";
-  var exampleFile = "demos/draw.wasm";
+  var exampleFile = null;
 
   var parser;
 
@@ -169,6 +201,9 @@ define(
   };
 
   var run = function() {
+    var query = parseQuery(queryDefaults);
+    exampleFile = "demos/" + sanitizeFileName(query.file);
+
     Promise.all([
       base.getURL("wasm.pegjs"),
       base.getURL(exampleFile),
