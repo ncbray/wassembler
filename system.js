@@ -65,23 +65,23 @@ var createSystem = function(buffer, srcURL) {
       var worker = new Worker(srcURL);
       worker.postMessage({buffer: buffer, f: f, context: context}, [buffer]);
     };
-
-    system.consoleI32 = function(value) {
-      console.log(value);
-    };
-
-    system.consoleString = function(ptr, size) {
-      var buffer = new ArrayBuffer(size);
-      instance._copyOut(ptr, size, buffer);
-      var values = new Uint8Array(buffer);
-      var s = "";
-      // TODO UTF8 support.
-      for (var i = 0; i < values.length; i++) {
-	s += String.fromCharCode(values[i]);
-      }
-      console.log(s);
-    };
   }
+
+  system.consoleI32 = function(value) {
+    console.log(value);
+  };
+
+  system.consoleString = function(ptr, size) {
+    var buffer = new ArrayBuffer(size);
+    instance._copyOut(ptr, size, buffer);
+    var values = new Uint8Array(buffer);
+    var s = "";
+    // TODO UTF8 support.
+    for (var i = 0; i < values.length; i++) {
+      s += String.fromCharCode(values[i]);
+    }
+    console.log(s);
+  };
 
   return system;
 };
