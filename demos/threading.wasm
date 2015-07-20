@@ -1,9 +1,15 @@
+memory {
+  // "hello, world\0"
+  message: hex 68656c6c6f2c20776f726c6400;
+}
+
 export func thread_main(context i32) void {
   consoleI32(context);
   consoleI32(12345);
 }
 
 export func main() void {
+  consoleString(message, 12);
   if (threadingSupported()) {
     threadCreate(thread_main, 0);
   } else {

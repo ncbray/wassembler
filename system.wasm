@@ -32,3 +32,4 @@ export func threadStart(f i32, context i32) void {
 }
 
 import func consoleI32(i32) void;
+import func consoleString(i32, i32) void;
