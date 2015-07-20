@@ -57,6 +57,19 @@ TODO: what does emulating i8 and i16 types buy if we already need to support i32
 
 TODO: does this cause an impediance mismatch with small integer SIMD types?
 
+### Hiding Implementation Details
+
+This prototype does not expose the heap to JS as an array buffer - instead it uses methods on the WASM module instance, such as `_copyOut`, to do bulk data transfer.  The upside is that it is easier for the WASM heap to behave as if it were not an array buffer - unmapped memory pages, for example.  The downside is that fine-grained interactions with the heap, such as traversing pointer-based datastructures, are more expensive from JS.  This interface also works best when data sizes are known apriori - JS should explicitly be given the length of null terminated strings, rather than calculating the string's length itself, for example.
+
+TODO: is this the correct tradeoff?
+
+### FFI Binding
+
+Generally, non-trivial FFI calls will need to know which WASM module instance they are being invoked on behalf of.  FFI calls will need to copy data in and out of the instance's memory space, keep a lookup table of JS objects assosiated with a particular instance, etc.  Historically, asm.js bound FFI functions to an instance using closures.  Threaded applications are more complicated, however, because FFI functions must be bound to the instance for each thread / JS isolate.  How the FFI functions get loaded into each isolate and how they are bound TBD.
+
+Currently this prototype binds the WASM module instance to "this" for all FFI calls.
+
+
 ## Things to Investigate
 
 * FFI / system interface design.
