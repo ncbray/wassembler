@@ -3,13 +3,21 @@ memory {
   message: hex 68656c6c6f2c20776f726c6400;
 }
 
+func strlen(ptr i32) i32 {
+  var curr i32 = ptr;
+  while (i32(loadI8(curr))) {
+    curr = curr + 1;
+  }
+  return curr - ptr;
+}
+
 export func thread_main(context i32) void {
   consoleI32(context);
   consoleI32(12345);
 }
 
 export func main() void {
-  consoleString(message, 12);
+  consoleString(message, strlen(message));
   if (threadingSupported()) {
     threadCreate(thread_main, 0);
   } else {
