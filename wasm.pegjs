@@ -298,7 +298,14 @@ hexData = (first:hexByte rest:(S d:hexByte {return d;})* {return buildList(first
 
 memoryHex = "hex" EOT S data:hexData S ";" {return wast.MemoryHex({data: data});}
 
-memoryDirective = memoryAlign / memoryZero / memoryHex / memoryLabel
+stringByte = text:("\\" '"' {return '"';} / $[^\\"] ) {return text.charCodeAt(0);}
+
+stringData = (first:stringByte rest:(d:stringByte {return d;})* {return buildList(first, rest).concat([0]);}) / {return [0];}
+
+// HACK desugar to MemoryHex
+memoryString = "string" EOT S '"' data:stringData '"' S ";" {return wast.MemoryHex({data: data});}
+
+memoryDirective = memoryAlign / memoryZero / memoryHex / memoryString / memoryLabel
 
 memoryDirectiveList = (first:memoryDirective rest:(S d:memoryDirective {return d;})* {return buildList(first, rest);}) / {return [];}
 

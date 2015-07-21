@@ -1,6 +1,7 @@
 memory {
   // "hello, world\0"
   message: hex 68656c6c6f2c20776f726c6400;
+  no_threads: string "Threads are not enabled.";
 }
 
 func strlen(ptr i32) i32 {
@@ -21,6 +22,6 @@ export func main() void {
   if (threadingSupported()) {
     threadCreate(thread_main, 0);
   } else {
-    // TODO
+    consoleString(no_threads, strlen(no_threads));
   }
 }

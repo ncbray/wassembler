@@ -442,9 +442,8 @@ define(["compilerutil", "wasm/ast", "wasm/typeinfo"], function(compilerutil, was
     node.ptr = base;
 
     var writer = new compilerutil.BinaryWriter();
-
-    for (var i = 0; i < node.directives.length; i++) {
-      var m = node.directives[i];
+    for (var d = 0; d < node.directives.length; d++) {
+      var m = node.directives[d];
       m.ptr = base + writer.pos;
       switch(m.type) {
       case "MemoryAlign":
