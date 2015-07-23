@@ -53,7 +53,7 @@ define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
   };
 
   JSTranslator.prototype.localName = function(local) {
-    return local.name;
+    return "$" + local.name;
   };
 
   JSTranslator.prototype.funcName = function(func) {
@@ -372,7 +372,7 @@ define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
     var body = [];
     for (var i = 0; i < func.params.length; i++){
       var p = func.params[i];
-      var name = p.name.text;
+      var name = this.localName(p.local);
       params.push(name);
       body.push(jast.VarDecl({
 	name: name,
@@ -384,7 +384,7 @@ define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
     for (var i = func.params.length; i < func.locals.length; i++) {
       var lcl = func.locals[i];
       body.push(jast.VarDecl({
-	name: lcl.name,
+	name: this.localName(lcl),
 	expr: this.zeroValue(lcl.ltype),
       }));
     }
@@ -392,7 +392,7 @@ define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
     this.processBlock(func.body, body);
 
     return jast.VarDecl({
-      name: func.name.text,
+      name: this.funcName(func),
       expr: jast.FunctionExpr({
 	params: params,
 	body: body,
@@ -594,7 +594,7 @@ define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
       funcPtr += 1;
 
       funcTable.push(jast.GetName({
-	name: extern.name.text,
+	name: this.externName(extern),
       }));
     }
 
@@ -604,7 +604,7 @@ define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
       funcPtr += 1;
 
       funcTable.push(jast.GetName({
-	name: func.name.text,
+	name: this.funcName(func),
       }));
     }
 
@@ -664,7 +664,7 @@ define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
     for (var i = 0; i < module.externs.length; i++) {
       var extern = module.externs[i];
       body.push(jast.VarDecl({
-	name: extern.name.text,
+	name: this.externName(extern),
 	expr: jast.GetAttr({
 	  expr: jast.GetName({
 	    name: "foreign",
@@ -678,7 +678,7 @@ define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
     for (var i = 0; i < module.tls.length; i++) {
       var v = module.tls[i];
       body.push(jast.VarDecl({
-	name: v.name.text,
+	name: this.tlsName(v),
 	expr: jast.ConstNum({value: 0}), // TODO type coercion.
       }));
     }
@@ -692,13 +692,13 @@ define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
 	exports.push(jast.KeyValue({
 	  key: func.name.text,
 	  value: jast.GetName({
-	    name: func.name.text,
+	    name: this.funcName(func),
 	  }),
 	}));
       }
     }
 
-    // Indrect function call table.
+    // Indirect function call table.
     body.push(jast.VarDecl({
       name: "ftable",
       expr: jast.CreateArray({
