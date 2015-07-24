@@ -1,19 +1,7 @@
 var createSystem = function(buffer, srcURL) {
   var system = {};
-  var is_main_thread = false;
 
-  system.initMainThread = function(initial_top) {
-    top = initial_top;
-    is_main_thread = true;
-  };
-
-  // Memory management
-  var top = 0;
-  system.sbrk = function(amt) {
-    var temp = top;
-    top += amt;
-    return temp;
-  };
+  // Intrinstics.
 
   // Math
   system.sqrtF32 = function(value) {
@@ -41,26 +29,64 @@ var createSystem = function(buffer, srcURL) {
     return Math.cos(value);
   };
 
-  // Threading
   system.threadingSupported = function() {
     return threading_supported;
   };
 
+  // Atomics.
   if (threading_supported) {
     var I32 = new SharedInt32Array(buffer);
-
-    system.atomicLoadI32 = function(addr) {
-      return Atomics.load(I32, addr >> 2);
+    var a = Atomics;
+  } else {
+    var I32 = new Int32Array(buffer);
+    // Polyfill
+    var a = {
+      load: function(view, addr) {
+	return view[addr];
+      },
+      store: function(view, addr, value) {
+	view[addr] = value;
+      },
+      compareExchange: function(view, addr, expected, value) {
+	var actual = view[addr];
+	if (actual === expected) {
+	  view[addr] = value;
+	}
+	return actual;
+      },
     };
+  }
 
-    system.atomicStoreI32 = function(addr, value) {
-      Atomics.store(I32, addr >> 2, value);
-    };
+  system.atomicLoadI32 = function(addr) {
+    return a.load(I32, addr >> 2);
+  };
 
-    system.atomicCompareExchangeI32 = function(addr, expected, value) {
-      return Atomics.store(I32, addr >> 2, expected, value);
-    };
+  system.atomicStoreI32 = function(addr, value) {
+    a.store(I32, addr >> 2, value);
+  };
 
+  system.atomicCompareExchangeI32 = function(addr, expected, value) {
+    return a.compareExchange(I32, addr >> 2, expected, value);
+  };
+
+  // Libc-like stuff.
+
+  var is_main_thread = false;
+  system.initMainThread = function(initial_top) {
+    top = initial_top;
+    is_main_thread = true;
+  };
+
+  // Memory management
+  var top = 0;
+  system.sbrk = function(amt) {
+    var temp = top;
+    top += amt;
+    return temp;
+  };
+
+  // Threading
+  if (threading_supported) {
     system.threadCreate = function(f, context) {
       var worker = new Worker(srcURL);
       worker.postMessage({buffer: buffer, f: f, context: context}, [buffer]);

@@ -168,6 +168,7 @@ define(["base", "wasm/desugar", "v8/backend"], function(base, desugar, wasm_back
       assert.equal(m.main(-1), 1);
     });
 
+
     QUnit.module(mode_name + " basic f32");
 
     QUnit.test("simple f32", function(assert) {
@@ -500,6 +501,21 @@ define(["base", "wasm/desugar", "v8/backend"], function(base, desugar, wasm_back
       assert.equal(m.main(11), 12);
       assert.equal(m.main(-2), -1);
     });
+
+    QUnit.module(mode_name + " atomics");
+
+    QUnit.test("load store i32", function(assert) {
+      var m = create("memory {tempA: zero 4; tempB: zero 4;} export func main(a i32, b i32) i32 {atomicStoreI32(tempA, a); atomicStoreI32(tempB, b); return atomicLoadI32(tempA) - atomicLoadI32(tempB);}", assert);
+      assert.equal(m.main(11, 4), 7);
+      assert.equal(m.main(-10, 3), -13);
+    });
+
+    QUnit.test("cmpxchg i32", function(assert) {
+      var m = create("memory {temp: zero 4;} export func main(n i32) i32 {atomicStoreI32(temp, 7); var actual i32 = atomicCompareExchangeI32(temp, n, 11); return actual * atomicLoadI32(temp);}", assert);
+      assert.equal(m.main(7), 77);
+      assert.equal(m.main(11), 49);
+    });
+
   };
 
   defineTests("polyfill", createNormal);
