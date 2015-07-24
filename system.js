@@ -9,7 +9,7 @@ var createSystem = function(buffer, srcURL) {
 
   // Memory management
   var top = 0;
-  system.alloc = function(amt) {
+  system.sbrk = function(amt) {
     var temp = top;
     top += amt;
     return temp;

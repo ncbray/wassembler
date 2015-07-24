@@ -96,7 +96,7 @@ export func frame(dt f32) void {
 
 export func main() void {
   // Allocate the frame buffer.
-  storeI32(frame_buffer, alloc(256 * 256 * 4));
+  storeI32(frame_buffer, sbrk(256 * 256 * 4));
 
   // Render the first frame.
   render();
