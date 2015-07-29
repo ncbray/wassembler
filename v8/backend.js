@@ -18,82 +18,89 @@ define(["compilerutil", "wasm/ast"], function(compilerutil, wast) {
   };
 
   var ops = {
-    setlocal: {bytecode: 0x01},
+    if1: {bytecode: 0x01},
+    if2: {bytecode: 0x02},
+    block: {bytecode: 0x03},
 
-    setheap: {bytecode: 0x03},
-    if1: {bytecode: 0x04},
-    if2: {bytecode: 0x05},
-    block: {bytecode: 0x06},
-    loop: {bytecode: 0x09},
-    break_: {bytecode: 0x0b},
-    ret: {bytecode: 0x0c},
+    loop: {bytecode: 0x06},
+    continue_: {bytecode: 0x07},
+    break_: {bytecode: 0x08},
+    return_: {bytecode: 0x09},
 
     i8const: {bytecode: 0x10},
     i32const: {bytecode: 0x11},
-    f64const: {bytecode: 0x12},
-    f32const: {bytecode: 0x13},
+    i64const: {bytecode: 0x12},
+    f64const: {bytecode: 0x13},
+    f32const: {bytecode: 0x14},
 
-    getlocal: {bytecode: 0x14},
+    getlocal: {bytecode: 0x15},
+    setlocal: {bytecode: 0x16},
 
-    getheap: {bytecode: 0x16},
+    getglobal: {bytecode: 0x17},
+    setglobal: {bytecode: 0x18},
+
     callfunc: {bytecode: 0x19},
     callindirect: {bytecode: 0x1a},
 
+    // TODO rework memory operations to match prototype.
+    getheap: {bytecode: 0x20},
+    setheap: {bytecode: 0x30},
 
-    not: {bytecode: 0x1b},
+    i32add: {bytecode: 0x40},
+    i32sub: {bytecode: 0x41},
+    i32mul: {bytecode: 0x42},
+    i32div: {bytecode: 0x43},
+    u32div: {bytecode: 0x44},
+    i32mod: {bytecode: 0x45},
+    u32mod: {bytecode: 0x46},
+    i32and: {bytecode: 0x47},
+    i32ior: {bytecode: 0x48},
+    i32xor: {bytecode: 0x49},
+    i32shl: {bytecode: 0x4a},
+    i32shr: {bytecode: 0x4b},
+    i32sar: {bytecode: 0x4c},
+    i32eq: {bytecode: 0x4d},
+    i32lt: {bytecode: 0x4e},
+    i32le: {bytecode: 0x4f},
+    u32lt: {bytecode: 0x50},
+    u32le: {bytecode: 0x51},
 
-    i32add: {bytecode: 0x20},
-    i32sub: {bytecode: 0x21},
-    i32mul: {bytecode: 0x22},
-    i32div: {bytecode: 0x23},
-    u32div: {bytecode: 0x24},
-    i32mod: {bytecode: 0x25},
-    u32mod: {bytecode: 0x26},
+    // TODO i32 greater than.
 
-    i32and: {bytecode: 0x27},
-    i32ior: {bytecode: 0x28},
-    i32xor: {bytecode: 0x29},
+    not: {bytecode: 0x59},
 
-    i32shl: {bytecode: 0x2a},
-    i32shr: {bytecode: 0x2b},
-    i32sar: {bytecode: 0x2c},
+    f32add: {bytecode: 0x73},
+    f32sub: {bytecode: 0x74},
+    f32mul: {bytecode: 0x75},
+    f32div: {bytecode: 0x76},
 
-    i32eq: {bytecode: 0x2d},
-    i32lt: {bytecode: 0x2e},
-    i32le: {bytecode: 0x2f},
-    u32lt: {bytecode: 0x30},
-    u32le: {bytecode: 0x31},
+    f32eq: {bytecode: 0x81},
+    f32lt: {bytecode: 0x82},
+    f32le: {bytecode: 0x83},
 
-    f64add: {bytecode: 0x40},
-    f64sub: {bytecode: 0x41},
-    f64mul: {bytecode: 0x42},
-    f64div: {bytecode: 0x43},
-    f64mod: {bytecode: 0x44},
+    // TODO f32 greater than.
 
-    f64eq: {bytecode: 0x45},
-    f64lt: {bytecode: 0x46},
-    f64le: {bytecode: 0x47},
+    f64add: {bytecode: 0x86},
+    f64sub: {bytecode: 0x87},
+    f64mul: {bytecode: 0x88},
+    f64div: {bytecode: 0x89},
 
-    f32add: {bytecode: 0x50},
-    f32sub: {bytecode: 0x51},
-    f32mul: {bytecode: 0x52},
-    f32div: {bytecode: 0x53},
-    f32mod: {bytecode: 0x54},
+    f64eq: {bytecode: 0x94},
+    f64lt: {bytecode: 0x95},
+    f64le: {bytecode: 0x96},
 
-    f32eq: {bytecode: 0x55},
-    f32lt: {bytecode: 0x56},
-    f32le: {bytecode: 0x57},
+    // TODO f64 greater than.
 
-    i32fromf32: {bytecode: 0x60},
-    i32fromf64: {bytecode: 0x61},
-    u32fromf32: {bytecode: 0x62},
-    u32fromf64: {bytecode: 0x63},
-    f64fromi32: {bytecode: 0x64},
-    f64fromu32: {bytecode: 0x65},
-    f64fromf32: {bytecode: 0x66},
-    f32fromi32: {bytecode: 0x67},
-    f32fromu32: {bytecode: 0x68},
-    f32fromf64: {bytecode: 0x69},
+    i32fromf32: {bytecode: 0x99},
+    i32fromf64: {bytecode: 0x9a},
+
+    f32fromi32: {bytecode: 0xa4},
+    f32fromu32: {bytecode: 0xa5},
+    f32fromf64: {bytecode: 0xa8},
+
+    f64fromi32: {bytecode: 0xaa},
+    f64fromu32: {bytecode: 0xab},
+    f64fromf32: {bytecode: 0xae},
   };
 
   var binOpMap = {
@@ -122,7 +129,6 @@ define(["compilerutil", "wasm/ast"], function(compilerutil, wast) {
       "-": ops.f32sub,
       "*": ops.f32mul,
       "/": ops.f32div,
-      "%": ops.f32div,
       "==": ops.f32eq,
       "<": ops.f32lt,
       "<=": ops.f32le,
@@ -133,7 +139,6 @@ define(["compilerutil", "wasm/ast"], function(compilerutil, wast) {
       "-": ops.f64sub,
       "*": ops.f64mul,
       "/": ops.f64div,
-      "%": ops.f64div,
       "==": ops.f64eq,
       "<": ops.f64lt,
       "<=": ops.f64le,
@@ -310,11 +315,10 @@ define(["compilerutil", "wasm/ast"], function(compilerutil, wast) {
       break;
     case "Return":
       // Count infered from the function signature.
-      this.writer.u8(ops.getlocal.bytecode);
+      this.writer.u8(ops.return_.bytecode);
       if (expr.expr) {
 	this.generateExpr(expr.expr);
       }
-      break;
       break;
     case "Break":
       this.writer.u8(ops.break_.bytecode);
