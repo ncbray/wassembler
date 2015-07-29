@@ -128,7 +128,6 @@ define(
   };
 
   Status.prototype.error = function(message, pos) {
-    console.log(message);
     var prefix = "ERROR";
     if (this.filename) {
       prefix += " " + this.filename;
