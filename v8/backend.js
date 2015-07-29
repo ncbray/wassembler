@@ -527,5 +527,19 @@ define(["compilerutil", "wasm/ast"], function(compilerutil, wast) {
     return gen.writer.getOutput();
   };
 
-  return {generate: generate};
+  var generateFuncs = function(module) {
+    var table = {};
+    for (var f in module.funcs) {
+      var func = module.funcs[f];
+      var gen = new BinaryGenerator();
+      gen.generateFunc(func);
+      table[func.name.text] = gen.writer.getOutput();
+    }
+    return table;
+  };
+
+  return {
+    generate: generate,
+    generateFuncs: generateFuncs,
+  };
 });

@@ -34,13 +34,9 @@ var status = new base.Status(function(message) {
 });
 
 var grammar = read("wasm.pegjs");
-
 var parser = base.createParser(grammar, status);
 
-
-var systemWASMSrc = read("system.wasm");
-var systemJJSrc = read("system.js");
-
+var systemWASMSrc = read("d8_system.wasm");
 
 function compile(filename) {
   var text = read(filename);
@@ -58,6 +54,10 @@ function compile(filename) {
   print(buffer.byteLength);
 }
 
-var filename = "demos/draw.wasm";
-compile(filename);
-
+if (arguments.length != 1) {
+  print("Usage: d8 d8_main.js -- file.wasm");
+  // TODO exit code.
+} else {
+  var filename = arguments[0];
+  compile(filename);
+}

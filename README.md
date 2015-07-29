@@ -2,9 +2,17 @@
 
 This is a quick and dirty prototype for turning a textual language into JS and/or bytecode.
 
-## Developing
+## Running in the Browser
 
-Running `./tools/httpd.py` will serve the current directory at http://localhost:7777/
+`./tools/httpd.py` will serve the current directory at http://localhost:7777/
+
+## Running on the Command Line
+
+[Get V8.](https://code.google.com/p/v8-wiki/wiki/UsingGit)
+
+[Patch V8.](https://github.com/WebAssembly/v8-native-prototype)
+
+`path/to/patched/d8 d8_main.js -- demos/simple.wasm`
 
 ## Design
 
