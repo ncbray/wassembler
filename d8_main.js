@@ -52,6 +52,8 @@ function compile(filename) {
   var buffer = wasm_backend_v8.generate(module);
   print(new Uint8Array(buffer));
   print(buffer.byteLength);
+
+  WASM.verifyModule(buffer); // If "WASM" does not exist, you should patch d8.
 }
 
 if (arguments.length != 1) {

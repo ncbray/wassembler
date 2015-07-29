@@ -1,9 +1,9 @@
 define(["compilerutil", "wasm/ast"], function(compilerutil, wast) {
   var types = {
-    "void": 0,
     "i32": 1,
-    "f32": 2,
-    "f64": 3,
+    "i64": 2,
+    "f32": 3,
+    "f64": 4,
   };
 
   var mem_types = {
@@ -389,11 +389,17 @@ define(["compilerutil", "wasm/ast"], function(compilerutil, wast) {
 
 
   BinaryGenerator.prototype.generateSignature = function(argTypes, returnType) {
+    if (returnType == "void") {
+      this.writer.u8(0);
+    } else {
+      this.writer.u8(1);
+      this.generateType(returnType);
+    }
+
     this.writer.u8(argTypes.length);
     for (var i in argTypes) {
       this.generateType(argTypes[i]);
     }
-    this.generateType(returnType);
   };
 
   BinaryGenerator.prototype.generateStringRef = function(value) {
@@ -424,7 +430,10 @@ define(["compilerutil", "wasm/ast"], function(compilerutil, wast) {
 
     this.strings = {};
 
-    this.writer.u8(module.funcs.length);
+    // Header
+    this.writer.u16(0); // No globals.
+    this.writer.u16(module.funcs.length);
+    this.writer.u16(0); // No data segments.
 
     var funcBegin = {};
     var funcEnd = {};
@@ -447,6 +456,7 @@ define(["compilerutil", "wasm/ast"], function(compilerutil, wast) {
       this.writer.u32(0); // No offset
 
       this.writer.u16(0); // No i32
+      this.writer.u16(0); // No i64
       this.writer.u16(0); // No f32
       this.writer.u16(0); // No f64
 
@@ -459,6 +469,7 @@ define(["compilerutil", "wasm/ast"], function(compilerutil, wast) {
 
       // Bucket locals by type.
       var i32Locals = [];
+      var i64Locals = [];
       var f32Locals = [];
       var f64Locals = [];
       for (var i in func.locals) {
@@ -466,6 +477,9 @@ define(["compilerutil", "wasm/ast"], function(compilerutil, wast) {
 	switch (l.ltype) {
 	case "i32":
 	  i32Locals.push(l);
+	  break;
+	case "i64":
+	  i64Locals.push(l);
 	  break;
 	case "f32":
 	  f32Locals.push(l);
@@ -483,6 +497,10 @@ define(["compilerutil", "wasm/ast"], function(compilerutil, wast) {
       var localIndex = 0;
       for (var i in i32Locals) {
 	i32Locals[i].remappedIndex = localIndex;
+	localIndex += 1;
+      }
+      for (var i in i64Locals) {
+	i64Locals[i].remappedIndex = localIndex;
 	localIndex += 1;
       }
       for (var i in f32Locals) {
@@ -509,6 +527,7 @@ define(["compilerutil", "wasm/ast"], function(compilerutil, wast) {
       funcEnd[f] = this.writer.allocU32();
 
       this.writer.u16(i32Locals.length);
+      this.writer.u16(i64Locals.length);
       this.writer.u16(f32Locals.length);
       this.writer.u16(f64Locals.length);
 
