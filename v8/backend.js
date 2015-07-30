@@ -1,5 +1,6 @@
 define(["compilerutil", "wasm/ast"], function(compilerutil, wast) {
   var types = {
+    "void": 0,
     "i32": 1,
     "i64": 2,
     "f32": 3,
@@ -389,14 +390,15 @@ define(["compilerutil", "wasm/ast"], function(compilerutil, wast) {
 
 
   BinaryGenerator.prototype.generateSignature = function(argTypes, returnType) {
-    if (returnType == "void") {
-      this.writer.u8(0);
-    } else {
-      this.writer.u8(1);
-      this.generateType(returnType);
-    }
+    //if (returnType == "void") {
+    //  this.writer.u8(0);
+    //} else {
+    //  this.writer.u8(1);
+    //  this.generateType(returnType);
+    //}
 
     this.writer.u8(argTypes.length);
+    this.generateType(returnType);
     for (var i in argTypes) {
       this.generateType(argTypes[i]);
     }
