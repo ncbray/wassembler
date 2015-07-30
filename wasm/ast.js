@@ -132,10 +132,19 @@ define(['astutil'], function(astutil) {
       ],
     },
     {
-      name: "BinaryOp",
+      name: "InfixOp",
       fields: [
 	{name: "left"},
 	{name: "op"},
+	{name: "right"},
+      ],
+    },
+    {
+      name: "BinaryOp",
+      fields: [
+	{name: "optype"},
+	{name: "op"},
+	{name: "left"},
 	{name: "right"},
       ],
     },

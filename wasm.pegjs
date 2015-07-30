@@ -9,7 +9,7 @@
   function buildBinaryExpr(first, rest) {
     var e = first;
     for (var i in rest) {
-      e = wast.BinaryOp({
+      e = wast.InfixOp({
         left: e,
         op: rest[i][1],
 	right: rest[i][3],
@@ -45,7 +45,7 @@ S = (whitespace / comment)*
 
 EOT = ![a-zA-Z0-9_]
 
-keyword = ("if" / "func" / "memory" / "return" / "export" / "import" / "var" / "align" / "config") EOT
+keyword = ("if" / "func" / "memory" / "return" / "export" / "import" / "var" / "align" / "config" / "switch" / "case" / "default") EOT
 
 identText = $([a-zA-Z_][a-zA-Z0-9_]*)
 
@@ -61,7 +61,7 @@ mtypeU = "I32" {return "i32";} / "I64" {return "i64";} / "F32" {return "f32";} /
 mtypeL = "i32" {return "i32";} / "i64" {return "i64";} / "f32" {return "f32";} / "f64" {return "f64";} / "i8" {return "i8";} / "i16" {return "i16";}
 
 
-loadOp
+loadExpr
   = "load" t:mtypeU S "(" S addr:expr S ")" {
     return wast.Load({
       mtype: t,
@@ -70,7 +70,7 @@ loadOp
     });
   }
 
-storeOp
+storeExpr
   = "store" t:mtypeU S "(" S addr:expr S "," S value:expr S ")" {
     return wast.Store({
       mtype: t,
@@ -80,7 +80,7 @@ storeOp
     });
   }
 
-coerceOp
+coerceExpr
   = t:mtypeL S "(" S expr:expr S ")" {
     return wast.Coerce({
       mtype: t,
@@ -135,32 +135,88 @@ atom
   = constant
   / indirectCall
   / "(" S e:expr S ")" {return e;}
-  / loadOp
-  / storeOp
-  / coerceOp
+  / loadExpr
+  / storeExpr
+  / coerceExpr
   / name:ident {return wast.GetName({name: name})}
 
-callOp = first:atom rest:(S "(" S args:exprList S ")" {return args;})* {return buildCallExpr(first, rest);}
+callExpr = first:atom rest:(S "(" S args:exprList S ")" {return args;})* {return buildCallExpr(first, rest);}
 
-prefixOp = op:("!"/"~"/"+"/"-") S expr:prefixOp {return wast.PrefixOp({op: op, expr: expr, pos: getPos()});} / callOp
+prefixExpr = op:("!"/"~"/"+"/"-") S expr:prefixExpr {return wast.PrefixOp({op: op, expr: expr, pos: getPos()});} / callExpr
 
-mulOp = first:prefixOp rest:(S $("*"/"/"/"%") S prefixOp)* {return buildBinaryExpr(first, rest);}
+mulOp = text:$("*"/"/"/"%") {
+  return wast.Identifier({
+    text: text,
+    pos: getPos(),
+  });
+}
 
-addOp = first:mulOp rest:(S $("+"/"-") S mulOp)* {return buildBinaryExpr(first, rest);}
+mulExpr = first:prefixExpr rest:(S mulOp S prefixExpr)* {return buildBinaryExpr(first, rest);}
 
-shiftOp = first:addOp rest:(S $("<<"/">>"/">>>") S addOp)* {return buildBinaryExpr(first, rest);}
+addOp = text:$("+"/"-") {
+  return wast.Identifier({
+    text: text,
+    pos: getPos(),
+  });
+}
 
-compareOp = first:shiftOp rest:(S $("<="/"<"/">="/">") S shiftOp)* {return buildBinaryExpr(first, rest);}
+addExpr = first:mulExpr rest:(S addOp S mulExpr)* {return buildBinaryExpr(first, rest);}
 
-equalOp = first:compareOp rest:(S $("=="/"!=") S compareOp)* {return buildBinaryExpr(first, rest);}
+shiftOp = text:$("<<"/">>"/">>>") {
+  return wast.Identifier({
+    text: text,
+    pos: getPos(),
+  });
+}
 
-bitwiseAndOp = first:equalOp rest:(S $("&") S equalOp)* {return buildBinaryExpr(first, rest);}
+shiftExpr = first:addExpr rest:(S shiftOp S addExpr)* {return buildBinaryExpr(first, rest);}
 
-bitwiseXorOp = first:bitwiseAndOp rest:(S $("^") S bitwiseAndOp)* {return buildBinaryExpr(first, rest);}
+compareOp = text:$("<="/"<"/">="/">") {
+  return wast.Identifier({
+    text: text,
+    pos: getPos(),
+  });
+}
 
-bitwiseOrOp = first:bitwiseXorOp rest:(S $("|") S bitwiseXorOp)* {return buildBinaryExpr(first, rest);}
+compareExpr = first:shiftExpr rest:(S compareOp S shiftExpr)* {return buildBinaryExpr(first, rest);}
 
-expr = bitwiseOrOp
+equalOp = text:$("=="/"!=") {
+  return wast.Identifier({
+    text: text,
+    pos: getPos(),
+  });
+}
+
+equalExpr = first:compareExpr rest:(S equalOp S compareExpr)* {return buildBinaryExpr(first, rest);}
+
+bitwiseAndOp = text:$("&") {
+  return wast.Identifier({
+    text: text,
+    pos: getPos(),
+  });
+}
+
+bitwiseAndExpr = first:equalExpr rest:(S bitwiseAndOp S equalExpr)* {return buildBinaryExpr(first, rest);}
+
+bitwiseXorOp = text:$("^") {
+  return wast.Identifier({
+    text: text,
+    pos: getPos(),
+  });
+}
+
+bitwiseXorExpr = first:bitwiseAndExpr rest:(S bitwiseXorOp S bitwiseAndExpr)* {return buildBinaryExpr(first, rest);}
+
+bitwiseOrOp = text:$("|") {
+  return wast.Identifier({
+    text: text,
+    pos: getPos(),
+  });
+}
+
+bitwiseOrExpr = first:bitwiseXorExpr rest:(S bitwiseOrOp S bitwiseXorExpr)* {return buildBinaryExpr(first, rest);}
+
+expr = bitwiseOrExpr
 
 exprList = (first:expr rest:(S "," S e:expr {return e;})* {return buildList(first, rest);} / {return [];} )
 

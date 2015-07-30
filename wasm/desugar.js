@@ -102,22 +102,25 @@ define(["wasm/ast", "wasm/traverse"], function(wast, traverse) {
 
 	if (node.expr.etype == "i64") {
 	  node = wast.BinaryOp({
-	    left: node.expr,
+	    optype: "i64",
 	    op: "==",
+	    left: node.expr,
 	    right: this.constI64(0),
 	  });
 	  node.etype = "i64";
 	} else if (node.expr.etype == "f32") {
 	  node = wast.BinaryOp({
-	    left: node.expr,
+	    optype: "f32",
 	    op: "==",
+	    left: node.expr,
 	    right: this.constF32(0.0),
 	  });
 	  node.etype = "i32";
 	} else if (node.expr.etype == "f64") {
 	  node = wast.BinaryOp({
-	    left: node.expr,
+	    optype: "f64",
 	    op: "==",
+	    left: node.expr,
 	    right: this.constF64(0.0),
 	  });
 	  node.etype = "i32";
@@ -137,12 +140,14 @@ define(["wasm/ast", "wasm/traverse"], function(wast, traverse) {
     case "i8":
       node.etype = "i32";
       node = wast.BinaryOp({
+	optype: "i32",
+	op: ">>",
 	left: wast.BinaryOp({
-	  left: node,
+	  optype: "i32",
 	  op: "<<",
+	  left: node,
 	  right: this.constI32(24),
 	}),
-	op: ">>",
 	right: this.constI32(24),
       });
       node.etype = "i32";
@@ -151,12 +156,14 @@ define(["wasm/ast", "wasm/traverse"], function(wast, traverse) {
     case "i16":
       node.etype = "i32";
       node = wast.BinaryOp({
+	optype: "i32",
+	op: ">>",
 	left: wast.BinaryOp({
-	  left: node,
+	  optype: "i32",
 	  op: "<<",
+	  left: node,
 	  right: this.constI32(16),
 	}),
-	op: ">>",
 	right: this.constI32(16),
       });
       node.etype = "i32";

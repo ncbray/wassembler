@@ -184,32 +184,37 @@ define(["compilerutil", "wasm/ast", "wasm/typeinfo", "wasm/opinfo"], function(co
 	throw Error(expr.op);
       }
       break;
-    case "BinaryOp":
+    case "InfixOp":
       expr.left = this.processExpr(expr.left);
       expr.right = this.processExpr(expr.right);
-      var types = opinfo.classifyBinaryOp[expr.op];
+      var opText = expr.op.text;
+      var types = opinfo.classifyBinaryOp[opText];
       if (types === undefined) {
-	// TODO position of operator?
-	this.error("unknown binary operator - " + expr.op, getPos(expr));
+	this.error("unknown binary operator " + opText, expr.op.pos);
       }
       if (this.dead) {
 	break;
       }
-      var decl = types[expr.left.etype];
+      var t = expr.left.etype;
+      var decl = types[t];
       if (decl === undefined) {
-	// TODO position of operator?
-	this.error("binary operator " + expr.op + " does not support type " + expr.left.etype, getPos(expr));
+	this.error("binary operator " + opText + " does not support type " + t, expr.op.pos);
       }
       if (this.dead) {
 	break;
       }
-      if (expr.left.etype != expr.right.etype) {
-	// TODO position of operator?
-	this.error("binary op type error - " + expr.left.etype + expr.op + expr.right.etype + " = ???", getPos(expr));
+      if (t != expr.right.etype) {
+	this.error("binary op type error " + t + opText + expr.right.etype + " = ???", expr.op.pos);
       }
       if (this.dead) {
 	break;
       }
+      expr = wast.BinaryOp({
+	optype: t,
+	op: opText,
+	left: expr.left,
+	right: expr.right,
+      })
       this.setExprType(expr, decl.result);
       break;
     case "Call":
