@@ -56,9 +56,9 @@ ident "identifier" = !keyword text: identText {
   });
 }
 
-mtypeU = "I32" {return "i32";} / "F32" {return "f32";} / "F64" {return "f64";} / "I8" {return "i8";} / "I16" {return "i16";}
+mtypeU = "I32" {return "i32";} / "I64" {return "i64";} / "F32" {return "f32";} / "F64" {return "f64";} / "I8" {return "i8";} / "I16" {return "i16";}
 
-mtypeL = "i32" {return "i32";} / "f32" {return "f32";} / "f64" {return "f64";} / "i8" {return "i8";} / "i16" {return "i16";}
+mtypeL = "i32" {return "i32";} / "i64" {return "i64";} / "f32" {return "f32";} / "f64" {return "f64";} / "i8" {return "i8";} / "i16" {return "i16";}
 
 
 loadOp

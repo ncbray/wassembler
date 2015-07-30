@@ -168,6 +168,110 @@ define(["base", "wasm/desugar", "v8/backend"], function(base, desugar, wasm_back
       assert.equal(m.main(-1), 1);
     });
 
+    QUnit.module(mode_name + " basic i64");
+
+    QUnit.test("simple i64", function(assert) {
+      var m = create("export func main() i64 {return i64(11);}", assert);
+      assert.equal(m.main(), 11);
+    });
+
+    QUnit.test("simple hex", function(assert) {
+      // TODO i64 constants.
+      var m = create("export func main() i64 {return i64(0x12345678) * i64(0x10000) + i64(0x9abc);}", assert);
+      assert.equal(m.main(), 20015998343868);
+    });
+
+    QUnit.test("add i64", function(assert) {
+      var m = create("export func main(a i64, b i64) i64 {return a + b;}", assert);
+      assert.equal(m.main(13, 2), 15);
+      assert.equal(m.main(13, -2), 11);
+      // TODO overflow behavior.
+    });
+
+    QUnit.test("mul i64", function(assert) {
+      var m = create("export func main(a i64, b i64) i64 {return a * b;}", assert);
+      assert.equal(m.main(13, 0x100000000), 0xd00000000);
+      assert.equal(m.main(13, -2), -26);
+      // TODO overflow behavior.
+    });
+
+    QUnit.test("divide i64", function(assert) {
+      var m = create("export func main(a i64, b i64) i64 {return a / b;}", assert);
+      assert.equal(m.main(13, 2), 6);
+      assert.equal(m.main(13, -2), -6);
+    });
+
+    QUnit.test("lt i64", function(assert) {
+      var m = create("export func main(a i64, b i64) i64 {return a < b;}", assert);
+      assert.equal(m.main(13, 2), 0);
+      assert.equal(m.main(5, 5), 0);
+      assert.equal(m.main(2, 13), 1);
+    });
+
+    QUnit.test("le i64", function(assert) {
+      var m = create("export func main(a i64, b i64) i64 {return a <= b;}", assert);
+      assert.equal(m.main(13, 2), 0);
+      assert.equal(m.main(5, 5), 1);
+      assert.equal(m.main(2, 13), 1);
+    });
+
+    QUnit.test("gt i64", function(assert) {
+      var m = create("export func main(a i64, b i64) i64 {return a > b;}", assert);
+      assert.equal(m.main(13, 2), 1);
+      assert.equal(m.main(5, 5), 0);
+      assert.equal(m.main(2, 13), 0);
+    });
+
+    QUnit.test("ge i64", function(assert) {
+      var m = create("export func main(a i64, b i64) i64 {return a >= b;}", assert);
+      assert.equal(m.main(13, 2), 1);
+      assert.equal(m.main(5, 5), 1);
+      assert.equal(m.main(2, 13), 0);
+    });
+
+    QUnit.test("eq i64", function(assert) {
+      var m = create("export func main(a i64, b i64) i64 {return a == b;}", assert);
+      assert.equal(m.main(13, 2), 0);
+      assert.equal(m.main(5, 5), 1);
+      assert.equal(m.main(2, 13), 0);
+    });
+
+    QUnit.test("not eq i64", function(assert) {
+      var m = create("export func main(a i64, b i64) i64 {return !(a == b);}", assert);
+      assert.equal(m.main(13, 2), 1);
+      assert.equal(m.main(5, 5), 0);
+      assert.equal(m.main(2, 13), 1);
+    });
+
+    QUnit.test("ne i64", function(assert) {
+      var m = create("export func main(a i64, b i64) i64 {return a != b;}", assert);
+      assert.equal(m.main(13, 2), 1);
+      assert.equal(m.main(5, 5), 0);
+      assert.equal(m.main(2, 13), 1);
+    });
+
+    QUnit.test("not ne i64", function(assert) {
+      var m = create("export func main(a i64, b i64) i64 {return !(a != b);}", assert);
+      assert.equal(m.main(13, 2), 0);
+      assert.equal(m.main(5, 5), 1);
+      assert.equal(m.main(2, 13), 0);
+    });
+
+    QUnit.test("not i64", function(assert) {
+      var m = create("export func main(n i64) i64 {return !n;}", assert);
+      assert.equal(m.main(0), 1);
+      assert.equal(m.main(1), 0);
+      assert.equal(m.main(2), 0);
+      assert.equal(m.main(-1), 0);
+    });
+
+    QUnit.test("not not i64", function(assert) {
+      var m = create("export func main(n i64) i64 {return !!n;}", assert);
+      assert.equal(m.main(0), 0);
+      assert.equal(m.main(1), 1);
+      assert.equal(m.main(2), 1);
+      assert.equal(m.main(-1), 1);
+    });
 
     QUnit.module(mode_name + " basic f32");
 
@@ -515,7 +619,6 @@ define(["base", "wasm/desugar", "v8/backend"], function(base, desugar, wasm_back
       assert.equal(m.main(7), 77);
       assert.equal(m.main(11), 49);
     });
-
   };
 
   defineTests("polyfill", createNormal);

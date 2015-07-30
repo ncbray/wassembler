@@ -173,7 +173,12 @@ define(["compilerutil", "wasm/ast", "wasm/typeinfo"], function(compilerutil, was
       expr.expr = this.processExpr(expr.expr);
       switch(expr.op) {
       case "!":
-	this.setExprType(expr, "i32");
+	if (expr.expr.etype == "i64") {
+	  // i64 bool not currently generates an i64.
+	  this.setExprType(expr, "i64");
+	} else {
+	  this.setExprType(expr, "i32");
+	}
 	break;
       default:
 	throw Error(expr.op);
@@ -187,17 +192,22 @@ define(["compilerutil", "wasm/ast", "wasm/typeinfo"], function(compilerutil, was
 	  // TODO position of operator?
 	  this.error("binary op type error - " + expr.left.etype + expr.op + expr.right.etype + " = ???", getPos(expr));
 	}
-	switch (expr.op) {
-	case "<":
-	case "<=":
-	case ">":
-	case ">=":
-	case "==":
-	case "!=":
-	  this.setExprType(expr, "i32");
-	  break;
-	default:
+	if (expr.left.etype == "i64") {
+	  // i64 compares currently generate an i64.
 	  this.setExprType(expr, expr.left.etype);
+	} else {
+	  switch (expr.op) {
+	  case "<":
+	  case "<=":
+	  case ">":
+	  case ">=":
+	  case "==":
+	  case "!=":
+	    this.setExprType(expr, "i32");
+	    break;
+	  default:
+	    this.setExprType(expr, expr.left.etype);
+	  }
 	}
       }
       break;
@@ -323,6 +333,7 @@ define(["compilerutil", "wasm/ast", "wasm/typeinfo"], function(compilerutil, was
       case "i8":
       case "i16":
       case "i32":
+      case "i64":
       case "f32":
       case "f64":
       case "void":

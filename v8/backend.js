@@ -14,8 +14,10 @@ define(["compilerutil", "wasm/ast"], function(compilerutil, wast) {
     "u16": 3,
     "i32": 4,
     "u32": 5,
-    "f32": 6,
-    "f64": 7,
+    "i64": 6,
+    "u64": 7,
+    "f32": 8,
+    "f64": 9,
   };
 
   var ops = {
@@ -72,6 +74,29 @@ define(["compilerutil", "wasm/ast"], function(compilerutil, wast) {
 
     not: {bytecode: 0x59},
 
+    i64add: {bytecode: 0x5a},
+    i64sub: {bytecode: 0x5b},
+    i64mul: {bytecode: 0x5c},
+    i64div: {bytecode: 0x5d},
+    u64div: {bytecode: 0x5e},
+    i64mod: {bytecode: 0x5f},
+    u64mod: {bytecode: 0x60},
+    i64and: {bytecode: 0x61},
+    i64ior: {bytecode: 0x62},
+    i64xor: {bytecode: 0x63},
+    i64shl: {bytecode: 0x64},
+    i64shr: {bytecode: 0x65},
+    i64sar: {bytecode: 0x66},
+    i64eq: {bytecode: 0x67},
+    i64lt: {bytecode: 0x68},
+    i64le: {bytecode: 0x69},
+    u64lt: {bytecode: 0x6a},
+    u64le: {bytecode: 0x6b},
+    i64gt: {bytecode: 0x6c},
+    i64ge: {bytecode: 0x6d},
+    u64gt: {bytecode: 0x6e},
+    u64ge: {bytecode: 0x6f},
+
     f32add: {bytecode: 0x73},
     f32sub: {bytecode: 0x74},
     f32mul: {bytecode: 0x75},
@@ -92,15 +117,28 @@ define(["compilerutil", "wasm/ast"], function(compilerutil, wast) {
     f64le: {bytecode: 0x96},
     f64gt: {bytecode: 0x97},
     f64ge: {bytecode: 0x98},
+
     i32fromf32: {bytecode: 0x99},
     i32fromf64: {bytecode: 0x9a},
 
+    i32fromi64: {bytecode: 0x9d},
+
+    i64fromf32: {bytecode: 0x9e},
+    i64fromf64: {bytecode: 0x9f},
+
+    i64fromi32: {bytecode: 0xa2},
+
+
     f32fromi32: {bytecode: 0xa4},
     f32fromu32: {bytecode: 0xa5},
+    f32fromi64: {bytecode: 0xa6},
+    f32fromu64: {bytecode: 0xa7},
     f32fromf64: {bytecode: 0xa8},
 
     f64fromi32: {bytecode: 0xaa},
     f64fromu32: {bytecode: 0xab},
+    f64fromi64: {bytecode: 0xac},
+    f64fromu64: {bytecode: 0xad},
     f64fromf32: {bytecode: 0xae},
   };
 
@@ -110,7 +148,7 @@ define(["compilerutil", "wasm/ast"], function(compilerutil, wast) {
       "-": ops.i32sub,
       "*": ops.i32mul,
       "/": ops.i32div,
-      "%": ops.i32div,
+      "%": ops.i32mod,
 
       "&": ops.i32and,
       "|": ops.i32ior,
@@ -127,11 +165,34 @@ define(["compilerutil", "wasm/ast"], function(compilerutil, wast) {
       ">=": ops.i32ge,
     },
 
+    "i64": {
+      "+": ops.i64add,
+      "-": ops.i64sub,
+      "*": ops.i64mul,
+      "/": ops.i64div,
+      "%": ops.i64mod,
+
+      "&": ops.i64and,
+      "|": ops.i64ior,
+      "^": ops.i64xor,
+
+      "<<": ops.i64shl,
+      ">>>": ops.i64shr,
+      ">>": ops.i64sar,
+
+      "==": ops.i64eq,
+      "<": ops.i64lt,
+      "<=": ops.i64le,
+      ">": ops.i64gt,
+      ">=": ops.i64ge,
+    },
+
     "f32": {
       "+": ops.f32add,
       "-": ops.f32sub,
       "*": ops.f32mul,
       "/": ops.f32div,
+
       "==": ops.f32eq,
       "<": ops.f32lt,
       "<=": ops.f32le,
@@ -173,6 +234,10 @@ define(["compilerutil", "wasm/ast"], function(compilerutil, wast) {
     case "ConstI32":
       this.writer.u8(ops.i32const.bytecode);
       this.writer.i32(expr.value);
+      break;
+    case "ConstI64":
+      this.writer.u8(ops.i64const.bytecode);
+      this.writer.i64(expr.value);
       break;
     case "ConstF32":
       this.writer.u8(ops.f32const.bytecode);
@@ -227,6 +292,10 @@ define(["compilerutil", "wasm/ast"], function(compilerutil, wast) {
 	break;
       case "i32":
 	switch (src) {
+	case "i64":
+	  this.writer.u8(ops.i32fromi64.bytecode);
+	  this.generateExpr(expr.expr);
+	  break;
 	case "f32":
 	  this.writer.u8(ops.i32fromf32.bytecode);
 	  this.generateExpr(expr.expr);
@@ -239,10 +308,32 @@ define(["compilerutil", "wasm/ast"], function(compilerutil, wast) {
 	  throw Error(dst + "<=" + src);
 	}
 	break;
+      case "i64":
+	switch (src) {
+	case "i32":
+	  this.writer.u8(ops.i64fromi32.bytecode);
+	  this.generateExpr(expr.expr);
+	  break;
+	case "f32":
+	  this.writer.u8(ops.i64fromf32.bytecode);
+	  this.generateExpr(expr.expr);
+	  break;
+	case "f64":
+	  this.writer.u8(ops.i64fromf64.bytecode);
+	  this.generateExpr(expr.expr);
+	  break;
+	default:
+	  throw Error(dst + "<=" + src);
+	}
+	break;
       case "f32":
 	switch (src) {
 	case "i32":
 	  this.writer.u8(ops.f32fromi32.bytecode);
+	  this.generateExpr(expr.expr);
+	  break;
+	case "i64":
+	  this.writer.u8(ops.f32fromi64.bytecode);
 	  this.generateExpr(expr.expr);
 	  break;
 	case "f64":
@@ -257,6 +348,10 @@ define(["compilerutil", "wasm/ast"], function(compilerutil, wast) {
 	switch (src) {
 	case "i32":
 	  this.writer.u8(ops.f64fromi32.bytecode);
+	  this.generateExpr(expr.expr);
+	  break;
+	case "i64":
+	  this.writer.u8(ops.f64fromi64.bytecode);
 	  this.generateExpr(expr.expr);
 	  break;
 	case "f32":

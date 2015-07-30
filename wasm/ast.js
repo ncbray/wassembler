@@ -14,6 +14,13 @@ define(['astutil'], function(astutil) {
       ],
     },
     {
+      name: "ConstI64",
+      fields: [
+	{name: "value"}, // TODO this is imprecise.
+	{name: "pos"},
+      ],
+    },
+    {
       name: "ConstF32",
       fields: [
 	{name: "value"},

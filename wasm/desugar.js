@@ -57,6 +57,15 @@ define(["wasm/ast", "wasm/traverse"], function(wast, traverse) {
     return node;
   };
 
+  Desugar.prototype.constI64 = function(value) {
+    var node = wast.ConstI64({
+      value: value,
+      pos: null,
+    });
+    node.etype = "i64";
+    return node;
+  };
+
   Desugar.prototype.constF32 = function(value) {
     var node = wast.ConstF32({
       value: value,
@@ -90,7 +99,15 @@ define(["wasm/ast", "wasm/traverse"], function(wast, traverse) {
       switch(node.op) {
       case "!":
 	// No floating point "not" operation, lower into a compare.
-	if (node.expr.etype == "f32") {
+
+	if (node.expr.etype == "i64") {
+	  node = wast.BinaryOp({
+	    left: node.expr,
+	    op: "==",
+	    right: this.constI64(0),
+	  });
+	  node.etype = "i64";
+	} else if (node.expr.etype == "f32") {
 	  node = wast.BinaryOp({
 	    left: node.expr,
 	    op: "==",

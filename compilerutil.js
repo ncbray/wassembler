@@ -108,6 +108,22 @@ define([], function() {
     this.pos += 4;
   };
 
+  BinaryWriter.prototype.i64 = function(data) {
+    checkRange(data, -0x8000000000000, 0x7ffffffffffff); // Approximate i64
+    this.expect(8);
+    this.data.setInt32(this.pos, data|0, true);
+    this.data.setInt32(this.pos + 4, (data/0x100000000)|0, true);
+    this.pos += 8;
+  };
+
+  BinaryWriter.prototype.u64 = function(data) {
+    checkRange(data, 0x0, 0xfffffffffffff); // Approximate i64
+    this.expect(8);
+    this.data.setInt32(this.pos, data|0, true);
+    this.data.setInt32(this.pos + 4, (data/0x100000000)|0, true);
+    this.pos += 8;
+  };
+
   BinaryWriter.prototype.f32 = function(data) {
     this.expect(4);
     this.data.setFloat32(this.pos, data, true);

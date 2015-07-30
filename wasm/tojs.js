@@ -134,6 +134,16 @@ define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
 	  value: 0
 	}),
       });
+    case "i64":
+      // HACK i64 operations are just double operations that are truncated.
+      return jast.Call({
+	expr: jast.GetName({
+	  name: "trunc",
+	}),
+	args: [
+	  expr,
+	],
+      });
     case "f32":
       return jast.Call({
 	expr: jast.GetName({
@@ -150,13 +160,18 @@ define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
       });
     default:
       console.log(expr);
-      throw type;
+      throw Error(type);
     }
 }
 
   JSTranslator.prototype.processExpr = function(expr) {
     switch(expr.type) {
     case "ConstI32":
+      return jast.ConstNum({
+	value: expr.value,
+      });
+    case "ConstI64":
+      // HACK this is imprecise.
       return jast.ConstNum({
 	value: expr.value,
       });
@@ -254,12 +269,23 @@ define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
 	break;
       case "f32":
 	break;
+      case "i64":
+	switch (expr.op) {
+	case ">>":
+	case ">>>":
+	case "<<":
+	case "|":
+	case "&":
+	case "^":
+	  throw Error(expr.op + " not yet supported for i64");
+	}
+	break;
       case "f64":
 	needs_coerce = false;
 	break;
       default:
 	console.log(expr);
-	throw expr.etype;
+	throw Error(expr.etype);
       }
       if (needs_coerce) {
 	  translated = this.coerce(translated, expr.etype);
@@ -657,6 +683,19 @@ define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
 	  attr: "Math",
 	}),
 	attr: "imul",
+      }),
+    }));
+
+    body.push(jast.VarDecl({
+      name: "trunc",
+      expr: jast.GetAttr({
+	expr: jast.GetAttr({
+	  expr: jast.GetName({
+	    name: "stdlib",
+	  }),
+	  attr: "Math",
+	}),
+	attr: "trunc",
       }),
     }));
 
