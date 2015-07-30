@@ -1,4 +1,4 @@
-define(["compilerutil", "wasm/ast", "wasm/typeinfo"], function(compilerutil, wast, typeinfo) {
+define(["compilerutil", "wasm/ast", "wasm/typeinfo", "wasm/opinfo"], function(compilerutil, wast, typeinfo, opinfo) {
 
   var configDefaults = {
     memory: {
@@ -187,29 +187,30 @@ define(["compilerutil", "wasm/ast", "wasm/typeinfo"], function(compilerutil, was
     case "BinaryOp":
       expr.left = this.processExpr(expr.left);
       expr.right = this.processExpr(expr.right);
-      if (!this.dead) {
-	if (expr.left.etype != expr.right.etype) {
-	  // TODO position of operator?
-	  this.error("binary op type error - " + expr.left.etype + expr.op + expr.right.etype + " = ???", getPos(expr));
-	}
-	if (expr.left.etype == "i64") {
-	  // i64 compares currently generate an i64.
-	  this.setExprType(expr, expr.left.etype);
-	} else {
-	  switch (expr.op) {
-	  case "<":
-	  case "<=":
-	  case ">":
-	  case ">=":
-	  case "==":
-	  case "!=":
-	    this.setExprType(expr, "i32");
-	    break;
-	  default:
-	    this.setExprType(expr, expr.left.etype);
-	  }
-	}
+      var types = opinfo.classifyBinaryOp[expr.op];
+      if (types === undefined) {
+	// TODO position of operator?
+	this.error("unknown binary operator - " + expr.op, getPos(expr));
       }
+      if (this.dead) {
+	break;
+      }
+      var decl = types[expr.left.etype];
+      if (decl === undefined) {
+	// TODO position of operator?
+	this.error("binary operator " + expr.op + " does not support type " + expr.left.etype, getPos(expr));
+      }
+      if (this.dead) {
+	break;
+      }
+      if (expr.left.etype != expr.right.etype) {
+	// TODO position of operator?
+	this.error("binary op type error - " + expr.left.etype + expr.op + expr.right.etype + " = ???", getPos(expr));
+      }
+      if (this.dead) {
+	break;
+      }
+      this.setExprType(expr, decl.result);
       break;
     case "Call":
       expr.expr = this.processExpr(expr.expr);
