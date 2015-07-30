@@ -65,8 +65,10 @@ define(["compilerutil", "wasm/ast"], function(compilerutil, wast) {
     i32le: {bytecode: 0x4f},
     u32lt: {bytecode: 0x50},
     u32le: {bytecode: 0x51},
-
-    // TODO i32 greater than.
+    i32gt: {bytecode: 0x52},
+    i32ge: {bytecode: 0x53},
+    u32gt: {bytecode: 0x54},
+    u32ge: {bytecode: 0x55},
 
     not: {bytecode: 0x59},
 
@@ -78,9 +80,8 @@ define(["compilerutil", "wasm/ast"], function(compilerutil, wast) {
     f32eq: {bytecode: 0x81},
     f32lt: {bytecode: 0x82},
     f32le: {bytecode: 0x83},
-
-    // TODO f32 greater than.
-
+    f32gt: {bytecode: 0x84},
+    f32ge: {bytecode: 0x85},
     f64add: {bytecode: 0x86},
     f64sub: {bytecode: 0x87},
     f64mul: {bytecode: 0x88},
@@ -89,9 +90,8 @@ define(["compilerutil", "wasm/ast"], function(compilerutil, wast) {
     f64eq: {bytecode: 0x94},
     f64lt: {bytecode: 0x95},
     f64le: {bytecode: 0x96},
-
-    // TODO f64 greater than.
-
+    f64gt: {bytecode: 0x97},
+    f64ge: {bytecode: 0x98},
     i32fromf32: {bytecode: 0x99},
     i32fromf64: {bytecode: 0x9a},
 
@@ -123,6 +123,8 @@ define(["compilerutil", "wasm/ast"], function(compilerutil, wast) {
       "==": ops.i32eq,
       "<": ops.i32lt,
       "<=": ops.i32le,
+      ">": ops.i32gt,
+      ">=": ops.i32ge,
     },
 
     "f32": {
@@ -133,6 +135,8 @@ define(["compilerutil", "wasm/ast"], function(compilerutil, wast) {
       "==": ops.f32eq,
       "<": ops.f32lt,
       "<=": ops.f32le,
+      ">": ops.f32gt,
+      ">=": ops.f32ge,
     },
 
     "f64": {
@@ -143,6 +147,8 @@ define(["compilerutil", "wasm/ast"], function(compilerutil, wast) {
       "==": ops.f64eq,
       "<": ops.f64lt,
       "<=": ops.f64le,
+      ">": ops.f64lt,
+      ">=": ops.f64le,
     },
   };
 

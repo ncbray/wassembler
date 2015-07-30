@@ -111,8 +111,6 @@ define(["wasm/ast", "wasm/traverse"], function(wast, traverse) {
       }
     case "BinaryOp":
       switch (node.op) {
-      case ">":
-      case ">=":
       case "!=":
 	node.op = invertedOps[node.op]
 	node = this.not(node);
