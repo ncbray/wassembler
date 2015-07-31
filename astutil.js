@@ -26,10 +26,10 @@ define([], function() {
 	  var node = {type: decl.name};
 	  for (var i in decl.fields) {
 	    var field = decl.fields[i];
-	    if (!(field.name in args)) {
-	      throw Error("Required AST field: " + decl.name + "." + field.name);
-	    }
 	    var value = args[field.name];
+	    if (value === undefined) {
+	      value = field.defaultValue;
+	    }
 	    if (value === undefined) {
 	      throw Error("Undefined AST field: " + decl.name + "." + field.name);
 	    }
@@ -42,29 +42,30 @@ define([], function() {
     return exports;
   };
 
-  var index = function(keynames, table, rowfilter) {
+  var index = function(keynames, table, rowfilter, rowrewrite) {
     var finalkeyname = keynames.pop();
     var out = {};
-    for (var i = 0; i < table.length; i++) {
+    nextrow: for (var i = 0; i < table.length; i++) {
       var row = table[i];
+      if (rowfilter && !rowfilter(row)) continue nextrow;
       var current = out;
       for (var j = 0; j < keynames.length; j++) {
 	var key = row[keynames[j]];
+	if (key === undefined) throw Error("bad key " + keynames[j] + "?");
+	if (key === null) continue nextrow;
 	if (!(key in current)) {
 	  current[key] = {};
 	}
 	current = current[key];
       }
       var key = row[finalkeyname];
-      if (current[key] === undefined) {
-	if (rowfilter) {
-	  row = rowfilter(row);
-	}
-	current[key] = row;
-      } else {
-	console.log(out);
-	throw Error("tried to redefine " + key + " @" + i);
+      if (key === undefined) throw Error("bad key " + finalkeyname + "?");
+      if (key === null) continue nextrow;
+      if (key in current) throw Error("tried to redefine " + key + " @" + i);
+      if (rowrewrite) {
+	row = rowrewrite(row);
       }
+      current[key] = row;
     }
     return out;
   };

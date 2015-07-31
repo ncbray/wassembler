@@ -49,8 +49,6 @@ define(["astutil", "compilerutil", "wasm/ast", "wasm/opinfo"], function(astutil,
     getheap: {bytecode: 0x20},
     setheap: {bytecode: 0x30},
 
-    not: {bytecode: 0x59},
-
     i32fromf32: {bytecode: 0x99},
     i32fromf64: {bytecode: 0x9a},
 
@@ -74,6 +72,10 @@ define(["astutil", "compilerutil", "wasm/ast", "wasm/opinfo"], function(astutil,
     f64fromu64: {bytecode: 0xad},
     f64fromf32: {bytecode: 0xae},
   };
+
+  var unaryOpEncodingTable = [
+    {optype: "i32", op: "boolnot", bytecode: 0x59},
+  ];
 
   var binaryOpEncodingTable = [
     {optype: "i32", op: opinfo.binaryOps.add, bytecode: 0x40},
@@ -145,6 +147,7 @@ define(["astutil", "compilerutil", "wasm/ast", "wasm/opinfo"], function(astutil,
     {optype: "f64", op: opinfo.binaryOps.ge, bytecode: 0x98},
   ];
 
+  var unaryOpMap = astutil.index(["optype", "op"], unaryOpEncodingTable);
   var binOpMap = astutil.index(["optype", "op"], binaryOpEncodingTable);
 
   var BinaryGenerator = function() {
@@ -300,17 +303,13 @@ define(["astutil", "compilerutil", "wasm/ast", "wasm/opinfo"], function(astutil,
 	throw Error(dst + "<=" + src);
       }
       break;
-
-    case "PrefixOp":
-      switch (expr.op) {
-      case "!":
-	this.writer.u8(ops.not.bytecode);
-	this.generateExpr(expr.expr);
-	break;
-      default:
-	console.log(expr);
-	throw Error(expr.op);
-      }
+    case "UnaryOp":
+      if (!(expr.optype in unaryOpMap)) throw Error(expr.optype);
+      var map = unaryOpMap[expr.optype];
+      if (!(expr.op in map)) throw Error(expr.optype + "." + expr.op);
+      var op = map[expr.op];
+      this.writer.u8(op.bytecode);
+      this.generateExpr(expr.expr);
       break;
     case "BinaryOp":
       if (!(expr.optype in binOpMap)) throw Error(expr.optype);

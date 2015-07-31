@@ -157,7 +157,34 @@ define(["astutil"], function(astutil) {
     return op in compareOpLut;
   };
 
+  var unary = astutil.makeASTBuilder([
+    {
+      name: "unary",
+      fields: [
+	{name: "optype"},
+	{name: "op"},
+	{name: "result"},
+	{name: "prefix", defaultValue: null},
+	{name: "intrinsicName", defaultValue: null},
+      ],
+    },
+  ]).unary;
+
+  var unaryOpTable = [
+    unary({optype: "i32", op: "boolnot", result: "i32", prefix: "!"}),
+    unary({optype: "i64", op: "boolnot", result: "i64", prefix: "!"}),
+    unary({optype: "f32", op: "boolnot", result: "i32", prefix: "!"}),
+    unary({optype: "f64", op: "boolnot", result: "i32", prefix: "!"}),
+    unary({optype: "f32", op: "sqrt", result: "f32", intrinsicName: "sqrtF32"}),
+    unary({optype: "f64", op: "sqrt", result: "f64", intrinsicName: "sqrtF64"}),
+  ];
+
+  var classifyPrefixOp = astutil.index(["prefix", "optype"], unaryOpTable);
+  var classifyUnaryIntrinsic = astutil.index(["intrinsicName"], unaryOpTable);
+
   return {
+    classifyPrefixOp: classifyPrefixOp,
+    classifyUnaryIntrinsic: classifyUnaryIntrinsic,
     binaryOps: binaryOps,
     classifyBinaryOp: classifyBinaryOp,
     isCompareOp: isCompareOp,

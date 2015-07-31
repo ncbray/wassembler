@@ -42,7 +42,7 @@ define(["js/ast", "wasm/typeinfo", "wasm/opinfo", "astutil"], function(jast, typ
     },
   ];
 
-  var typeToArrayName = astutil.index(["type"], views, function(row) { return row.array_name });
+  var typeToArrayName = astutil.index(["type"], views, undefined, function(row) { return row.array_name });
 
   var JSTranslator = function(use_shared_memory) {
     this.use_shared_memory = use_shared_memory;
@@ -91,7 +91,7 @@ define(["js/ast", "wasm/typeinfo", "wasm/opinfo", "astutil"], function(jast, typ
     ">>>": "u32",
   };
 
-  var wasmToJSOp = astutil.index(["wasmop"], [
+  var wasmToJSInfixOp = astutil.index(["wasmop"], [
     {wasmop: opinfo.binaryOps.add, jsop: "+"},
     {wasmop: opinfo.binaryOps.sub, jsop: "-"},
     {wasmop: opinfo.binaryOps.mul, jsop: "*"},
@@ -116,8 +116,16 @@ define(["js/ast", "wasm/typeinfo", "wasm/opinfo", "astutil"], function(jast, typ
     {wasmop: opinfo.binaryOps.sge, jsop: ">="},
   ]);
 
+  var prefixOpResult = {
+    "!": "bool",
+  };
+
+  var wasmToJSPrefixOp = astutil.index(["wasmop"], [
+    {wasmop: "boolnot", jsop: "!"},
+  ]);
+
   JSTranslator.prototype.defaultTranslateBinaryOp = function(optype, op, left, right, resultType) {
-    var jsOp = wasmToJSOp[op].jsop;
+    var jsOp = wasmToJSInfixOp[op].jsop;
     var actualType = binOpResult[jsOp];
     var out = jast.BinaryOp({
       left: left,
@@ -266,17 +274,16 @@ define(["js/ast", "wasm/typeinfo", "wasm/opinfo", "astutil"], function(jast, typ
 	}),
 	value: this.processExpr(expr.value),
       });
-    case "PrefixOp":
-      // The default
-      var translated = jast.PrefixOp({
-	op: expr.op,
-	expr: this.processExpr(expr.expr),
+    case "UnaryOp":
+      var child = this.processExpr(expr.expr);
+      var jsOp = wasmToJSPrefixOp[expr.op].jsop;
+      var actualType = binOpResult[jsOp];
+      var resultType = expr.etype;
+      var out = jast.PrefixOp({
+	op: jsOp,
+	expr: child,
       });
-      var needs_coerce = true;
-      if (needs_coerce) {
-	  translated = this.implicitCoerce(translated, expr.etype);
-      }
-      return translated;
+      return this.coerce(out, actualType, resultType);
     case "Coerce":
       return this.implicitCoerce(this.processExpr(expr.expr), expr.mtype);
     case "BinaryOp":

@@ -13,12 +13,19 @@ define([], function() {
     case "ConstF32":
     case "ConstF64":
       break;
-    case "BinaryOp":
+    case "PrefixOp":
+      node.expr = this.processExpr(node.expr);
+      break;
+    case "InfixOp":
       node.left = this.processExpr(node.left);
       node.right = this.processExpr(node.right);
       break;
-    case "PrefixOp":
+    case "UnaryOp":
       node.expr = this.processExpr(node.expr);
+      break;
+    case "BinaryOp":
+      node.left = this.processExpr(node.left);
+      node.right = this.processExpr(node.right);
       break;
     case "Store":
       node.address = this.processExpr(node.address);

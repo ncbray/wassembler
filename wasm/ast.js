@@ -140,6 +140,14 @@ define(['astutil'], function(astutil) {
       ],
     },
     {
+      name: "UnaryOp",
+      fields: [
+	{name: "optype"},
+	{name: "op"},
+	{name: "expr"},
+      ],
+    },
+    {
       name: "BinaryOp",
       fields: [
 	{name: "optype"},

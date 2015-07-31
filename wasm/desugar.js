@@ -10,8 +10,8 @@ define(["wasm/ast", "wasm/traverse", "wasm/opinfo"], function(wast, traverse, op
     switch (node.type) {
     case "ConstI32":
       return node.value === 0 || node.value === 1;
-    case "PrefixOp":
-      return node.op == "!";
+    case "UnaryOp":
+      return node.op == "boolnot";
     case "BinaryOp":
       return opinfo.isCompareOp(node.op);
     default:
@@ -20,7 +20,7 @@ define(["wasm/ast", "wasm/traverse", "wasm/opinfo"], function(wast, traverse, op
   };
 
   var peelBoolNot = function(node) {
-    if (node.expr.type == "PrefixOp" && node.expr.op == "!" && naturallyBool(node.expr.expr)) {
+    if (node.expr.type == "UnaryOp" && node.expr.op == "boolnot" && naturallyBool(node.expr.expr)) {
       return node.expr.expr;
     }
     return node;
@@ -30,10 +30,10 @@ define(["wasm/ast", "wasm/traverse", "wasm/opinfo"], function(wast, traverse, op
   };
 
   Desugar.prototype.not = function(expr) {
-    expr = wast.PrefixOp({
-      op: "!",
+    expr = wast.UnaryOp({
+      optype: "i32",
+      op: "boolnot",
       expr: expr,
-      pos: null,
     });
     expr.etype = "i32";
     return peelBoolNot(expr);
@@ -86,12 +86,12 @@ define(["wasm/ast", "wasm/traverse", "wasm/opinfo"], function(wast, traverse, op
 	node.mtype = simplified;
       }
       break;
-    case "PrefixOp":
+    case "UnaryOp":
       switch(node.op) {
-      case "!":
-	// No floating point "not" operation, lower into a compare.
-
-	if (node.expr.etype == "i64") {
+      case "boolnot":
+	// Missing most "not" operations, lower into a compare.
+	switch (node.optype) {
+	case "i64":
 	  node = wast.BinaryOp({
 	    optype: "i64",
 	    op: opinfo.binaryOps.eq,
@@ -99,7 +99,9 @@ define(["wasm/ast", "wasm/traverse", "wasm/opinfo"], function(wast, traverse, op
 	    right: this.constI64(0),
 	  });
 	  node.etype = "i64";
-	} else if (node.expr.etype == "f32") {
+	  break;
+
+	case "f32":
 	  node = wast.BinaryOp({
 	    optype: "f32",
 	    op: opinfo.binaryOps.eq,
@@ -107,7 +109,8 @@ define(["wasm/ast", "wasm/traverse", "wasm/opinfo"], function(wast, traverse, op
 	    right: this.constF32(0.0),
 	  });
 	  node.etype = "i32";
-	} else if (node.expr.etype == "f64") {
+	  break;
+	case "f64":
 	  node = wast.BinaryOp({
 	    optype: "f64",
 	    op: opinfo.binaryOps.eq,
@@ -115,14 +118,16 @@ define(["wasm/ast", "wasm/traverse", "wasm/opinfo"], function(wast, traverse, op
 	    right: this.constF64(0.0),
 	  });
 	  node.etype = "i32";
-	} else {
+	  break;
+	default:
           node = peelBoolNot(node);
         }
-      break;
+	break;
       }
     case "BinaryOp":
       switch (node.op) {
       case "ne":
+	// Missing "ne"
 	node.op = "eq"
 	node = this.not(node);
       }

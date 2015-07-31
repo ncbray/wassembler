@@ -171,18 +171,28 @@ define(["compilerutil", "wasm/ast", "wasm/typeinfo", "wasm/opinfo"], function(co
       break;
     case "PrefixOp":
       expr.expr = this.processExpr(expr.expr);
-      switch(expr.op) {
-      case "!":
-	if (expr.expr.etype == "i64") {
-	  // i64 bool not currently generates an i64.
-	  this.setExprType(expr, "i64");
-	} else {
-	  this.setExprType(expr, "i32");
-	}
-	break;
-      default:
-	throw Error(expr.op);
+      var opText = expr.op;
+      var types = opinfo.classifyPrefixOp[opText];
+      if (types === undefined) {
+	this.error("unknown prefix operator " + opText, expr.pos);
       }
+      if (this.dead) {
+	break;
+      }
+      var t = expr.expr.etype;
+      var decl = types[t];
+      if (decl === undefined) {
+	this.error("prefix operator " + opText + " does not support type " + t, expr.pos);
+      }
+      if (this.dead) {
+	break;
+      }
+      expr = wast.UnaryOp({
+	optype: t,
+	op: decl.op,
+	expr: expr.expr,
+      })
+      this.setExprType(expr, decl.result);
       break;
     case "InfixOp":
       expr.left = this.processExpr(expr.left);
