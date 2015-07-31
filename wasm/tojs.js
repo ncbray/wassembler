@@ -1,4 +1,4 @@
-define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
+define(["js/ast", "wasm/typeinfo", "wasm/opinfo", "astutil"], function(jast, typeinfo, opinfo, astutil) {
   var views = [
     {
       type: "u8",
@@ -42,11 +42,7 @@ define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
     },
   ];
 
-  var typeToArrayName = {};
-  for (var i = 0; i < views.length; i++) {
-    var view = views[i];
-    typeToArrayName[view.type] = view.array_name;
-  }
+  var typeToArrayName = astutil.index(["type"], views, function(row) { return row.array_name });
 
   var JSTranslator = function(use_shared_memory) {
     this.use_shared_memory = use_shared_memory;
@@ -75,6 +71,62 @@ define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
     return name;
   }
 
+  var binOpResult = {
+    "+": "f64",
+    "-": "f64",
+    "*": "f64",
+    "/": "f64",
+    "%": "f64",
+    "==": "bool",
+    "!=": "bool",
+    "<": "bool",
+    "<=": "bool",
+    ">": "bool",
+    ">=": "bool",
+    "&": "i32",
+    "^": "i32",
+    "|": "i32",
+    "<<": "i32",
+    ">>": "i32",
+    ">>>": "u32",
+  };
+
+  var wasmToJSOp = astutil.index(["wasmop"], [
+    {wasmop: opinfo.binaryOps.add, jsop: "+"},
+    {wasmop: opinfo.binaryOps.sub, jsop: "-"},
+    {wasmop: opinfo.binaryOps.mul, jsop: "*"},
+    {wasmop: opinfo.binaryOps.div, jsop: "/"},
+    {wasmop: opinfo.binaryOps.sdiv, jsop: "/"},
+    {wasmop: opinfo.binaryOps.srem, jsop: "%"},
+    {wasmop: opinfo.binaryOps.and, jsop: "&"},
+    {wasmop: opinfo.binaryOps.ior, jsop: "|"},
+    {wasmop: opinfo.binaryOps.xor, jsop: "^"},
+    {wasmop: opinfo.binaryOps.shl, jsop: "<<"},
+    {wasmop: opinfo.binaryOps.shr, jsop: ">>"},
+    {wasmop: opinfo.binaryOps.sar, jsop: ">>>"},
+    {wasmop: opinfo.binaryOps.eq, jsop: "=="},
+    {wasmop: opinfo.binaryOps.ne, jsop: "!="},
+    {wasmop: opinfo.binaryOps.lt, jsop: "<"},
+    {wasmop: opinfo.binaryOps.le, jsop: "<="},
+    {wasmop: opinfo.binaryOps.slt, jsop: "<"},
+    {wasmop: opinfo.binaryOps.sle, jsop: "<="},
+    {wasmop: opinfo.binaryOps.gt, jsop: ">"},
+    {wasmop: opinfo.binaryOps.ge, jsop: ">="},
+    {wasmop: opinfo.binaryOps.sgt, jsop: ">"},
+    {wasmop: opinfo.binaryOps.sge, jsop: ">="},
+  ]);
+
+  JSTranslator.prototype.defaultTranslateBinaryOp = function(optype, op, left, right, resultType) {
+    var jsOp = wasmToJSOp[op].jsop;
+    var actualType = binOpResult[jsOp];
+    var out = jast.BinaryOp({
+      left: left,
+      op: jsOp,
+      right: right,
+    });
+    return this.coerce(out, actualType, resultType);
+  };
+
   JSTranslator.prototype.implicitType = function(expr) {
     switch (expr.type) {
     case "Call":
@@ -83,30 +135,11 @@ define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
     case "ConstNum":
       return "f64";
     case "BinaryOp":
-      switch (expr.op) {
-      case "+":
-      case "-":
-      case "*":
-      case "/":
-      case "%":
-	return "f64";
-      case "<":
-      case "<=":
-      case ">":
-      case ">=":
-      case "==":
-      case "!=":
-	return "bool";
-      case "&":
-      case "^":
-      case "|":
-      case ">>":
-      case "<<":
-	return "i32";
-      default:
-	console.log(expr);
+      var result = binOpResult[expr.op];
+      if (result === undefined) {
 	throw Error(expr.op);
       }
+      return result;
     case "PrefixOp":
       switch (expr.op) {
       case "!":
@@ -121,11 +154,16 @@ define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
     }
   }
 
-  JSTranslator.prototype.coerce = function(expr, type) {
-    if (this.implicitType(expr) == type) {
+  JSTranslator.prototype.implicitCoerce = function(expr, desiredType){
+    var actualType = this.implicitType(expr);
+    return this.coerce(expr, actualType, desiredType);
+  }
+
+  JSTranslator.prototype.coerce = function(expr, actualType, desiredType){
+    if (actualType == desiredType) {
       return expr;
     }
-    switch (type) {
+    switch (desiredType) {
     case "i32":
       return jast.BinaryOp({
 	left: expr,
@@ -162,7 +200,7 @@ define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
       console.log(expr);
       throw Error(type);
     }
-}
+  }
 
   JSTranslator.prototype.processExpr = function(expr) {
     switch(expr.type) {
@@ -236,25 +274,18 @@ define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
       });
       var needs_coerce = true;
       if (needs_coerce) {
-	  translated = this.coerce(translated, expr.etype);
+	  translated = this.implicitCoerce(translated, expr.etype);
       }
       return translated;
     case "Coerce":
-      return this.coerce(this.processExpr(expr.expr), expr.mtype);
+      return this.implicitCoerce(this.processExpr(expr.expr), expr.mtype);
     case "BinaryOp":
-      // The default
-      var translated = jast.BinaryOp({
-	left: this.processExpr(expr.left),
-	op: expr.op,
-	right: this.processExpr(expr.right),
-      });
-      var needs_coerce = true;
-
-      switch (expr.etype) {
+      // Special cases
+      switch (expr.optype) {
       case "i32":
 	switch (expr.op) {
-	case "*":
-	  translated = jast.Call({
+	case "mul":
+	  return jast.Call({
 	    expr: jast.GetName({
 	      name: "imul",
 	    }),
@@ -263,10 +294,7 @@ define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
 	      this.processExpr(expr.right),
 	    ],
 	  });
-	  needs_coerce = expr.etype != "i32";
-	  break;
 	}
-	break;
       case "f32":
 	break;
       case "i64":
@@ -281,16 +309,15 @@ define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
 	}
 	break;
       case "f64":
-	needs_coerce = false;
 	break;
       default:
-	console.log(expr);
-	throw Error(expr.etype);
+	throw Error(expr.optype);
       }
-      if (needs_coerce) {
-	  translated = this.coerce(translated, expr.etype);
-      }
-      return translated;
+
+      // The default
+      var left = this.processExpr(expr.left);
+      var right = this.processExpr(expr.right);
+      return this.defaultTranslateBinaryOp(expr.optype, expr.op, left, right, expr.etype);
     case "CallDirect":
       var args = [];
       for (var i = 0; i < expr.args.length; i++) {
@@ -385,7 +412,7 @@ define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
     case "i32":
     case "f32":
     case "f64":
-      return this.coerce(jast.ConstNum({value: 0}), t);
+      return this.coerce(jast.ConstNum({value: 0}), "f64", t);
     default:
       throw Error(t);
     }
@@ -402,7 +429,7 @@ define(["js/ast", "wasm/typeinfo"], function(jast, typeinfo) {
       params.push(name);
       body.push(jast.VarDecl({
 	name: name,
-	expr: this.coerce(jast.GetName({name: name}), p.ptype),
+	expr: this.coerce(jast.GetName({name: name}), "?", p.ptype),
       }));
     }
 

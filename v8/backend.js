@@ -1,4 +1,4 @@
-define(["compilerutil", "wasm/ast"], function(compilerutil, wast) {
+define(["astutil", "compilerutil", "wasm/ast", "wasm/opinfo"], function(astutil, compilerutil, wast, opinfo) {
   var types = {
     "void": 0,
     "i32": 1,
@@ -49,74 +49,7 @@ define(["compilerutil", "wasm/ast"], function(compilerutil, wast) {
     getheap: {bytecode: 0x20},
     setheap: {bytecode: 0x30},
 
-    i32add: {bytecode: 0x40},
-    i32sub: {bytecode: 0x41},
-    i32mul: {bytecode: 0x42},
-    i32div: {bytecode: 0x43},
-    u32div: {bytecode: 0x44},
-    i32mod: {bytecode: 0x45},
-    u32mod: {bytecode: 0x46},
-    i32and: {bytecode: 0x47},
-    i32ior: {bytecode: 0x48},
-    i32xor: {bytecode: 0x49},
-    i32shl: {bytecode: 0x4a},
-    i32shr: {bytecode: 0x4b},
-    i32sar: {bytecode: 0x4c},
-    i32eq: {bytecode: 0x4d},
-    i32lt: {bytecode: 0x4e},
-    i32le: {bytecode: 0x4f},
-    u32lt: {bytecode: 0x50},
-    u32le: {bytecode: 0x51},
-    i32gt: {bytecode: 0x52},
-    i32ge: {bytecode: 0x53},
-    u32gt: {bytecode: 0x54},
-    u32ge: {bytecode: 0x55},
-
     not: {bytecode: 0x59},
-
-    i64add: {bytecode: 0x5a},
-    i64sub: {bytecode: 0x5b},
-    i64mul: {bytecode: 0x5c},
-    i64div: {bytecode: 0x5d},
-    u64div: {bytecode: 0x5e},
-    i64mod: {bytecode: 0x5f},
-    u64mod: {bytecode: 0x60},
-    i64and: {bytecode: 0x61},
-    i64ior: {bytecode: 0x62},
-    i64xor: {bytecode: 0x63},
-    i64shl: {bytecode: 0x64},
-    i64shr: {bytecode: 0x65},
-    i64sar: {bytecode: 0x66},
-    i64eq: {bytecode: 0x67},
-    i64lt: {bytecode: 0x68},
-    i64le: {bytecode: 0x69},
-    u64lt: {bytecode: 0x6a},
-    u64le: {bytecode: 0x6b},
-    i64gt: {bytecode: 0x6c},
-    i64ge: {bytecode: 0x6d},
-    u64gt: {bytecode: 0x6e},
-    u64ge: {bytecode: 0x6f},
-
-    f32add: {bytecode: 0x73},
-    f32sub: {bytecode: 0x74},
-    f32mul: {bytecode: 0x75},
-    f32div: {bytecode: 0x76},
-
-    f32eq: {bytecode: 0x81},
-    f32lt: {bytecode: 0x82},
-    f32le: {bytecode: 0x83},
-    f32gt: {bytecode: 0x84},
-    f32ge: {bytecode: 0x85},
-    f64add: {bytecode: 0x86},
-    f64sub: {bytecode: 0x87},
-    f64mul: {bytecode: 0x88},
-    f64div: {bytecode: 0x89},
-
-    f64eq: {bytecode: 0x94},
-    f64lt: {bytecode: 0x95},
-    f64le: {bytecode: 0x96},
-    f64gt: {bytecode: 0x97},
-    f64ge: {bytecode: 0x98},
 
     i32fromf32: {bytecode: 0x99},
     i32fromf64: {bytecode: 0x9a},
@@ -142,76 +75,77 @@ define(["compilerutil", "wasm/ast"], function(compilerutil, wast) {
     f64fromf32: {bytecode: 0xae},
   };
 
-  var binOpMap = {
-    "i32": {
-      "+": ops.i32add,
-      "-": ops.i32sub,
-      "*": ops.i32mul,
-      "/": ops.i32div,
-      "%": ops.i32mod,
+  var binaryOpEncodingTable = [
+    {optype: "i32", op: opinfo.binaryOps.add, bytecode: 0x40},
+    {optype: "i32", op: opinfo.binaryOps.sub, bytecode: 0x41},
+    {optype: "i32", op: opinfo.binaryOps.mul, bytecode: 0x42},
+    {optype: "i32", op: opinfo.binaryOps.sdiv, bytecode: 0x43},
+    {optype: "i32", op: opinfo.binaryOps.udiv, bytecode: 0x44},
+    {optype: "i32", op: opinfo.binaryOps.srem, bytecode: 0x45},
+    {optype: "i32", op: opinfo.binaryOps.urem, bytecode: 0x46},
+    {optype: "i32", op: opinfo.binaryOps.and, bytecode: 0x47},
+    {optype: "i32", op: opinfo.binaryOps.ior, bytecode: 0x48},
+    {optype: "i32", op: opinfo.binaryOps.xor, bytecode: 0x49},
+    {optype: "i32", op: opinfo.binaryOps.shl, bytecode: 0x4a},
+    {optype: "i32", op: opinfo.binaryOps.shr, bytecode: 0x4b},
+    {optype: "i32", op: opinfo.binaryOps.sar, bytecode: 0x4c},
+    {optype: "i32", op: opinfo.binaryOps.eq, bytecode: 0x4d},
+    {optype: "i32", op: opinfo.binaryOps.slt, bytecode: 0x4e},
+    {optype: "i32", op: opinfo.binaryOps.sle, bytecode: 0x4f},
+    {optype: "i32", op: opinfo.binaryOps.ult, bytecode: 0x50},
+    {optype: "i32", op: opinfo.binaryOps.ule, bytecode: 0x51},
+    {optype: "i32", op: opinfo.binaryOps.sgt, bytecode: 0x52},
+    {optype: "i32", op: opinfo.binaryOps.sge, bytecode: 0x53},
+    {optype: "i32", op: opinfo.binaryOps.ugt, bytecode: 0x54},
+    {optype: "i32", op: opinfo.binaryOps.uge, bytecode: 0x55},
 
-      "&": ops.i32and,
-      "|": ops.i32ior,
-      "^": ops.i32xor,
+    {optype: "i64", op: opinfo.binaryOps.add, bytecode: 0x5a},
+    {optype: "i64", op: opinfo.binaryOps.sub, bytecode: 0x5b},
+    {optype: "i64", op: opinfo.binaryOps.mul, bytecode: 0x5c},
+    {optype: "i64", op: opinfo.binaryOps.sdiv, bytecode: 0x5d},
+    {optype: "i64", op: opinfo.binaryOps.udiv, bytecode: 0x5e},
+    {optype: "i64", op: opinfo.binaryOps.srem, bytecode: 0x5f},
+    {optype: "i64", op: opinfo.binaryOps.urem, bytecode: 0x60},
+    {optype: "i64", op: opinfo.binaryOps.and, bytecode: 0x61},
+    {optype: "i64", op: opinfo.binaryOps.ior, bytecode: 0x62},
+    {optype: "i64", op: opinfo.binaryOps.xor, bytecode: 0x63},
+    {optype: "i64", op: opinfo.binaryOps.shl, bytecode: 0x64},
+    {optype: "i64", op: opinfo.binaryOps.shr, bytecode: 0x65},
+    {optype: "i64", op: opinfo.binaryOps.sar, bytecode: 0x66},
+    {optype: "i64", op: opinfo.binaryOps.eq, bytecode: 0x67},
+    {optype: "i64", op: opinfo.binaryOps.slt, bytecode: 0x68},
+    {optype: "i64", op: opinfo.binaryOps.sle, bytecode: 0x69},
+    {optype: "i64", op: opinfo.binaryOps.ult, bytecode: 0x6a},
+    {optype: "i64", op: opinfo.binaryOps.ule, bytecode: 0x6b},
+    {optype: "i64", op: opinfo.binaryOps.sgt, bytecode: 0x6c},
+    {optype: "i64", op: opinfo.binaryOps.sge, bytecode: 0x6d},
+    {optype: "i64", op: opinfo.binaryOps.ugt, bytecode: 0x6e},
+    {optype: "i64", op: opinfo.binaryOps.uge, bytecode: 0x6f},
 
-      "<<": ops.i32shl,
-      ">>>": ops.i32shr,
-      ">>": ops.i32sar,
+    {optype: "f32", op: opinfo.binaryOps.add, bytecode: 0x73},
+    {optype: "f32", op: opinfo.binaryOps.sub, bytecode: 0x74},
+    {optype: "f32", op: opinfo.binaryOps.mul, bytecode: 0x75},
+    {optype: "f32", op: opinfo.binaryOps.div, bytecode: 0x76},
 
-      "==": ops.i32eq,
-      "<": ops.i32lt,
-      "<=": ops.i32le,
-      ">": ops.i32gt,
-      ">=": ops.i32ge,
-    },
+    {optype: "f32", op: opinfo.binaryOps.eq, bytecode: 0x81},
+    {optype: "f32", op: opinfo.binaryOps.lt, bytecode: 0x82},
+    {optype: "f32", op: opinfo.binaryOps.le, bytecode: 0x83},
+    {optype: "f32", op: opinfo.binaryOps.gt, bytecode: 0x84},
+    {optype: "f32", op: opinfo.binaryOps.ge, bytecode: 0x85},
 
-    "i64": {
-      "+": ops.i64add,
-      "-": ops.i64sub,
-      "*": ops.i64mul,
-      "/": ops.i64div,
-      "%": ops.i64mod,
+    {optype: "f64", op: opinfo.binaryOps.add, bytecode: 0x86},
+    {optype: "f64", op: opinfo.binaryOps.sub, bytecode: 0x87},
+    {optype: "f64", op: opinfo.binaryOps.mul, bytecode: 0x88},
+    {optype: "f64", op: opinfo.binaryOps.div, bytecode: 0x89},
 
-      "&": ops.i64and,
-      "|": ops.i64ior,
-      "^": ops.i64xor,
+    {optype: "f64", op: opinfo.binaryOps.eq, bytecode: 0x94},
+    {optype: "f64", op: opinfo.binaryOps.lt, bytecode: 0x95},
+    {optype: "f64", op: opinfo.binaryOps.le, bytecode: 0x96},
+    {optype: "f64", op: opinfo.binaryOps.gt, bytecode: 0x97},
+    {optype: "f64", op: opinfo.binaryOps.ge, bytecode: 0x98},
+  ];
 
-      "<<": ops.i64shl,
-      ">>>": ops.i64shr,
-      ">>": ops.i64sar,
-
-      "==": ops.i64eq,
-      "<": ops.i64lt,
-      "<=": ops.i64le,
-      ">": ops.i64gt,
-      ">=": ops.i64ge,
-    },
-
-    "f32": {
-      "+": ops.f32add,
-      "-": ops.f32sub,
-      "*": ops.f32mul,
-      "/": ops.f32div,
-
-      "==": ops.f32eq,
-      "<": ops.f32lt,
-      "<=": ops.f32le,
-      ">": ops.f32gt,
-      ">=": ops.f32ge,
-    },
-
-    "f64": {
-      "+": ops.f64add,
-      "-": ops.f64sub,
-      "*": ops.f64mul,
-      "/": ops.f64div,
-      "==": ops.f64eq,
-      "<": ops.f64lt,
-      "<=": ops.f64le,
-      ">": ops.f64lt,
-      ">=": ops.f64le,
-    },
-  };
+  var binOpMap = astutil.index(["optype", "op"], binaryOpEncodingTable);
 
   var BinaryGenerator = function() {
     this.writer = new compilerutil.BinaryWriter();
@@ -379,9 +313,9 @@ define(["compilerutil", "wasm/ast"], function(compilerutil, wast) {
       }
       break;
     case "BinaryOp":
-      if (!(expr.etype in binOpMap)) throw Error(expr.etype);
-      var map = binOpMap[expr.etype];
-      if (!(expr.op in map)) throw Error(expr.op);
+      if (!(expr.optype in binOpMap)) throw Error(expr.optype);
+      var map = binOpMap[expr.optype];
+      if (!(expr.op in map)) throw Error(expr.optype + "." + expr.op);
       var op = map[expr.op];
 
       this.writer.u8(op.bytecode);

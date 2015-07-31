@@ -211,7 +211,7 @@ define(["compilerutil", "wasm/ast", "wasm/typeinfo", "wasm/opinfo"], function(co
       }
       expr = wast.BinaryOp({
 	optype: t,
-	op: opText,
+	op: decl.op,
 	left: expr.left,
 	right: expr.right,
       })

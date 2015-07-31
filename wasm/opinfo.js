@@ -140,8 +140,30 @@ define([], function() {
   classifyFixedResult(compareOps, ["i64"], "i64");
   classifyFixedResult(intCompareOps, ["i64"], "i64");
 
+  var compareOpLut = {
+    eq: true,
+    ne: true,
+    lt: true,
+    le: true,
+    slt: true,
+    sle: true,
+    ult: true,
+    ule: true,
+    gt: true,
+    ge: true,
+    sgt: true,
+    sge: true,
+    ugt: true,
+    uge: true,
+  };
+
+  var isCompareOp = function(op) {
+    return op in compareOpLut;
+  };
+
   return {
     binaryOps: binaryOps,
     classifyBinaryOp: classifyBinaryOp,
+    isCompareOp: isCompareOp,
   };
 });

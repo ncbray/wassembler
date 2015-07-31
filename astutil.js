@@ -41,7 +41,36 @@ define([], function() {
     }
     return exports;
   };
+
+  var index = function(keynames, table, rowfilter) {
+    var finalkeyname = keynames.pop();
+    var out = {};
+    for (var i = 0; i < table.length; i++) {
+      var row = table[i];
+      var current = out;
+      for (var j = 0; j < keynames.length; j++) {
+	var key = row[keynames[j]];
+	if (!(key in current)) {
+	  current[key] = {};
+	}
+	current = current[key];
+      }
+      var key = row[finalkeyname];
+      if (current[key] === undefined) {
+	if (rowfilter) {
+	  row = rowfilter(row);
+	}
+	current[key] = row;
+      } else {
+	console.log(out);
+	throw Error("tried to redefine " + key + " @" + i);
+      }
+    }
+    return out;
+  };
+
   return {
     makeASTBuilder: makeASTBuilder,
+    index: index,
   };
 });
