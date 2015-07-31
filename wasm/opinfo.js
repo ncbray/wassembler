@@ -1,4 +1,4 @@
-define([], function() {
+define(["astutil"], function(astutil) {
   var binaryOpList = [
     "add",
     "sub",
@@ -37,17 +37,11 @@ define([], function() {
     binaryOps[op] = op;
   }
 
+  var binaryOpTable = [];
   var classifyBinaryOp = {};
 
   var classify = function(decl, left, right, result) {
-    if (!(decl.text in classifyBinaryOp)) {
-      classifyBinaryOp[decl.text] = {};
-    }
-    var types = classifyBinaryOp[decl.text];
-    if (left in types) {
-      throw Error("tried to redefine " + decl.text + " for " + left);
-    }
-    types[left] = {op: decl.op, right: right, result: result};
+    binaryOpTable.push({optype: left, op: decl.op, right: right, result: result, text: decl.text});
   };
 
   var classifySimple = function(table, types) {
@@ -139,6 +133,8 @@ define([], function() {
 
   classifyFixedResult(compareOps, ["i64"], "i64");
   classifyFixedResult(intCompareOps, ["i64"], "i64");
+
+  var classifyBinaryOp = astutil.index(["text", "optype"], binaryOpTable);
 
   var compareOpLut = {
     eq: true,
