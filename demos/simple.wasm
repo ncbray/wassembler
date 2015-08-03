@@ -1,6 +1,6 @@
-export func add(a i64, b i64) i64 {
-  return a + b;
-}
+//export func add(a i64, b i64) i64 {
+//  return a + b;
+//}
 
 export func ifelse(cond i32, a i32, b i32) i32 {
   if (cond) {

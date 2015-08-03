@@ -1,3 +1,7 @@
+if (!this.WASM) {
+  throw "You need to patch v8 to support WASM.";
+}
+
 // Minimal require.js polyfill for d8.
 var cache = {};
 var resolving = null;
@@ -53,7 +57,8 @@ function compile(filename) {
   print(new Uint8Array(buffer));
   print(buffer.byteLength);
 
-  WASM.verifyModule(buffer); // If "WASM" does not exist, you should patch d8.
+  //WASM.verifyModule(buffer);
+  print("result:", WASM.compileRun(buffer));
 }
 
 if (arguments.length != 1) {
