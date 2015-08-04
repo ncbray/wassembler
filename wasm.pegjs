@@ -45,7 +45,7 @@ S = (whitespace / comment)*
 
 EOT = ![a-zA-Z0-9_]
 
-keyword = ("if" / "func" / "memory" / "return" / "export" / "import" / "var" / "align" / "config" / "switch" / "case" / "default") EOT
+keyword = ("if" / "func" / "memory" / "return" / "export" / "import" / "var" / "align" / "config" / "switch" / "case" / "default" / "while" / "loop") EOT
 
 identText = $([a-zA-Z_][a-zA-Z0-9_]*)
 
@@ -238,6 +238,12 @@ stmt
         cond:cond,
         body: b,
 	pos: getPos(),
+      });
+    })
+    /("loop" EOT
+      S "{" S b:body S "}" {
+      return wast.Loop({
+        body: b,
       });
     })
     /("return" EOT S e:(expr/{return null}) S ";" {

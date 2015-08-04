@@ -99,7 +99,7 @@ define(["compilerutil", "wasm/ast", "wasm/typeinfo", "wasm/opinfo"], function(co
 	switch(ref.type) {
 	case "Function":
 	  expr = wast.GetFunction({func: ref, pos: getPos(expr)});
-	this.setExprType(expr, "i32");
+	  this.setExprType(expr, "i32");
 	  break;
         case "Extern":
 	  expr = wast.GetExtern({func: ref, pos: getPos(expr)});
@@ -332,8 +332,11 @@ define(["compilerutil", "wasm/ast", "wasm/typeinfo", "wasm/opinfo"], function(co
       expr.body = this.processBlock(expr.body);
       this.setExprType(expr, "void");
       break;
+    case "Loop":
+      expr.body = this.processBlock(expr.body);
+      this.setExprType(expr, "void");
+      break;
     default:
-      console.log(expr);
       throw Error(expr.type);
     }
 

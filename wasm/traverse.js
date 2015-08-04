@@ -80,6 +80,9 @@ define([], function() {
       node.cond = this.processExpr(node.cond);
       node.body = this.processBlock(node.body);
       break;
+    case "Loop":
+      node.body = this.processBlock(node.body);
+      break;
     default:
       node = this.processExpr(node);
     }

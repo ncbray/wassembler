@@ -357,7 +357,7 @@ define(["astutil", "compilerutil", "wasm/ast", "wasm/opinfo"], function(astutil,
       break;
     case "Break":
       this.writer.u8(ops.break_.bytecode);
-      this.writer.u8(0);
+      this.writer.u8(1);
       break;
     default:
       console.log(expr);
@@ -381,7 +381,7 @@ define(["astutil", "compilerutil", "wasm/ast", "wasm/opinfo"], function(astutil,
       break;
     case "Loop":
       this.writer.u8(ops.loop.bytecode);
-      this.generateBlock(expr.body);
+      this.generateBlock(expr.body, true); // Loops have an implicit block, do not output a bytecode.
       break;
     case "SetLocal":
       this.writer.u8(ops.setlocal.bytecode);
@@ -395,8 +395,10 @@ define(["astutil", "compilerutil", "wasm/ast", "wasm/opinfo"], function(astutil,
     };
   };
 
-  BinaryGenerator.prototype.generateBlock = function(block) {
-    this.writer.u8(ops.block.bytecode);
+  BinaryGenerator.prototype.generateBlock = function(block, supress_bytecode) {
+    if (!supress_bytecode) {
+      this.writer.u8(ops.block.bytecode);
+    }
     this.writer.u8(block.length);
     for (var i in block) {
       this.generateStmt(block[i]);
