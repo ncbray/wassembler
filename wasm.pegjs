@@ -261,6 +261,12 @@ stmt
 	pos: getPos(),
       });
     })
+    / (name:ident S ":" S stmt:stmt {
+      return wast.Label({
+        name: name,
+        stmt: stmt
+      });
+    })
     / (name:ident S "=" S value:expr S ";" {
       return wast.SetName({
         name: name,

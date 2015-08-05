@@ -404,6 +404,9 @@ define(["compilerutil", "wasm/ast", "wasm/typeinfo", "wasm/opinfo"], function(co
 	block.push(node);
       }
       break;
+    case "Label":
+      this.processStmt(node.stmt, block);
+      break;
     default:
       block.push(this.processExpr(node));
     }

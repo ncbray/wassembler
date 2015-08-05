@@ -554,6 +554,11 @@ define(["base", "wasm/desugar", "v8/backend"], function(base, desugar, wasm_back
       assert.equal(m.is_prime(97), 1);
     });
 
+    QUnit.test("double loop", function(assert) {
+      var m = create("export func main() i32 {var i i32 = 0; var j i32 = 0; var value i32 = 0; outter: while (j < 10) {inner: while (i < 10) {value = value + i; i = i + 1;} value = value * (j + 1); j = j + 1;} return value;}", assert);
+      assert.equal(m.main(), 163296000);
+    });
+
 
     QUnit.module(mode_name + " function calls");
 
