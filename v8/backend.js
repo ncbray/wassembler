@@ -357,7 +357,7 @@ define(["astutil", "compilerutil", "wasm/ast", "wasm/opinfo"], function(astutil,
       break;
     case "Break":
       this.writer.u8(ops.break_.bytecode);
-      this.writer.u8(1);
+      this.writer.u8(expr.depth);
       break;
     default:
       console.log(expr);

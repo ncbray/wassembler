@@ -1,8 +1,4 @@
-//export func add(a i64, b i64) i64 {
-//  return a + b;
-//}
-
-export func ifelse(cond i32, a i32, b i32) i32 {
+func ifelse(cond i32, a i32, b i32) i32 {
   if (cond) {
     return a > b;
   } else {
@@ -11,5 +7,9 @@ export func ifelse(cond i32, a i32, b i32) i32 {
 }
 
 export func main() i32 {
-  return 11 + ifelse(0, 3, 5) * 2;
+  var i i32 = 0;
+  while (i < 10) {
+    i = i + 1;
+  }
+  return i + ifelse(0, 1, 2) * 2;
 }

@@ -176,7 +176,7 @@ define(["wasm/ast", "wasm/traverse", "wasm/opinfo"], function(wast, traverse, op
     case "While":
       var body = [wast.If({
 	cond: this.not(node.cond),
-	t: [wast.Break({pos: null})],
+	t: [wast.Break({depth: 1})],
 	f: null,
 	pos: null,
       })];

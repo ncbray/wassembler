@@ -207,7 +207,7 @@ define(['astutil'], function(astutil) {
     {
       name: "Break",
       fields: [
-	{name: "pos"},
+	{name: "depth"},
       ],
     },
     {
