@@ -212,6 +212,12 @@ define(['astutil'], function(astutil) {
       ],
     },
     {
+      name: "BreakToLabel",
+      fields: [
+	{name: "name"},
+      ],
+    },
+    {
       name: "Break",
       fields: [
 	{name: "depth"},

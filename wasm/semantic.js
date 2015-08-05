@@ -39,6 +39,10 @@ define(["compilerutil", "wasm/ast", "wasm/typeinfo", "wasm/opinfo"], function(co
     }
   };
 
+  var isLoop = function(node) {
+    return node.type == "While" || node.type == "Loop";
+  };
+
   var SemanticPass = function(status) {
     this.status = status;
   };
@@ -390,6 +394,9 @@ define(["compilerutil", "wasm/ast", "wasm/typeinfo", "wasm/opinfo"], function(co
   };
 
   SemanticPass.prototype.processStmt = function(node, block) {
+    var old_dead = this.dead;
+    this.dead = false;
+
     switch (node.type) {
     case "VarDecl":
       var t = this.processType(node.vtype);
@@ -404,12 +411,53 @@ define(["compilerutil", "wasm/ast", "wasm/typeinfo", "wasm/opinfo"], function(co
 	block.push(node);
       }
       break;
+    case "BreakToLabel":
+      var name = node.name.text
+      var labelInfo = this.labelScope[name];
+      if (labelInfo.poisoned) {
+        // We aren't 100% sure what the user indended, so don't print additional
+        // errors.
+        this.dead = true;
+      } else {
+	if (labelInfo) {
+	  if (labelInfo.live) {
+            var diff = this.depth - labelInfo.depth;
+            // Break 0 breaks out of the current block. This difference in depth
+            // between a break statement and the enclosing block will be 1, so
+            // subtract 1 from the depth difference to get the correct encoding.
+            node = wast.Break({depth: diff - 1});
+	  } else {
+            // "live" is true only while processing the subtree contained by the
+            // label.  If live is false, this means the break statement is
+            // trying to transfer control to a label that is not a ancestor of
+            // the break statement, and this is illegal.
+            this.error("label " + name + " does not contain break statement", node.name.pos);
+	  }
+	} else {
+          this.error("unknown label " + name, node.name.pos);
+	}
+      }
+      block.push(node);
+      break;
     case "Label":
+      var name = node.name.text;
+      var labelInfo = this.labelScope[name];
+      if (labelInfo) {
+        this.error("attempted to redeclare " + name, node.name.pos);
+	labelInfo.poisoned = true;
+      } else {
+	labelInfo = {name: name, depth: this.depth, live: true, poisoned: false, loop: isLoop(node.stmt)};
+	this.labelScope[name] = labelInfo;
+      }
       this.processStmt(node.stmt, block);
+      if (labelInfo) {
+	labelInfo.live = false;
+      }
       break;
     default:
       block.push(this.processExpr(node));
     }
+    this.dead |= old_dead;
   };
 
   SemanticPass.prototype.processBlock = function(block) {
@@ -417,10 +465,12 @@ define(["compilerutil", "wasm/ast", "wasm/typeinfo", "wasm/opinfo"], function(co
       return block;
     }
     var old_dead = this.dead;
-    var out = []
+    var out = [];
+    this.depth += 1;
     for (var i in block) {
       this.processStmt(block[i], out);
     }
+    this.depth -= 1;
     this.dead = this.dead || old_dead;
     return out;
   };
@@ -428,7 +478,8 @@ define(["compilerutil", "wasm/ast", "wasm/typeinfo", "wasm/opinfo"], function(co
   SemanticPass.prototype.processFunction = function(func) {
     this.func = func;
     this.localScope = {};
-
+    this.labelScope = {};
+    this.depth = 0;
     this.dead = false;
 
     for (var i in func.params) {

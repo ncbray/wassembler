@@ -45,7 +45,7 @@ S = (whitespace / comment)*
 
 EOT = ![a-zA-Z0-9_]
 
-keyword = ("if" / "func" / "memory" / "return" / "export" / "import" / "var" / "align" / "config" / "switch" / "case" / "default" / "while" / "loop") EOT
+keyword = ("if" / "func" / "memory" / "return" / "export" / "import" / "var" / "align" / "config" / "switch" / "case" / "default" / "while" / "loop" / "break") EOT
 
 identText = $([a-zA-Z_][a-zA-Z0-9_]*)
 
@@ -259,6 +259,11 @@ stmt
         vtype: type,
         value: value,
 	pos: getPos(),
+      });
+    })
+    / ("break" EOT S name:ident S ";" {
+      return wast.BreakToLabel({
+        name: name,
       });
     })
     / (name:ident S ":" S stmt:stmt {
