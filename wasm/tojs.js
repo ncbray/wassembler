@@ -1,4 +1,39 @@
-define(["js/ast", "wasm/typeinfo", "wasm/opinfo", "astutil"], function(jast, typeinfo, opinfo, astutil) {
+define(["js/ast", "wasm/traverse", "wasm/typeinfo", "wasm/opinfo", "astutil"], function(jast, traverse, typeinfo, opinfo, astutil) {
+
+  var TranslatorAnalysis = function() {
+    this.breakStack = [];
+    this.labelUID = 0;
+  }
+
+  TranslatorAnalysis.prototype.processStmtPre = function(stmt, out) {
+    switch (stmt.type) {
+    case "If":
+    case "Loop":
+      this.breakStack.push(stmt);
+      break;
+    case "Break":
+      // Figure out what statement this break targets, and generate a label if it doesn't already exist.
+      var target = this.breakStack[this.breakStack.length - stmt.depth - 1];
+      if (!target.generatedLabel) {
+	target.generatedLabel = "label" + this.labelUID;
+	this.labelUID += 1;
+      }
+      stmt.generatedLabel = target.generatedLabel;
+    }
+    out.push(stmt);
+  }
+
+  TranslatorAnalysis.prototype.processStmtPost = function(stmt, out) {
+    switch (stmt.type) {
+    case "If":
+    case "Loop":
+      this.breakStack.pop();
+      break;
+    }
+    out.push(stmt);
+  }
+
+
   var views = [
     {
       type: "u8",
@@ -153,11 +188,9 @@ define(["js/ast", "wasm/typeinfo", "wasm/opinfo", "astutil"], function(jast, typ
       case "!":
 	return "bool";
       default:
-	console.log(expr);
 	throw Error(expr.op);
       }
     default:
-      console.log(expr);
       throw Error(expr.type);
     }
   }
@@ -205,7 +238,6 @@ define(["js/ast", "wasm/typeinfo", "wasm/opinfo", "astutil"], function(jast, typ
 	expr: expr,
       });
     default:
-      console.log(expr);
       throw Error(type);
     }
   }
@@ -362,20 +394,27 @@ define(["js/ast", "wasm/typeinfo", "wasm/opinfo", "astutil"], function(jast, typ
     }
   };
 
+  JSTranslator.prototype.addLabel = function(stmt, result) {
+    if (stmt.generatedLabel) {
+      result = jast.Label({name: stmt.generatedLabel, stmt: result});
+    }
+    return result;
+  };
+
   JSTranslator.prototype.processStmt = function(stmt, result) {
     switch(stmt.type) {
     case "If":
-      result.push(jast.If({
+      result.push(this.addLabel(stmt, jast.If({
 	cond: this.processExpr(stmt.cond),
 	t: this.processBlock(stmt.t, []),
 	f: stmt.f ? this.processBlock(stmt.f, []) : null,
-      }));
+      })));
       break;
     case "Loop":
-      result.push(jast.While({
+      result.push(this.addLabel(stmt, jast.While({
 	cond: jast.GetName({name: "true"}),
 	body: this.processBlock(stmt.body, []),
-      }));
+      })));
       break;
     case "SetLocal":
       result.push(jast.Assign({
@@ -399,7 +438,9 @@ define(["js/ast", "wasm/typeinfo", "wasm/opinfo", "astutil"], function(jast, typ
       }));
       break;
     case "Break":
-      result.push(jast.Break({}));
+      result.push(jast.Break({
+        name: stmt.generatedLabel,
+      }));
       break;
     default:
       result.push(this.processExpr(stmt));
@@ -427,6 +468,10 @@ define(["js/ast", "wasm/typeinfo", "wasm/opinfo", "astutil"], function(jast, typ
 
   JSTranslator.prototype.processFunc = function(func) {
     this.func = func;
+
+    var analysis = new traverse.TopDownBottomUp(new TranslatorAnalysis());
+    analysis.processFunc(func);
+
 
     var params = [];
     var body = [];

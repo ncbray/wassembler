@@ -75,7 +75,7 @@ define(["wasm/ast", "wasm/traverse", "wasm/opinfo"], function(wast, traverse, op
     return node;
   };
 
-  Desugar.prototype.processExpr = function(node) {
+  Desugar.prototype.processExprPost = function(node) {
     switch (node.type) {
     case "Coerce":
       var simplified = this.simplifyType(node.mtype);
@@ -171,7 +171,7 @@ define(["wasm/ast", "wasm/traverse", "wasm/opinfo"], function(wast, traverse, op
     return node;
   };
 
-  Desugar.prototype.processStmt = function(node, out) {
+  Desugar.prototype.processStmtPost = function(node, out) {
     switch (node.type) {
     case "While":
       var body = [wast.If({
@@ -199,7 +199,7 @@ define(["wasm/ast", "wasm/traverse", "wasm/opinfo"], function(wast, traverse, op
     return t;
   };
 
-  Desugar.prototype.processFunc = function(node) {
+  Desugar.prototype.processFuncPost = function(node) {
     for (var i = 0; i < node.params.length; i++) {
       node.params[i].ptype = this.simplifyType(node.params[i].ptype);
     }
@@ -222,7 +222,7 @@ define(["wasm/ast", "wasm/traverse", "wasm/opinfo"], function(wast, traverse, op
   };
 
   var process = function(module, config) {
-    var desugar = new traverse.BottomUp(new Desugar(config));
+    var desugar = new traverse.TopDownBottomUp(new Desugar(config));
     desugar.processModule(module);
     return module;
   };

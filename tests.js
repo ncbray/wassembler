@@ -555,10 +555,19 @@ define(["base", "wasm/desugar", "v8/backend"], function(base, desugar, wasm_back
     });
 
     QUnit.test("double loop", function(assert) {
-      var m = create("export func main() i32 {var i i32 = 0; var j i32 = 0; var value i32 = 0; outter: while (j < 10) {inner: while (i < 10) {value = value + i; i = i + 1;} value = value * (j + 1); j = j + 1;} return value;}", assert);
-      assert.equal(m.main(), 163296000);
+      var m = create("export func main() i32 {var j i32 = 0; var value i32 = 0; outer: while (j < 10) {var i i32 = 0; inner: while (i < 10) {value = value + i; i = i + 1;} value = value * (j + 1); j = j + 1;} return value;}", assert);
+      assert.equal(m.main(), 443884500);
     });
 
+    QUnit.test("double loop inner break", function(assert) {
+      var m = create("export func main() i32 {var j i32 = 0; var value i32 = 0; outer: while (j < 10) {var i i32 = 0; inner: while (i < 10) {value = value + i; i = i + 1; if (i >= 5) {break inner;}} value = value * (j + 1); j = j + 1;} return value;}", assert);
+      assert.equal(m.main(), 98641000);
+    });
+
+    QUnit.test("double loop outer break", function(assert) {
+      var m = create("export func main() i32 {var j i32 = 0; var value i32 = 0; outer: while (j < 10) {var i i32 = 0; inner: while (i < 10) {value = value + i; i = i + 1; if (i >= 5) {break outer;}} value = value * (j + 1); j = j + 1;} return value;}", assert);
+      assert.equal(m.main(), 10);
+    });
 
     QUnit.module(mode_name + " function calls");
 

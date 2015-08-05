@@ -179,8 +179,12 @@ define(["compilerutil"], function(compilerutil) {
       }
       this.writer.out(";").eol();
       break;
+    case "Label":
+      this.writer.out(stmt.name).out(": ");
+      this.generateStmt(stmt.stmt);
+      break;
     case "Break":
-      this.writer.out("break");
+      this.writer.out("break ").out(stmt.name);
       this.writer.out(";").eol();
       break;
     case "If":

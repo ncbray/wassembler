@@ -1,15 +1,19 @@
 define([], function() {
-  var BottomUp = function(visitor) {
+  var TopDownBottomUp = function(visitor) {
     this.visitor = visitor;
   };
 
-  BottomUp.prototype.processExpr = function(node) {
+  TopDownBottomUp.prototype.processExpr = function(node) {
+    if (this.visitor.processExprPre) {
+      node = this.visitor.processExprPre(node);
+    }
     switch (node.type) {
     case "GetLocal":
     case "GetFunction":
     case "GetExtern":
     case "GetTls":
     case "ConstI32":
+    case "ConstI64":
     case "ConstF32":
     case "ConstF64":
       break;
@@ -53,43 +57,60 @@ define([], function() {
       console.log(node);
       throw Error(node.type);
     }
-    return this.visitor.processExpr(node);
+    if (this.visitor.processExprPost) {
+      node = this.visitor.processExprPost(node);
+    }
+    return node;
   }
 
-  BottomUp.prototype.processStmt = function(node, out) {
-    switch (node.type) {
-    case "SetLocal":
-    case "SetTls":
-      node.value = this.processExpr(node.value);
-      break;
-    case "Return":
-      if (node.expr) {
-	node.expr = this.processExpr(node.expr);
-      }
-      break;
-    case "Break":
-      break;
-    case "If":
-      node.cond = this.processExpr(node.cond);
-      node.t = this.processBlock(node.t);
-      if (node.f) {
-	node.f = this.processBlock(node.f);
-      }
-      break;
-    case "While":
-      node.cond = this.processExpr(node.cond);
-      node.body = this.processBlock(node.body);
-      break;
-    case "Loop":
-      node.body = this.processBlock(node.body);
-      break;
-    default:
-      node = this.processExpr(node);
+  TopDownBottomUp.prototype.processStmt = function(node, out) {
+    var temp = [];
+    if (this.visitor.processStmtPre) {
+      this.visitor.processStmtPre(node, temp);
+    } else {
+      temp.push(node);
     }
-    this.visitor.processStmt(node, out);
+
+    for (var i = 0; i < temp.length; i++) {
+      node = temp[i];
+      switch (node.type) {
+      case "SetLocal":
+      case "SetTls":
+	node.value = this.processExpr(node.value);
+	break;
+      case "Return":
+	if (node.expr) {
+	  node.expr = this.processExpr(node.expr);
+	}
+	break;
+      case "Break":
+	break;
+      case "If":
+	node.cond = this.processExpr(node.cond);
+	node.t = this.processBlock(node.t);
+	if (node.f) {
+	  node.f = this.processBlock(node.f);
+	}
+	break;
+      case "While":
+	node.cond = this.processExpr(node.cond);
+	node.body = this.processBlock(node.body);
+	break;
+      case "Loop":
+	node.body = this.processBlock(node.body);
+	break;
+      default:
+	node = this.processExpr(node);
+      }
+      if (this.visitor.processStmtPost) {
+	this.visitor.processStmtPost(node, out);
+      } else {
+	out.push(node);
+      }
+    }
   };
 
-  BottomUp.prototype.processBlock = function(block) {
+  TopDownBottomUp.prototype.processBlock = function(block) {
     var out = [];
     for (var i = 0; i < block.length; i++) {
       this.processStmt(block[i], out);
@@ -97,19 +118,27 @@ define([], function() {
     return out;
   };
 
-  BottomUp.prototype.processFunc = function(func) {
+  TopDownBottomUp.prototype.processFunc = function(func) {
+    if (this.visitor.processFuncPre) {
+      this.visitor.processFuncPre(func);
+    }
     func.body = this.processBlock(func.body);
-    this.visitor.processFunc(func);
+    if (this.visitor.processFuncPost) {
+      this.visitor.processFuncPost(func);
+    }
   };
 
-  BottomUp.prototype.processModule = function(module) {
+  TopDownBottomUp.prototype.processModule = function(module) {
     for (var i = 0; i < module.externs.length; i++) {
-      this.visitor.processExtern(module.externs[i]);
+      var extern = module.externs[i];
+      if (this.visitor.processExtern) {
+	this.visitor.processExtern(extern);
+      }
     }
     for (var i = 0; i < module.funcs.length; i++) {
       this.processFunc(module.funcs[i]);
     }
   };
 
-  return {BottomUp: BottomUp};
+  return {TopDownBottomUp: TopDownBottomUp};
 });

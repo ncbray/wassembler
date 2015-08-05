@@ -15,7 +15,7 @@ define(["wasm/traverse"], function(traverse) {
     }
   };
 
-  FindLive.prototype.processExpr = function(node) {
+  FindLive.prototype.processExprPost = function(node) {
     switch(node.type) {
     case "GetFunction":
       this.markLiveFunc(node.func);
@@ -33,12 +33,8 @@ define(["wasm/traverse"], function(traverse) {
     return node;
   };
 
-  FindLive.prototype.processStmt = function(node, out) {
-    out.push(this.processExpr(node));
-  };
-
-  FindLive.prototype.processFunc = function(node) {
-    return node;
+  FindLive.prototype.processStmtPost = function(node, out) {
+    out.push(this.processExprPost(node));
   };
 
   FindLive.prototype.run = function(module) {
@@ -91,7 +87,7 @@ define(["wasm/traverse"], function(traverse) {
 
   var process = function(module) {
     var finder = new FindLive();
-    finder.traverse = new traverse.BottomUp(finder);
+    finder.traverse = new traverse.TopDownBottomUp(finder);
     finder.run(module);
     return module;
   };

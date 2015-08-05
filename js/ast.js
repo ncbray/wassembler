@@ -82,8 +82,16 @@ define(["astutil"], function(astutil) {
       ],
     },
     {
+      name: "Label",
+      fields: [
+	{name: "name"},
+	{name: "stmt"},
+      ],
+    },
+    {
       name: "Break",
       fields: [
+	{name: "name"},
       ],
     },
     {
