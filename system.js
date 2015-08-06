@@ -126,7 +126,10 @@ var augmentInstance = function(instance, buffer) {
 
 var instance;
 
-if (typeof window === 'object') {
+var is_browser = typeof window === 'object';
+var is_worker = typeof importScripts === 'function';
+
+if (!is_worker) {
   return function(foreign, srcURL) {
     var buffer = createMemory();
     var system = createSystem(buffer, srcURL);

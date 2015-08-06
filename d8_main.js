@@ -41,6 +41,7 @@ var grammar = read("wasm.pegjs");
 var parser = base.createParser(grammar, status);
 
 var systemWASMSrc = read("d8_system.wasm");
+var systemJSSrc = read("system.js");
 
 function compile(filename) {
   var text = read(filename);
@@ -52,13 +53,21 @@ function compile(filename) {
 
   module = desugar.process(module);
 
+  var compiled = base.astToCompiledJS(module, systemJSSrc, {}, status);
+  if (status.num_errors > 0) {
+    return null;
+  }
+
+  var instance = compiled({});
+
   // Generate binary encoding
   var buffer = wasm_backend_v8.generate(module);
-  print(new Uint8Array(buffer));
-  print(buffer.byteLength);
+  print("bytes:", new Uint8Array(buffer));
+  print("num bytes:", buffer.byteLength);
+  print();
 
-  //WASM.verifyModule(buffer);
-  print("result:", WASM.compileRun(buffer));
+  print("JS result:", instance.main());
+  print("V8 result:", WASM.compileRun(buffer));
 }
 
 if (arguments.length != 1) {

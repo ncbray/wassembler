@@ -394,7 +394,6 @@ define(["astutil", "compilerutil", "wasm/ast", "wasm/opinfo"], function(astutil,
       this.writer.u8(expr.depth);
       break;
     default:
-      console.log(expr);
       throw Error(expr.type);
     };
   };
@@ -561,8 +560,7 @@ define(["astutil", "compilerutil", "wasm/ast", "wasm/opinfo"], function(astutil,
 	  f64Locals.push(l);
 	  break;
 	default:
-	  console.log(l);
-	  throw l.ltype;
+	  throw Error(l.ltype);
 	}
       }
 

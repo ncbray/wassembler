@@ -49,6 +49,8 @@ Demos: <a href="index.html?file=draw.wasm">draw.wasm</a> | <a href="index.html?f
 </div>
 </body>
 <script>
+print = function() {throw Error("tried to call print, did a debugging statement for d8 sneak in?");}
+
 require(['main'], function(main){
   main.run();
 });
