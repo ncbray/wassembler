@@ -1,4 +1,9 @@
+memory {
+  temp: zero 4;
+}
+
 func ifelse(cond i32, a i32, b i32) i32 {
+  storeI32(temp, 10);
   if (cond) {
     return a > b;
   } else {
@@ -7,6 +12,7 @@ func ifelse(cond i32, a i32, b i32) i32 {
 }
 
 export func main() i32 {
+  storeI32(temp, 0);
   var i i32 = 0;
   done: while (i < 10) {
     i = i + 1;
@@ -14,5 +20,5 @@ export func main() i32 {
       break done;
     }
   }
-  return i + ifelse(0, 1, 2) * 2;
+  return (i + ifelse(0, 1, 2) * 2) * loadI32(temp);
 }

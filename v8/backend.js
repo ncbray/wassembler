@@ -20,6 +20,15 @@ define(["astutil", "compilerutil", "wasm/ast", "wasm/opinfo"], function(astutil,
     "f64": 9,
   };
 
+  var localTypeForMemType = {
+    "i8": "i32",
+    "i16": "i32",
+    "i32": "i32",
+    "i64": "i64",
+    "f32": "f32",
+    "f64": "f64",
+  };
+
   var ops = {
     if1: {bytecode: 0x01},
     if2: {bytecode: 0x02},
@@ -44,10 +53,6 @@ define(["astutil", "compilerutil", "wasm/ast", "wasm/opinfo"], function(astutil,
 
     callfunc: {bytecode: 0x19},
     callindirect: {bytecode: 0x1a},
-
-    // TODO rework memory operations to match prototype.
-    getheap: {bytecode: 0x20},
-    setheap: {bytecode: 0x30},
 
     i32fromf32: {bytecode: 0x99},
     i32fromf64: {bytecode: 0x9a},
@@ -150,6 +155,33 @@ define(["astutil", "compilerutil", "wasm/ast", "wasm/opinfo"], function(astutil,
   var unaryOpMap = astutil.index(["optype", "op"], unaryOpEncodingTable);
   var binOpMap = astutil.index(["optype", "op"], binaryOpEncodingTable);
 
+
+  var loadOpEncodingTable = [
+    {resulttype: "i32", addrtype: "i32", bytecode: 0x20},
+    {resulttype: "i64", addrtype: "i32", bytecode: 0x21},
+    {resulttype: "f32", addrtype: "i32", bytecode: 0x22},
+    {resulttype: "f64", addrtype: "i32", bytecode: 0x23},
+    {resulttype: "i32", addrtype: "i64", bytecode: 0x24},
+    {resulttype: "i64", addrtype: "i64", bytecode: 0x25},
+    {resulttype: "f32", addrtype: "i64", bytecode: 0x26},
+    {resulttype: "f64", addrtype: "i64", bytecode: 0x27},
+  ];
+
+  var storeOpEncodingTable = [
+    {resulttype: "i32", addrtype: "i32", bytecode: 0x30},
+    {resulttype: "i64", addrtype: "i32", bytecode: 0x31},
+    {resulttype: "f32", addrtype: "i32", bytecode: 0x32},
+    {resulttype: "f64", addrtype: "i32", bytecode: 0x33},
+    {resulttype: "i32", addrtype: "i64", bytecode: 0x34},
+    {resulttype: "i64", addrtype: "i64", bytecode: 0x35},
+    {resulttype: "f32", addrtype: "i64", bytecode: 0x36},
+    {resulttype: "f64", addrtype: "i64", bytecode: 0x37},
+  ];
+
+
+  var loadOpMap = astutil.index(["addrtype", "resulttype"], loadOpEncodingTable);
+  var storeOpMap = astutil.index(["addrtype", "resulttype"], storeOpEncodingTable);
+
   var BinaryGenerator = function() {
     this.writer = new compilerutil.BinaryWriter();
   };
@@ -195,12 +227,14 @@ define(["astutil", "compilerutil", "wasm/ast", "wasm/opinfo"], function(astutil,
       this.writer.i32(this.funcID[expr.func.index]);
       break;
     case "Load":
-      this.writer.u8(ops.getheap.bytecode);
+      var decl = loadOpMap["i32"][localTypeForMemType[expr.mtype]];
+      this.writer.u8(decl.bytecode);
       this.generateMemType(expr.mtype);
       this.generateExpr(expr.address);
       break;
     case "Store":
-      this.writer.u8(ops.setheap.bytecode);
+      var decl = storeOpMap["i32"][localTypeForMemType[expr.mtype]];
+      this.writer.u8(decl.bytecode);
       this.generateMemType(expr.mtype);
       this.generateExpr(expr.address);
       this.generateExpr(expr.value);
