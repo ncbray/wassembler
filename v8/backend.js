@@ -505,10 +505,11 @@ define(["astutil", "compilerutil", "wasm/ast", "wasm/opinfo"], function(astutil,
     // Header
     this.writer.u16(0); // No globals.
     this.writer.u16(module.funcs.length);
-    this.writer.u16(0); // No data segments.
+    this.writer.u16(module.memory.length);
 
     var funcBegin = {};
     var funcEnd = {};
+    var dataBegin = {};
 
     var uid = 0;
 
@@ -607,11 +608,25 @@ define(["astutil", "compilerutil", "wasm/ast", "wasm/opinfo"], function(astutil,
       this.writer.u8(0); // Not an extern.
     };
 
+    for (var m in module.memory) {
+      var mem = module.memory[m];
+      this.writer.u32(mem.ptr);
+      dataBegin[mem.ptr] = this.writer.allocU32();
+      this.writer.u32(mem.buffer.byteLength);
+      this.writer.u8(1);
+    }
+
     for (var f in module.funcs) {
       this.writer.patchU32(funcBegin[f], this.writer.pos);
       this.generateFunc(module.funcs[f]);
       this.writer.patchU32(funcEnd[f], this.writer.pos);
     };
+
+    for (var m in module.memory) {
+      var mem = module.memory[m];
+      this.writer.patchU32(dataBegin[mem.ptr], this.writer.pos);
+      this.writer.bytes(mem.buffer);
+    }
 
     this.generateStringTable();
   };

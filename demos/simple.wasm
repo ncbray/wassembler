@@ -1,5 +1,6 @@
 memory {
   temp: zero 4;
+  scale: hex 02000000;
 }
 
 func ifelse(cond i32, a i32, b i32) i32 {
@@ -20,5 +21,15 @@ export func main() i32 {
       break done;
     }
   }
-  return (i + ifelse(0, 1, 2) * 2) * loadI32(temp);
+  return (i + ifelse(0, 1, 2) * 2) * loadI32(temp) + loadI32(scale);
 }
+
+//export func check() i32 {
+//  var i i32 = 0;
+//  var total i32 = 0;
+//  while (i < 1024 * 1024) {
+//    total = total | loadI32(i);
+//    i = i + 4;
+//  }
+//  return total;
+//}

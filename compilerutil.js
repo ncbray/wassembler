@@ -170,6 +170,14 @@ define([], function() {
     return size;
   };
 
+  BinaryWriter.prototype.bytes = function(buffer) {
+    var size = buffer.byteLength;
+    (new Uint8Array(this.data.buffer, this.pos, size)).set(new Uint8Array(buffer));
+    print(size);
+    this.expect(size);
+    this.pos += size;
+  };
+
   return {
     CodeWriter: CodeWriter,
     BinaryWriter: BinaryWriter,
