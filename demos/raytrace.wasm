@@ -147,15 +147,22 @@ func renderFrame() void {
       vecAdd(half, light, half);
       vecNormalize(half);
 
+      // Light accumulation
       var r f32 = 0.0;
       var g f32 = 0.0;
       var b f32 = 0.0;
 
+      // Surface diffuse.
+      var dr f32 = 0.7f;
+      var dg f32 = 0.7f;
+      var db f32 = 0.7f;
+
       if (intersect(pos, dir, intersection)) {
-        r = r + 0.15f;
-        //r = loadF32(intersection + 12) * 0.5f + 0.5f;
-        //g = loadF32(intersection + 16) * 0.5f + 0.5f;
-        //b = loadF32(intersection + 20) * 0.5f + 0.5f;
+        sampleEnv(intersection + 12, color);
+        var ambientScale f32 = 0.2f;
+        r = r + dr * loadF32(color) * ambientScale;
+        g = g + dg * loadF32(color + 4) * ambientScale;
+        b = b + db * loadF32(color + 8) * ambientScale;
 
         var diffuse f32 = vecNLDot(intersection + 12, light);
         var specular f32 = vecNLDot(intersection + 12, half);
@@ -169,9 +176,9 @@ func renderFrame() void {
 
         specular = specular * 0.6f;
 
-        r = r + diffuse + specular;
-	g = g + specular;
-	b = b + specular;
+        r = r + dr * diffuse + specular;
+	g = g + dg * diffuse + specular;
+	b = b + db * diffuse + specular;
       } else {
         sampleEnv(dir, color);
         r = loadF32(color);
