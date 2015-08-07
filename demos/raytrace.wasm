@@ -9,6 +9,7 @@ memory {
   pos: zero 12;
   dir: zero 12;
   light: zero 12;
+  half: zero 12;
   intersection: zero 24;
   color: zero 12;
 }
@@ -41,6 +42,14 @@ func vecStore(x f32, y f32, z f32, ptr i32) void {
   storeF32(ptr + 8, z);
 }
 
+func vecAdd(a i32, b i32, out i32) void {
+  vecStore(loadF32(a) + loadF32(b), loadF32(a + 4) + loadF32(b + 4), loadF32(a + 8) + loadF32(b + 8), out);
+}
+
+func vecScale(a i32, scale f32, out i32) void {
+  vecStore(loadF32(a) * scale, loadF32(a + 4) * scale, loadF32(a + 8) * scale, out);
+}
+
 func vecNormalize(ptr i32) void {
   var x f32 = loadF32(ptr);
   var y f32 = loadF32(ptr + 4);
@@ -64,6 +73,13 @@ func vecDot(a i32, b i32) f32 {
   return loadF32(a) * loadF32(b) + loadF32(a + 4) * loadF32(b + 4) + loadF32(a + 8) * loadF32(b + 8);
 }
 
+func vecNLDot(a i32, b i32) f32 {
+  var value f32 = vecDot(a, b);
+  if (value < 0.0f) {
+    value = 0.0f;
+  }
+  return value;
+}
 
 func sampleEnv(dir i32, ptr i32) void {
   var y f32 = loadF32(dir + 4);
@@ -83,10 +99,10 @@ func intersect(pos i32, dir i32, intersection i32) i32 {
 
 
   // The sphere.
-  var radius f32 = 3.0f;
+  var radius f32 = 4.0f;
   var cx f32 = 0.0f;
   var cy f32 = 0.0f;
-  var cz f32 = -4.0f;
+  var cz f32 = -6.0f;
 
   // Calculate the position relative to the center of the sphere.
   var ox f32 = px - cx;
@@ -113,7 +129,7 @@ func renderFrame() void {
   var h i32 = loadI32(height);
   var buffer i32 = loadI32(frame_buffer);
 
-  vecStore(20.0f, 20.0f, 10.0f, light);
+  vecStore(20.0f, 20.0f, 15.0f, light);
   vecNormalize(light);
 
   var j i32 = 0;
@@ -126,6 +142,11 @@ func renderFrame() void {
       vecStore(x, y, -0.5f, dir);
       vecNormalize(dir);
 
+      // Compute the half vector;
+      vecScale(dir, -1.0f, half);
+      vecAdd(half, light, half);
+      vecNormalize(half);
+
       var r f32 = 0.0;
       var g f32 = 0.0;
       var b f32 = 0.0;
@@ -136,10 +157,21 @@ func renderFrame() void {
         //g = loadF32(intersection + 16) * 0.5f + 0.5f;
         //b = loadF32(intersection + 20) * 0.5f + 0.5f;
 
-        var amt f32 = vecDot(intersection + 12, light);
-        if (amt > 0.0f) {
-          r = r + amt * 1.0f;
-        }
+        var diffuse f32 = vecNLDot(intersection + 12, light);
+        var specular f32 = vecNLDot(intersection + 12, half);
+	// Take it to the 64th power, manually.
+        specular = specular * specular;
+        specular = specular * specular;
+        specular = specular * specular;
+        specular = specular * specular;
+        specular = specular * specular;
+        specular = specular * specular;
+
+        specular = specular * 0.6f;
+
+        r = r + diffuse + specular;
+	g = g + specular;
+	b = b + specular;
       } else {
         sampleEnv(dir, color);
         r = loadF32(color);
