@@ -115,10 +115,18 @@ var createSystem = function(buffer, srcURL) {
 var augmentInstance = function(instance, buffer) {
   if (threading_supported) {
     instance._copyOut = function(srcOff, size, dst, dstOff) {
+      var end = srcOff + size;
+      if (end < srcOff || srcOff > buffer.byteLength || srcOff < 0 || end > buffer.byteLength || end < 0) {
+	throw Error("Range [" + srcOff + ", " + end + ") is out of bounds. [0, " + buffer.byteLength + ")");
+      }
       new Uint8Array(dst, dstOff, size).set(new SharedUint8Array(buffer, srcOff, size));
     };
   } else {
     instance._copyOut = function(srcOff, size, dst, dstOff) {
+      var end = srcOff + size;
+      if (end < srcOff || srcOff > buffer.byteLength || srcOff < 0 || end > buffer.byteLength || end < 0) {
+	throw Error("Range [" + srcOff + ", " + end + ") is out of bounds. [0, " + buffer.byteLength + ")");
+      }
       new Uint8Array(dst, dstOff, size).set(new Uint8Array(buffer, srcOff, size));
     };
   }

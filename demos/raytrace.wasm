@@ -1,0 +1,161 @@
+import func flipBuffer(i32) void;
+
+import func printF32(f32) void;
+
+memory {
+  width: zero 4;
+  height: zero 4;
+  frame_buffer: zero 4;
+  pos: zero 12;
+  dir: zero 12;
+  light: zero 12;
+  intersection: zero 24;
+  color: zero 12;
+}
+
+// Convert [0.0, 1.0] to [0, 255].
+func f2b(v f32) i32 {
+  var vi i32 = i32(v * 255.0f);
+  if (vi < 0) {
+    vi = 0;
+  }
+  if(vi > 255) {
+    vi = 255;
+  }
+  return vi;
+}
+
+// Convert a linear color value to a gamma-space byte.
+// Square root approximates gamma-correct rendering.
+func l2g(v f32) i32 {
+  return f2b(sqrtF32(v));
+}
+
+func packColor(r f32, g f32, b f32, a f32) i32 {
+  return f2b(a) << 24 | l2g(b) << 16 | l2g(g) << 8 | l2g(r);
+}
+
+func vecStore(x f32, y f32, z f32, ptr i32) void {
+  storeF32(ptr, x);
+  storeF32(ptr + 4, y);
+  storeF32(ptr + 8, z);
+}
+
+func vecNormalize(ptr i32) void {
+  var x f32 = loadF32(ptr);
+  var y f32 = loadF32(ptr + 4);
+  var z f32 = loadF32(ptr + 8);
+  var invLen f32 = 1.0f / sqrtF32(x * x + y * y + z * z);
+  //printF32(x);
+  //printF32(y);
+  //printF32(z);
+  //printF32(invLen);
+  vecStore(x * invLen, y * invLen, z * invLen, ptr);
+}
+
+func vecLen(ptr i32) f32 {
+  var x f32 = loadF32(ptr);
+  var y f32 = loadF32(ptr + 4);
+  var z f32 = loadF32(ptr + 8);
+  return sqrtF32(x * x + y * y + z * z);
+}
+
+func vecDot(a i32, b i32) f32 {
+  return loadF32(a) * loadF32(b) + loadF32(a + 4) * loadF32(b + 4) + loadF32(a + 8) * loadF32(b + 8);
+}
+
+
+func sampleEnv(dir i32, ptr i32) void {
+  var y f32 = loadF32(dir + 4);
+  var amt f32 = y * 0.5f + 0.5f;
+  var keep f32 = 1.0f - amt;
+  vecStore(keep * 0.1f + amt * 0.1f, keep * 1.0f + amt * 0.1f, keep * 0.1f + amt * 1.0f, ptr);
+}
+
+func intersect(pos i32, dir i32, intersection i32) i32 {
+  var px f32 = loadF32(pos);
+  var py f32 = loadF32(pos+4);
+  var pz f32 = loadF32(pos+8);
+
+  var vx f32 = loadF32(dir);
+  var vy f32 = loadF32(dir + 4);
+  var vz f32 = loadF32(dir + 8);
+
+
+  // The sphere.
+  var radius f32 = 3.0f;
+  var cx f32 = 0.0f;
+  var cy f32 = 0.0f;
+  var cz f32 = 5.0f;
+
+  // Calculate the position relative to the center of the sphere.
+  var ox f32 = px - cx;
+  var oy f32 = py - cy;
+  var oz f32 = pz - cz;
+
+  var dot f32 = vx * ox + vy * oy + vz * oz;
+
+  var partial f32 = dot * dot + radius * radius - (ox * ox + oy * oy + oz * oz);
+  if (partial >= 0.0f) {
+    var d f32 = 0.0f - dot + sqrtF32(partial);
+    var normal i32 = intersection + 12;
+    vecStore(px + vx * d - cx, py + vy * d - cy, pz + vz * d - cz, normal);
+    vecNormalize(normal);
+    return 1;
+  } else {
+    return 0;
+  }
+}
+
+func renderFrame() void {
+  var w i32 = loadI32(width);
+  var h i32 = loadI32(height);
+  var buffer i32 = loadI32(frame_buffer);
+
+  vecStore(20.0f, 20.0f, 6.0f, light);
+  vecNormalize(light);
+
+  var j i32 = 0;
+  while (j < h) {
+    var y f32 = 0.5f - f32(j) / f32(h);
+    var i i32 = 0;
+    while (i < w) {
+      var x f32 = f32(i) / f32(w) - 0.5f;
+      vecStore(x, y, 0.0f, pos);
+      vecStore(x, y, 0.0f - 0.5f, dir);
+      vecNormalize(dir);
+
+      var r f32 = 0.0;
+      var g f32 = 0.0;
+      var b f32 = 0.0;
+
+      if (intersect(pos, dir, intersection)) {
+        r = r + 0.15f;
+        //r = loadF32(intersection + 12) * 0.5f + 0.5f;
+        //g = loadF32(intersection + 16) * 0.5f + 0.5f;
+        //b = loadF32(intersection + 20) * 0.5f + 0.5f;
+
+        var amt f32 = 0.0f - vecDot(intersection + 12, light);
+        if (amt > 0.0f) {
+          r = r + amt * 1.0f;
+        }
+      } else {
+        sampleEnv(dir, color);
+        r = loadF32(color);
+        g = loadF32(color + 4);
+        b = loadF32(color + 8);
+      }
+      storeI32(buffer + (j * w + i) * 4, packColor(r, g, b, 1.0f));
+      i = i + 1;
+    }
+    j = j + 1;
+  }
+}
+
+export func main() void {
+  storeI32(width, 256);
+  storeI32(height, 256);
+  storeI32(frame_buffer, sbrk(loadI32(width) * loadI32(height) * 4));
+  renderFrame();
+  flipBuffer(loadI32(frame_buffer));
+}
