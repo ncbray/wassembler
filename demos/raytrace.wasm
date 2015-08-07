@@ -86,7 +86,7 @@ func intersect(pos i32, dir i32, intersection i32) i32 {
   var radius f32 = 3.0f;
   var cx f32 = 0.0f;
   var cy f32 = 0.0f;
-  var cz f32 = 0.0f-4.0f;
+  var cz f32 = -4.0f;
 
   // Calculate the position relative to the center of the sphere.
   var ox f32 = px - cx;
@@ -97,7 +97,7 @@ func intersect(pos i32, dir i32, intersection i32) i32 {
 
   var partial f32 = dot * dot + radius * radius - (ox * ox + oy * oy + oz * oz);
   if (partial >= 0.0f) {
-    var d f32 = 0.0f - dot - sqrtF32(partial);
+    var d f32 = -dot - sqrtF32(partial);
     if (d >= 0.0f) {
       var normal i32 = intersection + 12;
       vecStore(px + vx * d - cx, py + vy * d - cy, pz + vz * d - cz, normal);
@@ -123,7 +123,7 @@ func renderFrame() void {
     while (i < w) {
       var x f32 = f32(i) / f32(w) - 0.5f;
       vecStore(x, y, 0.0f, pos);
-      vecStore(x, y, 0.0f - 0.5f, dir);
+      vecStore(x, y, -0.5f, dir);
       vecNormalize(dir);
 
       var r f32 = 0.0;

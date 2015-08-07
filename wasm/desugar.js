@@ -90,10 +90,11 @@ define(["wasm/ast", "wasm/traverse", "wasm/opinfo"], function(wast, traverse, op
       switch(node.op) {
       case "boolnot":
 	// Missing most "not" operations, lower into a compare.
+        // Turn !v into v==0.
 	switch (node.optype) {
 	case "i64":
 	  node = wast.BinaryOp({
-	    optype: "i64",
+	    optype: node.optype,
 	    op: opinfo.binaryOps.eq,
 	    left: node.expr,
 	    right: this.constI64(0),
@@ -103,7 +104,7 @@ define(["wasm/ast", "wasm/traverse", "wasm/opinfo"], function(wast, traverse, op
 
 	case "f32":
 	  node = wast.BinaryOp({
-	    optype: "f32",
+	    optype: node.optype,
 	    op: opinfo.binaryOps.eq,
 	    left: node.expr,
 	    right: this.constF32(0.0),
@@ -112,7 +113,7 @@ define(["wasm/ast", "wasm/traverse", "wasm/opinfo"], function(wast, traverse, op
 	  break;
 	case "f64":
 	  node = wast.BinaryOp({
-	    optype: "f64",
+	    optype: node.optype,
 	    op: opinfo.binaryOps.eq,
 	    left: node.expr,
 	    right: this.constF64(0.0),
@@ -123,7 +124,32 @@ define(["wasm/ast", "wasm/traverse", "wasm/opinfo"], function(wast, traverse, op
           node = peelBoolNot(node);
         }
 	break;
+      case "neg":
+	// TODO support integer negation in the v8 backend.
+	// Turn -i into 0-i.
+	switch (node.optype) {
+	case "i32":
+	  node = wast.BinaryOp({
+	    optype: node.optype,
+	    op: opinfo.binaryOps.sub,
+	    left: this.constI32(0),
+	    right: node.expr,
+	  });
+	  node.etype = node.optype;
+	  break;
+	case "i64":
+	  node = wast.BinaryOp({
+	    optype: node.optype,
+	    op: opinfo.binaryOps.sub,
+	    left: this.constI64(0),
+	    right: node.expr,
+	  });
+	  node.etype = node.optype;
+	  break;
+	}
+	break;
       }
+      break;
     case "BinaryOp":
       switch (node.op) {
       case "ne":

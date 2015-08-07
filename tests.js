@@ -71,6 +71,12 @@ define(["base", "wasm/desugar", "v8/backend"], function(base, desugar, wasm_back
       assert.equal(m.main(), 1193046);
     });
 
+    QUnit.test("negate i32", function(assert) {
+      var m = create("export func main(n i32) i32 {return -n;}", assert);
+      assert.equal(m.main(11), -11);
+      assert.equal(m.main(-7), 7);
+    });
+
     QUnit.test("add i32", function(assert) {
       var m = create("export func main(a i32, b i32) i32 {return a + b;}", assert);
       assert.equal(m.main(13, 2), 15);
@@ -280,6 +286,12 @@ define(["base", "wasm/desugar", "v8/backend"], function(base, desugar, wasm_back
       assert.equal(m.main(), 11.5);
     });
 
+    QUnit.test("negate f32", function(assert) {
+      var m = create("export func main(n f32) f32 {return -n;}", assert);
+      assert.equal(m.main(11.1), Math.fround(-11.1));
+      assert.equal(m.main(-7.5), Math.fround(7.5));
+    });
+
     QUnit.test("add f32", function(assert) {
       var m = create("export func main(a f32, b f32) f32 {return a + b;}", assert);
       assert.equal(m.main(13, 2.1), Math.fround(15.1));
@@ -351,6 +363,12 @@ define(["base", "wasm/desugar", "v8/backend"], function(base, desugar, wasm_back
     });
 
     QUnit.module(mode_name + " basic f64");
+
+    QUnit.test("negate f64", function(assert) {
+      var m = create("export func main(n f64) f64 {return -n;}", assert);
+      assert.equal(m.main(11.1), -11.1);
+      assert.equal(m.main(-7.5), 7.5);
+    });
 
     QUnit.test("add f64", function(assert) {
       var m = create("export func main(a f64, b f64) f64 {return a + b;}", assert);

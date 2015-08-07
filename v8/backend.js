@@ -80,6 +80,8 @@ define(["astutil", "compilerutil", "wasm/ast", "wasm/opinfo"], function(astutil,
 
   var unaryOpEncodingTable = [
     {optype: "i32", op: "boolnot", bytecode: 0x59},
+    {optype: "f32", op: "neg", bytecode: 0x7a},
+    {optype: "f64", op: "neg", bytecode: 0x8d},
   ];
 
   var binaryOpEncodingTable = [

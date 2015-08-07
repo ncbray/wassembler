@@ -157,6 +157,7 @@ define(["js/ast", "wasm/traverse", "wasm/typeinfo", "wasm/opinfo", "astutil"], f
 
   var wasmToJSPrefixOp = astutil.index(["wasmop"], [
     {wasmop: "boolnot", jsop: "!"},
+    {wasmop: "neg", jsop: "-"},
   ]);
 
   JSTranslator.prototype.defaultTranslateBinaryOp = function(optype, op, left, right, resultType) {

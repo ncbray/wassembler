@@ -175,6 +175,10 @@ define(["astutil"], function(astutil) {
     unary({optype: "i64", op: "boolnot", result: "i64", prefix: "!"}),
     unary({optype: "f32", op: "boolnot", result: "i32", prefix: "!"}),
     unary({optype: "f64", op: "boolnot", result: "i32", prefix: "!"}),
+    unary({optype: "i32", op: "neg", result: "i32", prefix: "-"}),
+    unary({optype: "i64", op: "neg", result: "i64", prefix: "-"}),
+    unary({optype: "f32", op: "neg", result: "f32", prefix: "-"}),
+    unary({optype: "f64", op: "neg", result: "f64", prefix: "-"}),
     unary({optype: "f32", op: "sqrt", result: "f32", intrinsicName: "sqrtF32"}),
     unary({optype: "f64", op: "sqrt", result: "f64", intrinsicName: "sqrtF64"}),
   ];
