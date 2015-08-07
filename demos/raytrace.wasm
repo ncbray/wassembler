@@ -12,6 +12,7 @@ memory {
   half: zero 12;
   intersection: zero 24;
   color: zero 12;
+  phase: zero 4;
 }
 
 // Convert [0.0, 1.0] to [0, 255].
@@ -101,7 +102,7 @@ func intersect(pos i32, dir i32, intersection i32) i32 {
   // The sphere.
   var radius f32 = 4.0f;
   var cx f32 = 0.0f;
-  var cy f32 = 0.0f;
+  var cy f32 = sinF32(loadF32(phase));
   var cz f32 = -6.0f;
 
   // Calculate the position relative to the center of the sphere.
@@ -190,6 +191,12 @@ func renderFrame() void {
     }
     j = j + 1;
   }
+}
+
+export func frame(dt f32) void {
+  storeF32(phase, loadF32(phase) + dt);
+  renderFrame();
+  flipBuffer(loadI32(frame_buffer));
 }
 
 export func main() void {
