@@ -172,8 +172,8 @@ define([], function() {
 
   BinaryWriter.prototype.bytes = function(buffer) {
     var size = buffer.byteLength;
-    (new Uint8Array(this.data.buffer, this.pos, size)).set(new Uint8Array(buffer));
     this.expect(size);
+    (new Uint8Array(this.data.buffer, this.pos, size)).set(new Uint8Array(buffer));
     this.pos += size;
   };
 
