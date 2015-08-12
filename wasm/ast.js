@@ -69,6 +69,13 @@ define(['astutil'], function(astutil) {
       ],
     },
     {
+      name: "GetIntrinsic",
+      fields: [
+	{name: "func"},
+	{name: "pos"},
+      ],
+    },
+    {
       name: "GetLocal",
       fields: [
 	{name: "local"},

@@ -109,6 +109,10 @@ define(["compilerutil", "wasm/ast", "wasm/typeinfo", "wasm/opinfo"], function(co
 	  expr = wast.GetExtern({func: ref, pos: getPos(expr)});
 	  this.setExprType(expr, "i32");
 	  break;
+	case "Intrinsic":
+	  expr = wast.GetIntrinsic({func: ref, pos: getPos(expr)});
+	  this.setExprType(expr, "i32");
+	  break;
         case "TlsDecl":
 	  expr = wast.GetTls({tls: ref, pos: getPos(expr)});
 	  this.setExprType(expr, ref.mtype);
@@ -232,62 +236,65 @@ define(["compilerutil", "wasm/ast", "wasm/typeinfo", "wasm/opinfo"], function(co
       this.setExprType(expr, decl.result);
       break;
     case "Call":
+      // Process children
       expr.expr = this.processExpr(expr.expr);
-      if (!this.dead) {
-	switch (expr.expr.type) {
-	case "GetFunction":
-	  expr = wast.CallDirect({
-	    func: expr.expr.func,
-	    args: expr.args,
-	    pos: getPos(expr),
-	  });
-	  break;
-	case "GetExtern":
-	  expr = wast.CallExternal({
-	    func: expr.expr.func,
-	    args: expr.args,
-	    pos: getPos(expr),
-	  });
-	  break;
-	default:
-	  console.log(expr);
-	  throw expr.expr;
-	}
-      }
-
-      // Process arguments
       for (var i = 0; i < expr.args.length; i++) {
 	expr.args[i] = this.processExpr(expr.args[i]);
       }
 
+      var args = expr.args;
+      var ft = null;
+
       if (!this.dead) {
-	switch (expr.type) {
-	case "CallDirect":
-	  var target = expr.func;
-	  if (expr.args.length != target.params.length) {
-	    this.error("argument count mismatch - got " + expr.args.length + ", but expected " + target.params.length, getPos(expr));
-	  }
-
-	  this.setExprType(expr, target.returnType);
-
+	switch (expr.expr.type) {
+	case "GetFunction":
+	  var func = expr.expr.func;
+	  ft = func.funcType;
+	  this.checkCall(expr, ft);
 	  if (!this.dead) {
-	    for (var i = 0; i < expr.args.length; i++) {
-	      var arg = expr.args[i];
-	      if (arg.etype != target.params[i].ptype) {
-		this.error("arg " + i + " - got " + arg.etype + ", but expected " + target.params[i].ptype, getPos(arg));
-	      }
-	    }
+	    expr = wast.CallDirect({
+	      func: func,
+	      args: expr.args,
+	      pos: getPos(expr),
+	    });
+	    this.setExprType(expr, ft.returnType);
 	  }
 	  break;
-	case "CallExternal":
-	  var target = expr.func;
-	  var ft = target.ftype;
-	  this.setExprType(expr, ft.returnType);
+	case "GetExtern":
+	  var func = expr.expr.func;
+	  ft = func.ftype;
 	  this.checkCall(expr, ft);
+	  if (!this.dead) {
+	    expr = wast.CallExternal({
+	      func: func,
+	      args: expr.args,
+	      pos: getPos(expr),
+	    });
+	    this.setExprType(expr, ft.returnType);
+	  }
+	  break;
+	case "GetIntrinsic":
+	  var func = expr.expr.func;
+	  ft = func.funcType;
+	  this.checkCall(expr, ft);
+	  if (!this.dead) {
+	    var op = func.op;
+	    switch (op.type) {
+	    case "unary":
+	      expr = wast.UnaryOp({
+		optype: op.optype,
+		op: op.op,
+		expr: expr.args[0],
+	      });
+	      break;
+	    default:
+	      throw Error(op.op);
+	    }
+	    this.setExprType(expr, ft.returnType);
+	  }
 	  break;
 	default:
-	  console.log(expr);
-	  throw Error(expr.type);
+	  throw Error(expr.expr.type);
 	}
       }
       break;
@@ -502,11 +509,14 @@ define(["compilerutil", "wasm/ast", "wasm/typeinfo", "wasm/opinfo"], function(co
   };
 
   SemanticPass.prototype.processFuncSig = function(func) {
+    var paramTypes = [];
     for (var i in func.params) {
       var p = func.params[i];
       p.ptype = this.processType(p.ptype);
+      paramTypes.push(p.ptype);
     }
     func.returnType = this.processType(func.returnType);
+    func.funcType = wast.FuncType({paramTypes: paramTypes, returnType: func.returnType});
   };
 
   SemanticPass.prototype.processTlsDecl = function(node) {
@@ -557,8 +567,22 @@ define(["compilerutil", "wasm/ast", "wasm/typeinfo", "wasm/opinfo"], function(co
     node.buffer = writer.getOutput();
   };
 
+  SemanticPass.prototype.indexIntrinsics = function() {
+    for (var name in opinfo.classifyUnaryIntrinsic) {
+      var op = opinfo.classifyUnaryIntrinsic[name];
+      var decl = {
+	type: "Intrinsic",
+	op: op,
+	funcType: wast.FuncType({
+	  paramTypes: [op.optype],
+	  returnType: op.result,
+	}),
+      };
+      this.registerInModule({text: op.intrinsicName, pos: null}, decl);
+    }
+  };
+
   SemanticPass.prototype.indexModule = function(module) {
-    this.moduleScope = {};
     for (var i = 0; i < module.externs.length; i++) {
       var e = module.externs[i];
       e.index = i;
@@ -568,8 +592,8 @@ define(["compilerutil", "wasm/ast", "wasm/typeinfo", "wasm/opinfo"], function(co
     for (var i = 0; i < module.funcs.length; i++) {
       var func = module.funcs[i];
       func.index = i;
-      this.registerInModule(func.name, func);
       this.processFuncSig(func);
+      this.registerInModule(func.name, func);
     }
 
     // Zero is null, so don't use that.
@@ -656,6 +680,8 @@ define(["compilerutil", "wasm/ast", "wasm/typeinfo", "wasm/opinfo"], function(co
     });
 
     this.module = module;
+    this.moduleScope = {};
+    this.indexIntrinsics();
     this.indexModule(module);
     if (!this.dead) {
       for (var i in module.funcs) {

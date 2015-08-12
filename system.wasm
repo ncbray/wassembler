@@ -7,12 +7,10 @@ config {
 
 import func sbrk(i32) i32;
 
-import func sqrtF32(f32) f32;
 import func powF32(f32, f32) f32;
 import func sinF32(f32) f32;
 import func cosF32(f32) f32;
 
-import func sqrtF64(f64) f64;
 import func powF64(f64, f64) f64;
 import func sinF64(f64) f64;
 import func cosF64(f64) f64;

@@ -4,9 +4,6 @@ var createSystem = function(buffer, srcURL) {
   // Intrinstics.
 
   // Math
-  system.sqrtF32 = function(value) {
-    return Math.fround(Math.sqrt(value));
-  };
   system.powF32 = function(base, exponent) {
     return Math.fround(Math.pow(base, exponent));
   };
@@ -15,9 +12,6 @@ var createSystem = function(buffer, srcURL) {
   };
   system.cosF32 = function(value) {
     return Math.fround(Math.cos(value));
-  };
-  system.sqrtF64 = function(value) {
-    return Math.sqrt(value);
   };
   system.powF64 = function(base, exponent) {
     return Math.pow(base, exponent);

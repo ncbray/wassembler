@@ -309,13 +309,28 @@ define(["js/ast", "wasm/traverse", "wasm/typeinfo", "wasm/opinfo", "astutil"], f
       });
     case "UnaryOp":
       var child = this.processExpr(expr.expr);
-      var jsOp = wasmToJSPrefixOp[expr.op].jsop;
-      var actualType = binOpResult[jsOp];
-      var resultType = expr.etype;
-      var out = jast.PrefixOp({
-	op: jsOp,
-	expr: child,
-      });
+      switch (expr.op) {
+      case "sqrt":
+	var actualType = "f64";
+	var resultType = expr.etype;
+	var out = jast.Call({
+	  expr: jast.GetName({
+	    name: "sqrt",
+	  }),
+	  args: [
+	    child,
+	  ],
+	});
+	break;
+      default:
+	var jsOp = wasmToJSPrefixOp[expr.op].jsop;
+	var actualType = binOpResult[jsOp];
+	var resultType = expr.etype;
+	var out = jast.PrefixOp({
+	  op: jsOp,
+	  expr: child,
+	});
+      }
       return this.coerce(out, actualType, resultType);
     case "Coerce":
       return this.implicitCoerce(this.processExpr(expr.expr), expr.mtype);
@@ -740,44 +755,23 @@ define(["js/ast", "wasm/traverse", "wasm/typeinfo", "wasm/opinfo", "astutil"], f
       }));
     }
 
-    body.push(jast.VarDecl({
-      name: "fround",
-      expr: jast.GetAttr({
-	expr: jast.GetAttr({
-	  expr: jast.GetName({
-	    name: "stdlib",
-	  }),
-	  attr: "Math",
-	}),
-	attr: "fround",
-      }),
-    }));
+    var mathImports = ["fround", "imul", "trunc", "sqrt"];
 
-    body.push(jast.VarDecl({
-      name: "imul",
-      expr: jast.GetAttr({
+    for (var i = 0; i < mathImports.length; i++) {
+      var name = mathImports[i];
+      body.push(jast.VarDecl({
+	name: name,
 	expr: jast.GetAttr({
-	  expr: jast.GetName({
-	    name: "stdlib",
+	  expr: jast.GetAttr({
+	    expr: jast.GetName({
+	      name: "stdlib",
+	    }),
+	    attr: "Math",
 	  }),
-	  attr: "Math",
+	  attr: name,
 	}),
-	attr: "imul",
-      }),
-    }));
-
-    body.push(jast.VarDecl({
-      name: "trunc",
-      expr: jast.GetAttr({
-	expr: jast.GetAttr({
-	  expr: jast.GetName({
-	    name: "stdlib",
-	  }),
-	  attr: "Math",
-	}),
-	attr: "trunc",
-      }),
-    }));
+      }));
+    }
 
     // Foreign functions.
     for (var i = 0; i < module.externs.length; i++) {
