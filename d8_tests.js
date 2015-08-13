@@ -72,6 +72,7 @@ function runTest(testmodule, test) {
   if (test.v8) {
     print("    V8");
     var buffer = wasm_backend_v8.generate(ast);
+    WASM.verifyModule(buffer);
     //var instanceV8 = WASM.instantiateModule(buffer);
   }
 }

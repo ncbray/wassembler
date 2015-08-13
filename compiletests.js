@@ -904,6 +904,14 @@ define(["astutil"], function(astutil) {
   });
 
   test({
+    name: "parameter and local confusion",
+    source: "export func main(n f32) f32 {var a i32 = 2;  return f32(a) * n;}",
+    verify: function(m, assert) {
+      assert.equal(m.main(1.25), 2.5);
+    },
+  });
+
+  test({
     name: "factorial",
     source: "export func fact(n i32) i32 {if (n <= 1) {return 1;} else {return n * fact(n - 1);}}",
     verify: function(m, assert) {
@@ -948,6 +956,7 @@ define(["astutil"], function(astutil) {
       assert.ok("bar" in m);
       assert.equal(m.bar(11), 38.5);
     },
+    v8: false,
   });
 
   module("tls");

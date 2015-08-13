@@ -547,6 +547,17 @@ define(["astutil", "compilerutil", "wasm/ast", "wasm/opinfo"], function(astutil,
     for (var f = 0; f < module.funcs.length; f++) {
       var func = module.funcs[f];
 
+      var localIndex = 0;
+
+      // Parameters are assigned the first indexes.
+      for(var p = 0; p < func.params.length; p++) {
+	var param = func.params[p];
+	var l = param.local;
+	l.param = true;
+	l.remappedIndex = localIndex;
+	localIndex += 1;
+      }
+
       // Bucket locals by type.
       var i32Locals = [];
       var i64Locals = [];
@@ -554,6 +565,9 @@ define(["astutil", "compilerutil", "wasm/ast", "wasm/opinfo"], function(astutil,
       var f64Locals = [];
       for (var i in func.locals) {
 	var l = func.locals[i];
+	// Parameters are not considered locals.
+	if (l.param) continue;
+
 	switch (l.ltype) {
 	case "i32":
 	  i32Locals.push(l);
@@ -573,7 +587,6 @@ define(["astutil", "compilerutil", "wasm/ast", "wasm/opinfo"], function(astutil,
       }
 
       // Recalculate index, when bucked by types.
-      var localIndex = 0;
       for (var i in i32Locals) {
 	i32Locals[i].remappedIndex = localIndex;
 	localIndex += 1;

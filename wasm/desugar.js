@@ -30,13 +30,27 @@ define(["wasm/ast", "wasm/traverse", "wasm/opinfo"], function(wast, traverse, op
   };
 
   Desugar.prototype.not = function(expr) {
-    expr = wast.UnaryOp({
-      optype: "i32",
-      op: "boolnot",
-      expr: expr,
-    });
-    expr.etype = "i32";
-    return peelBoolNot(expr);
+    switch(expr.etype) {
+    case "i32":
+      expr = wast.UnaryOp({
+	optype: "i32",
+	op: "boolnot",
+	expr: expr,
+      });
+      expr.etype = "i32";
+      return peelBoolNot(expr);
+    case "i64":
+      node = wast.BinaryOp({
+	optype: "i64",
+	op: opinfo.binaryOps.eq,
+	left: expr,
+	right: this.constI64(0),
+      });
+      node.etype = "i64";
+      return node;
+    default:
+      throw Error(expr.etype);
+    }
   };
 
   Desugar.prototype.constI32 = function(value) {
