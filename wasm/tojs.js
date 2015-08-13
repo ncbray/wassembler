@@ -335,43 +335,60 @@ define(["js/ast", "wasm/traverse", "wasm/typeinfo", "wasm/opinfo", "astutil"], f
     case "Coerce":
       return this.implicitCoerce(this.processExpr(expr.expr), expr.mtype);
     case "BinaryOp":
+      var left = this.processExpr(expr.left);
+      var right = this.processExpr(expr.right);
+
       // Special cases
-      switch (expr.optype) {
-      case "i32":
-	switch (expr.op) {
-	case "mul":
+      switch (expr.op) {
+      case "mul":
+	switch (expr.optype) {
+	case "i32":
 	  return jast.Call({
 	    expr: jast.GetName({
 	      name: "imul",
 	    }),
 	    args: [
-	      this.processExpr(expr.left),
-	      this.processExpr(expr.right),
+	      left,
+	      right,
 	    ],
 	  });
 	}
-      case "f32":
 	break;
-      case "i64":
-	switch (expr.op) {
-	case ">>":
-	case ">>>":
-	case "<<":
-	case "|":
-	case "&":
-	case "^":
+      case "min":
+	return this.coerce(jast.Call({
+	  expr: jast.GetName({
+	    name: "min",
+	  }),
+	  args: [
+	    left,
+	    right,
+	  ],
+	}), "f64", expr.etype);
+      case "max":
+	return this.coerce(jast.Call({
+	  expr: jast.GetName({
+	    name: "max",
+	  }),
+	  args: [
+	    left,
+	    right,
+	  ],
+	}), "f64", expr.etype);
+      case ">>":
+      case ">>>":
+      case "<<":
+      case "|":
+      case "&":
+      case "^":
+	switch (expr.optype) {
+	case "i64":
 	  throw Error(expr.op + " not yet supported for i64");
+
 	}
 	break;
-      case "f64":
-	break;
-      default:
-	throw Error(expr.optype);
       }
 
       // The default
-      var left = this.processExpr(expr.left);
-      var right = this.processExpr(expr.right);
       return this.defaultTranslateBinaryOp(expr.optype, expr.op, left, right, expr.etype);
     case "CallDirect":
       var args = [];
@@ -755,7 +772,7 @@ define(["js/ast", "wasm/traverse", "wasm/typeinfo", "wasm/opinfo", "astutil"], f
       }));
     }
 
-    var mathImports = ["fround", "imul", "trunc", "sqrt"];
+    var mathImports = ["fround", "imul", "trunc", "min", "max", "sqrt"];
 
     for (var i = 0; i < mathImports.length; i++) {
       var name = mathImports[i];

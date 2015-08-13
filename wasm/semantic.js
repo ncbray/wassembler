@@ -287,8 +287,16 @@ define(["compilerutil", "wasm/ast", "wasm/typeinfo", "wasm/opinfo"], function(co
 		expr: expr.args[0],
 	      });
 	      break;
+	    case "binary":
+	      expr = wast.BinaryOp({
+		optype: op.optype,
+		op: op.op,
+		left: expr.args[0],
+		right: expr.args[1],
+	      });
+	      break;
 	    default:
-	      throw Error(op.op);
+	      throw Error(op.type);
 	    }
 	    this.setExprType(expr, ft.returnType);
 	  }
@@ -575,6 +583,18 @@ define(["compilerutil", "wasm/ast", "wasm/typeinfo", "wasm/opinfo"], function(co
 	op: op,
 	funcType: wast.FuncType({
 	  paramTypes: [op.optype],
+	  returnType: op.result,
+	}),
+      };
+      this.registerInModule({text: op.intrinsicName, pos: null}, decl);
+    }
+    for (var name in opinfo.classifyBinaryIntrinsic) {
+      var op = opinfo.classifyBinaryIntrinsic[name];
+      var decl = {
+	type: "Intrinsic",
+	op: op,
+	funcType: wast.FuncType({
+	  paramTypes: [op.optype, op.right],
 	  returnType: op.result,
 	}),
       };

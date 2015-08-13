@@ -28,6 +28,8 @@ define(["astutil"], function(astutil) {
     "sge",
     "ugt",
     "uge",
+    "min",
+    "max",
   ];
 
   // Eventually op names may map to enums, but for now keep them as strings.
@@ -40,8 +42,23 @@ define(["astutil"], function(astutil) {
   var binaryOpTable = [];
   var classifyBinaryOp = {};
 
+  var binary = astutil.makeASTBuilder([
+    {
+      name: "binary",
+      fields: [
+	{name: "optype"},
+	{name: "op"},
+	{name: "right"},
+	{name: "result"},
+	{name: "text", defaultValue: null},
+	{name: "intrinsicName", defaultValue: null},
+      ],
+    },
+  ]).binary;
+
+
   var classify = function(decl, left, right, result) {
-    binaryOpTable.push({optype: left, op: decl.op, right: right, result: result, text: decl.text});
+    binaryOpTable.push(binary({optype: left, op: decl.op, right: right, result: result, text: decl.text}));
   };
 
   var classifySimple = function(table, types) {
@@ -134,7 +151,13 @@ define(["astutil"], function(astutil) {
   classifyFixedResult(compareOps, ["i64"], "i64");
   classifyFixedResult(intCompareOps, ["i64"], "i64");
 
+  binaryOpTable.push(binary({optype: "f32", op: binaryOps.min, right: "f32", result: "f32", intrinsicName: "minF32"}));
+  binaryOpTable.push(binary({optype: "f32", op: binaryOps.max, right: "f32", result: "f32", intrinsicName: "maxF32"}));
+  binaryOpTable.push(binary({optype: "f64", op: binaryOps.min, right: "f64", result: "f64", intrinsicName: "minF64"}));
+  binaryOpTable.push(binary({optype: "f64", op: binaryOps.max, right: "f64", result: "f64", intrinsicName: "maxF64"}));
+
   var classifyBinaryOp = astutil.index(["text", "optype"], binaryOpTable);
+  var classifyBinaryIntrinsic = astutil.index(["intrinsicName"], binaryOpTable);
 
   var compareOpLut = {
     eq: true,
@@ -191,6 +214,7 @@ define(["astutil"], function(astutil) {
     classifyUnaryIntrinsic: classifyUnaryIntrinsic,
     binaryOps: binaryOps,
     classifyBinaryOp: classifyBinaryOp,
+    classifyBinaryIntrinsic: classifyBinaryIntrinsic,
     isCompareOp: isCompareOp,
   };
 });

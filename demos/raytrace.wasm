@@ -75,11 +75,7 @@ func vecDot(a i32, b i32) f32 {
 }
 
 func vecNLDot(a i32, b i32) f32 {
-  var value f32 = vecDot(a, b);
-  if (value < 0.0f) {
-    value = 0.0f;
-  }
-  return value;
+  return maxF32(vecDot(a, b), 0.0f);
 }
 
 func sampleEnv(dir i32, ptr i32) void {

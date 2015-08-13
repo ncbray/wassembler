@@ -362,6 +362,31 @@ define(["base", "wasm/desugar", "v8/backend"], function(base, desugar, wasm_back
       assert.equal(m.main(-1.7), 1);
     });
 
+    QUnit.test("min f32", function(assert) {
+      var m = create("export func main(a f32, b f32) f32 {return minF32(a, b);}", assert);
+      assert.equal(m.main(1.1, 2.3), Math.fround(1.1));
+      assert.equal(m.main(-1.1, 2.3), Math.fround(-1.1));
+      assert.equal(m.main(1.1, -2.3), Math.fround(-2.3));
+      assert.equal(m.main(-1.1, -2.3), Math.fround(-2.3));
+    });
+
+    QUnit.test("max f32", function(assert) {
+      var m = create("export func main(a f32, b f32) f32 {return maxF32(a, b);}", assert);
+      assert.equal(m.main(1.1, 2.3), Math.fround(2.3));
+      assert.equal(m.main(-1.1, 2.3), Math.fround(2.3));
+      assert.equal(m.main(1.1, -2.3), Math.fround(1.1));
+      assert.equal(m.main(-1.1, -2.3), Math.fround(-1.1));
+    });
+
+    QUnit.test("sqrt f32", function(assert) {
+      var m = create("export func main(n f32) f32 {return sqrtF32(n);}", assert);
+      assert.equal(m.main(100), 10);
+      assert.equal(m.main(2), Math.fround(Math.sqrt(2)));
+      assert.equal(0, 0);
+      assert.ok(isNaN(m.main(-1)));
+    });
+
+
     QUnit.module(mode_name + " basic f64");
 
     QUnit.test("negate f64", function(assert) {
@@ -439,6 +464,31 @@ define(["base", "wasm/desugar", "v8/backend"], function(base, desugar, wasm_back
       assert.equal(m.main(2.3), 1);
       assert.equal(m.main(-1.7), 1);
     });
+
+    QUnit.test("min f64", function(assert) {
+      var m = create("export func main(a f64, b f64) f64 {return minF64(a, b);}", assert);
+      assert.equal(m.main(1.1, 2.3), 1.1);
+      assert.equal(m.main(-1.1, 2.3), -1.1);
+      assert.equal(m.main(1.1, -2.3), -2.3);
+      assert.equal(m.main(-1.1, -2.3), -2.3);
+    });
+
+    QUnit.test("max f64", function(assert) {
+      var m = create("export func main(a f64, b f64) f64 {return maxF64(a, b);}", assert);
+      assert.equal(m.main(1.1, 2.3), 2.3);
+      assert.equal(m.main(-1.1, 2.3), 2.3);
+      assert.equal(m.main(1.1, -2.3), 1.1);
+      assert.equal(m.main(-1.1, -2.3), -1.1);
+    });
+
+    QUnit.test("sqrt f64", function(assert) {
+      var m = create("export func main(n f64) f64 {return sqrtF64(n);}", assert);
+      assert.equal(m.main(100), 10);
+      assert.equal(m.main(2), Math.sqrt(2));
+      assert.equal(0, 0);
+      assert.ok(isNaN(m.main(-1)));
+    });
+
 
     QUnit.module(mode_name + " variables");
 
