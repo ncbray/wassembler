@@ -10,7 +10,8 @@ define(["astutil"], function(astutil) {
 	{name: "source"},
 	{name: "verify"},
 	{name: "js", defaultValue: true},
-	{name: "v8", defaultValue: true},
+	{name: "v8_encode", defaultValue: true},
+	{name: "v8_run", defaultValue: true},
       ],
     },
   ]).compiletest;
@@ -237,6 +238,7 @@ define(["astutil"], function(astutil) {
     verify: function(m, assert) {
       assert.equal(m.main(), 11);
     },
+    v8_run: false, // No i64 type in JS, yet.
   });
 
   test({
@@ -245,6 +247,7 @@ define(["astutil"], function(astutil) {
     verify: function(m, assert) {
       assert.equal(m.main(), 20015998343868);
     },
+    v8_run: false, // No i64 type in JS, yet.
   });
 
   test({
@@ -255,6 +258,7 @@ define(["astutil"], function(astutil) {
       assert.equal(m.main(13, -2), 11);
       // TODO overflow behavior.
     },
+    v8_run: false, // No i64 type in JS, yet.
   });
 
   test({
@@ -265,6 +269,7 @@ define(["astutil"], function(astutil) {
       assert.equal(m.main(13, -2), -26);
       // TODO overflow behavior.
     },
+    v8_run: false, // No i64 type in JS, yet.
   });
 
   test({
@@ -274,6 +279,7 @@ define(["astutil"], function(astutil) {
       assert.equal(m.main(13, 2), 6);
       assert.equal(m.main(13, -2), -6);
     },
+    v8_run: false, // No i64 type in JS, yet.
   });
 
   test({
@@ -284,6 +290,7 @@ define(["astutil"], function(astutil) {
       assert.equal(m.main(5, 5), 0);
       assert.equal(m.main(2, 13), 1);
     },
+    v8_run: false, // No i64 type in JS, yet.
   });
 
   test({
@@ -294,6 +301,7 @@ define(["astutil"], function(astutil) {
       assert.equal(m.main(5, 5), 1);
       assert.equal(m.main(2, 13), 1);
     },
+    v8_run: false, // No i64 type in JS, yet.
   });
 
   test({
@@ -304,6 +312,7 @@ define(["astutil"], function(astutil) {
       assert.equal(m.main(5, 5), 0);
       assert.equal(m.main(2, 13), 0);
     },
+    v8_run: false, // No i64 type in JS, yet.
   });
 
   test({
@@ -314,6 +323,7 @@ define(["astutil"], function(astutil) {
       assert.equal(m.main(5, 5), 1);
       assert.equal(m.main(2, 13), 0);
     },
+    v8_run: false, // No i64 type in JS, yet.
   });
 
   test({
@@ -324,6 +334,7 @@ define(["astutil"], function(astutil) {
       assert.equal(m.main(5, 5), 1);
       assert.equal(m.main(2, 13), 0);
     },
+    v8_run: false, // No i64 type in JS, yet.
   });
 
   test({
@@ -334,6 +345,7 @@ define(["astutil"], function(astutil) {
       assert.equal(m.main(5, 5), 0);
       assert.equal(m.main(2, 13), 1);
     },
+    v8_run: false, // No i64 type in JS, yet.
   });
 
   test({
@@ -344,6 +356,7 @@ define(["astutil"], function(astutil) {
       assert.equal(m.main(5, 5), 0);
       assert.equal(m.main(2, 13), 1);
     },
+    v8_run: false, // No i64 type in JS, yet.
   });
 
   test({
@@ -354,6 +367,7 @@ define(["astutil"], function(astutil) {
       assert.equal(m.main(5, 5), 1);
       assert.equal(m.main(2, 13), 0);
     },
+    v8_run: false, // No i64 type in JS, yet.
   });
 
   test({
@@ -365,6 +379,7 @@ define(["astutil"], function(astutil) {
       assert.equal(m.main(2), 0);
       assert.equal(m.main(-1), 0);
     },
+    v8_run: false, // No i64 type in JS, yet.
   });
 
   test({
@@ -376,7 +391,9 @@ define(["astutil"], function(astutil) {
       assert.equal(m.main(2), 1);
       assert.equal(m.main(-1), 1);
     },
+    v8_run: false, // No i64 type in JS, yet.
   });
+
 
   module("f32");
 
@@ -506,6 +523,7 @@ define(["astutil"], function(astutil) {
       assert.equal(m.main(1.1, -2.3), Math.fround(-2.3));
       assert.equal(m.main(-1.1, -2.3), Math.fround(-2.3));
     },
+    v8_run: false, // min and max are funny.
   });
 
   test({
@@ -517,6 +535,7 @@ define(["astutil"], function(astutil) {
       assert.equal(m.main(1.1, -2.3), Math.fround(1.1));
       assert.equal(m.main(-1.1, -2.3), Math.fround(-1.1));
     },
+    v8_run: false, // min and max are funny.
   });
 
   test({
@@ -650,6 +669,7 @@ define(["astutil"], function(astutil) {
       assert.equal(m.main(1.1, -2.3), -2.3);
       assert.equal(m.main(-1.1, -2.3), -2.3);
     },
+    v8_run: false,  // min and max are funny.
   });
 
   test({
@@ -661,6 +681,7 @@ define(["astutil"], function(astutil) {
       assert.equal(m.main(1.1, -2.3), 1.1);
       assert.equal(m.main(-1.1, -2.3), -1.1);
     },
+    v8_run: false, // min and max are funny.
   });
 
   test({
@@ -893,6 +914,7 @@ define(["astutil"], function(astutil) {
     verify: function(m, assert) {
       assert.equal(m.main(), undefined);
     },
+    v8_run: false, // Turbo fan bug.
   });
 
   test({
@@ -901,6 +923,7 @@ define(["astutil"], function(astutil) {
     verify: function(m, assert) {
       assert.equal(m.main(), undefined);
     },
+    v8_run: false, // Turbo fan bug.
   });
 
   test({
@@ -936,6 +959,7 @@ define(["astutil"], function(astutil) {
     verify: function(m, assert) {
       assert.equal(m.main(), -36);
     },
+    v8_run: false, // No imports, yet.
   });
 
   test({
@@ -956,7 +980,7 @@ define(["astutil"], function(astutil) {
       assert.ok("bar" in m);
       assert.equal(m.bar(11), 38.5);
     },
-    v8: false,
+    v8_run: false, // No indirect calls, yet.
   });
 
   module("tls");
@@ -968,7 +992,7 @@ define(["astutil"], function(astutil) {
       assert.equal(m.main(11), 12);
       assert.equal(m.main(-2), -1);
     },
-    v8: false,
+    v8_encode: false, // No TLS, yet.
   });
 
   module("atomics");
@@ -980,6 +1004,7 @@ define(["astutil"], function(astutil) {
       assert.equal(m.main(11, 4), 7);
       assert.equal(m.main(-10, 3), -13);
     },
+    v8_run: false, // No imports, yet.
   });
 
   test({
@@ -989,6 +1014,7 @@ define(["astutil"], function(astutil) {
       assert.equal(m.main(7), 77);
       assert.equal(m.main(11), 49);
     },
+    v8_run: false, // No imports, yet.
   });
 
   return {

@@ -35,19 +35,19 @@ function runTest(testmodule, test) {
   var assert = {
     equal: function(a, b) {
       if (a != b) {
-	print (a + " != " + b);
+	print ("        " + a + " != " + b);
 	assert.num_errors += 1;
       }
     },
     ok: function(value) {
       if (!value) {
-	print ("not ok");
+	print ("        " + "not ok");
 	assert.num_errors += 1;
       }
     },
     notOk: function(value) {
       if (value) {
-	print ("ok");
+	print ("        " + "ok");
 	assert.num_errors += 1;
       }
     },
@@ -69,11 +69,16 @@ function runTest(testmodule, test) {
     }
   }
 
-  if (test.v8) {
-    print("    V8");
+  if (test.v8_encode) {
+    print("    V8 encode");
     var buffer = wasm_backend_v8.generate(ast);
-    WASM.verifyModule(buffer);
-    //var instanceV8 = WASM.instantiateModule(buffer);
+
+    if (test.v8_run) {
+      print("    V8 run");
+      WASM.verifyModule(buffer);
+      var instanceV8 = WASM.instantiateModule(buffer);
+      test.verify(instanceV8, assert);
+    }
   }
 }
 

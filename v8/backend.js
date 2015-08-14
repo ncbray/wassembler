@@ -209,8 +209,14 @@ define(["astutil", "compilerutil", "wasm/ast", "wasm/opinfo"], function(astutil,
   BinaryGenerator.prototype.generateExpr = function(expr) {
     switch (expr.type) {
     case "ConstI32":
-      this.writer.u8(ops.i32const.bytecode);
-      this.writer.i32(expr.value);
+      if (-128 <= expr.value && expr.value <= 127) {
+	// A more compact encoding for smaller numbers.
+        this.writer.u8(ops.i8const.bytecode);
+        this.writer.u8(expr.value);
+      } else {
+        this.writer.u8(ops.i32const.bytecode);
+        this.writer.i32(expr.value);
+      }
       break;
     case "ConstI64":
       this.writer.u8(ops.i64const.bytecode);
@@ -497,10 +503,8 @@ define(["astutil", "compilerutil", "wasm/ast", "wasm/opinfo"], function(astutil,
       for (var i = 0; i < refs.length; i++) {
 	this.writer.patchU32(refs[i], this.writer.pos);
       }
-      var sizePos = this.writer.allocU32();
       var size = this.writer.utf8(s);
-      this.writer.u8(0); // Null terminate to be paranoid.
-      this.writer.patchU32(sizePos, size);
+      this.writer.u8(0); // Null terminate strings.
     }
   };
 
@@ -510,6 +514,9 @@ define(["astutil", "compilerutil", "wasm/ast", "wasm/opinfo"], function(astutil,
     this.strings = {};
 
     // Header
+    var num_address_space_bits = Math.ceil(Math.log2(module.config.memory.fixed));
+    this.writer.u8(num_address_space_bits);
+    this.writer.u8(0);  // Don't export memory.
     this.writer.u16(0); // No globals.
     this.writer.u16(module.funcs.length);
     this.writer.u16(module.memory.length);
