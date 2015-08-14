@@ -19,19 +19,13 @@ var externs = {
   },
 };
 
-function runTest(testmodule, test) {
-  var status = new base.Status(function(message) {
-    print(message);
-  });
+var testCount = 0;
+var jsTestPass = 0;
+var jsTestFail = 0;
+var v8TestPass = 0;
+var v8TestFail = 0;
 
-  print(testmodule.name + " / " + test.name);
-  print("    common");
-  var ast = base.frontend(sources.systemWASM, "test", test.source, parser, status);
-  if (status.num_errors > 0) {
-    haltTest();
-  }
-  ast = desugar.process(ast);
-
+function makeAssert() {
   var assert = {
     equal: function(a, b) {
       if (a != b) {
@@ -53,6 +47,21 @@ function runTest(testmodule, test) {
     },
     num_errors: 0,
   };
+  return assert;
+}
+
+function runTest(test) {
+  testCount += 1;
+  var status = new base.Status(function(message) {
+    print(message);
+  });
+
+  print("    common");
+  var ast = base.frontend(sources.systemWASM, "test", test.source, parser, status);
+  if (status.num_errors > 0) {
+    haltTest();
+  }
+  ast = desugar.process(ast);
 
   if (test.js) {
     print("    JS");
@@ -63,9 +72,12 @@ function runTest(testmodule, test) {
     }
 
     var instanceJS = moduleJS(externs);
+    var assert = makeAssert();
     test.verify(instanceJS, assert);
     if (assert.num_errors > 0) {
-      haltTest();
+      jsTestFail += 1;
+    } else {
+      jsTestPass += 1;
     }
   }
 
@@ -77,7 +89,13 @@ function runTest(testmodule, test) {
       print("    V8 run");
       WASM.verifyModule(buffer);
       var instanceV8 = WASM.instantiateModule(buffer);
+      var assert = makeAssert();
       test.verify(instanceV8, assert);
+      if (assert.num_errors > 0) {
+	v8TestFail += 1;
+      } else {
+	v8TestPass += 1;
+      }
     }
   }
 }
@@ -87,9 +105,15 @@ function main() {
     var module = compiletests.testDefinitions[m];
     for (var t = 0; t < module.tests.length; t++) {
       var test = module.tests[t];
-      runTest(module, test);
+      print(module.name + " / " + test.name);
+      runTest(test);
     }
   }
+
+  print();
+  print(testCount, "tests");
+  print("JS", jsTestPass, "pass,", jsTestFail, "fail");
+  print("V8", v8TestPass, "pass,", v8TestFail, "fail");
 }
 
 main()
