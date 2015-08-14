@@ -178,7 +178,7 @@ define(["wasm/ast", "wasm/traverse", "wasm/opinfo"], function(wast, traverse, op
       node.etype = "i32";
       node = wast.BinaryOp({
 	optype: "i32",
-	op: opinfo.binaryOps.shr,
+	op: opinfo.binaryOps.sar,
 	left: wast.BinaryOp({
 	  optype: "i32",
 	  op: opinfo.binaryOps.shl,
@@ -195,7 +195,7 @@ define(["wasm/ast", "wasm/traverse", "wasm/opinfo"], function(wast, traverse, op
       node.etype = "i32";
       node = wast.BinaryOp({
 	optype: "i32",
-	op: opinfo.binaryOps.shr,
+	op: opinfo.binaryOps.sar,
 	left: wast.BinaryOp({
 	  optype: "i32",
 	  op: opinfo.binaryOps.shl,

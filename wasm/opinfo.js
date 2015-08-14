@@ -106,8 +106,8 @@ define(["astutil"], function(astutil) {
 
   var shiftOps = [
     {op: binaryOps.shl, text: "<<"},
-    {op: binaryOps.shr, text: ">>"},
-    {op: binaryOps.sar, text: ">>>"},
+    {op: binaryOps.sar, text: ">>"},
+    {op: binaryOps.shr, text: ">>>"},
   ];
 
   var compareOps = [
