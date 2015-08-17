@@ -406,6 +406,14 @@ define(["astutil"], function(astutil) {
   });
 
   test({
+    name: "passing f32",
+    source: "func proxy(n f32) f32 {return n;} export func main() f32 {return proxy(11.5f);}",
+    verify: function(m, assert) {
+      assert.equal(m.main(), 11.5);
+    },
+  });
+
+  test({
     name: "negate f32",
     source: "export func main(n f32) f32 {return -n;}",
     verify: function(m, assert) {
