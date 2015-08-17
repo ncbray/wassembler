@@ -914,7 +914,6 @@ define(["astutil"], function(astutil) {
     verify: function(m, assert) {
       assert.equal(m.main(), undefined);
     },
-    v8_run: false, // Turbo fan bug.
   });
 
   test({
@@ -923,7 +922,6 @@ define(["astutil"], function(astutil) {
     verify: function(m, assert) {
       assert.equal(m.main(), undefined);
     },
-    v8_run: false, // Turbo fan bug.
   });
 
   test({
