@@ -164,13 +164,6 @@ define(["wasm/ast", "wasm/traverse", "wasm/opinfo"], function(wast, traverse, op
 	break;
       }
       break;
-    case "BinaryOp":
-      switch (node.op) {
-      case "ne":
-	// Missing "ne"
-	node.op = "eq"
-	node = this.not(node);
-      }
     }
     switch(node.etype) {
     case "i8":
