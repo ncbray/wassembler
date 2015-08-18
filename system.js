@@ -66,17 +66,8 @@ var createSystem = function(buffer, srcURL) {
   // Libc-like stuff.
 
   var is_main_thread = false;
-  system.initMainThread = function(initial_top) {
-    top = initial_top;
+  system.initMainThread = function() {
     is_main_thread = true;
-  };
-
-  // Memory management
-  var top = 0;
-  system.sbrk = function(amt) {
-    var temp = top;
-    top += amt;
-    return temp;
   };
 
   // Threading
@@ -138,7 +129,7 @@ if (!is_worker) {
     var wrapped_foreign = wrap_foreign(system, foreign);
     instance = module(stdlib, wrapped_foreign, buffer);
     augmentInstance(instance, buffer);
-    system.initMainThread(initial_top);
+    system.initMainThread();
     return instance;
   }
 } else {

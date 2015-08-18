@@ -622,6 +622,16 @@ define(["compilerutil", "wasm/ast", "wasm/typeinfo", "wasm/opinfo"], function(co
       this.indexMemoryDecl(module.memory[i]);
     }
 
+    // Create label for the end of pre-reserved memory.
+    var m = wast.MemoryLabel({
+      name: wast.Identifier({
+	text: "_end",
+	pos: null,
+      })
+    });
+    m.ptr = this.ptr;
+    this.registerInModule(m.name, m);
+
     for (var i = 0; i < module.tls.length; i++) {
       var v = module.tls[i];
       v.index = i;

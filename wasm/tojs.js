@@ -709,10 +709,6 @@ define(["js/ast", "wasm/traverse", "wasm/typeinfo", "wasm/opinfo", "astutil"], f
 
     return [
       jast.VarDecl({
-	name: "initial_top",
-	expr: jast.ConstNum({value: module.top}),
-      }),
-      jast.VarDecl({
 	name: "createMemory",
 	expr: jast.FunctionExpr({
 	  params: [],
