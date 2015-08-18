@@ -19,17 +19,19 @@ function compile(filename) {
   if (status.num_errors > 0) {
     return null;
   }
-
-  var instanceJS = compiled({});
-
   // Generate binary encoding
   var buffer = wasm_backend_v8.generate(module);
   print("bytes:", new Uint8Array(buffer));
   print("num bytes:", buffer.byteLength);
   print();
 
+  // Instantiate
+  var foreign = {};
+  var instanceJS = compiled(foreign);
+  var instanceV8 = WASM.instantiateModule(buffer);
+
   print("JS result:", instanceJS.main());
-  print("V8 result:", WASM.compileRun(buffer));
+  print("V8 result:", instanceV8.main());
 }
 
 if (arguments.length != 1) {
