@@ -1,7 +1,5 @@
 import func flipBuffer(i32) void;
 
-import func printF32(f32) void;
-
 memory {
   width: zero 4;
   height: zero 4;
@@ -75,7 +73,12 @@ func vecDot(a i32, b i32) f32 {
 }
 
 func vecNLDot(a i32, b i32) f32 {
-  return maxF32(vecDot(a, b), 0.0f);
+  // Don't use maxF32, yet, because the V8 backend doesn't implement it.
+  var value f32 = vecDot(a, b);
+  if (value < 0.0f) {
+    value = 0.0f;
+  }
+  return value;
 }
 
 func sampleEnv(dir i32, ptr i32) void {
@@ -121,7 +124,7 @@ func intersect(pos i32, dir i32, intersection i32) i32 {
   return 0;
 }
 
-func renderFrame() void {
+func renderFrame() i32 {
   var w i32 = loadI32(width);
   var h i32 = loadI32(height);
   var buffer i32 = loadI32(frame_buffer);
@@ -187,18 +190,21 @@ func renderFrame() void {
     }
     j = j + 1;
   }
+  return buffer;
 }
 
 export func frame(dt f32) void {
   storeF32(phase, loadF32(phase) + dt);
-  renderFrame();
-  flipBuffer(loadI32(frame_buffer));
+  flipBuffer(renderFrame());
+}
+
+export func init(w i32, h i32) void {
+  storeI32(width, w);
+  storeI32(height, h);
+  storeI32(frame_buffer, sbrk(w * h * 4));
 }
 
 export func main() void {
-  storeI32(width, 256);
-  storeI32(height, 256);
-  storeI32(frame_buffer, sbrk(loadI32(width) * loadI32(height) * 4));
-  renderFrame();
-  flipBuffer(loadI32(frame_buffer));
+  init(256, 256);
+  flipBuffer(renderFrame());
 }
