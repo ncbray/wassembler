@@ -417,11 +417,18 @@ define(["compilerutil", "wasm/ast", "wasm/typeinfo", "wasm/opinfo"], function(co
       var t = this.processType(node.vtype);
       var lcl = this.createLocal(node.name.text, t);
       if (node.value) {
-	node = wast.SetLocal({
-	  local: lcl,
-	  value: this.processExpr(node.value),
-	  pos: getPos(node),
-	});
+	var pos = getPos(node);
+	var value = this.processExpr(node.value);
+	if (!this.dead) {
+	  if (t != value.etype) {
+            this.error("expected " + t + ", got " + value.etype, pos);
+	  }
+	  node = wast.SetLocal({
+	    local: lcl,
+	    value: value,
+	    pos: pos,
+	  });
+	}
 	this.setExprType(node, "void");
 	block.push(node);
       }

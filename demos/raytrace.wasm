@@ -148,9 +148,9 @@ func renderFrame() i32 {
       vecNormalize(half);
 
       // Light accumulation
-      var r f32 = 0.0;
-      var g f32 = 0.0;
-      var b f32 = 0.0;
+      var r f32 = 0.0f;
+      var g f32 = 0.0f;
+      var b f32 = 0.0f;
 
       // Surface diffuse.
       var dr f32 = 0.7f;
