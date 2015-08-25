@@ -26,7 +26,19 @@ function compile(filename) {
   print();
 
   // Instantiate
-  var foreign = {};
+  var foreign = {
+    sinF32: function(value) {
+      return Math.fround(Math.sin(value));
+    },
+    printI32: function(value) {
+      print("print", value);
+      return 0;
+    },
+    flipBuffer: function(ptr) {
+      print("flip", ptr);
+      return 0;
+    },
+  };
   var instanceJS = compiled(foreign);
   var instanceV8 = WASM.instantiateModule(buffer, foreign);
 

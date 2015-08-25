@@ -15,6 +15,14 @@ func sbrk(amt i32) i32 {
   return _end + temp;
 }
 
+import func powF32(f32, f32) f32;
+import func sinF32(f32) f32;
+import func cosF32(f32) f32;
+
+import func powF64(f64, f64) f64;
+import func sinF64(f64) f64;
+import func cosF64(f64) f64;
+
 // Needed for tests.
 import func atomicLoadI32(i32) i32;
 import func atomicStoreI32(i32, i32) void;
