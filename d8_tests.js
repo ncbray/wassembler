@@ -84,11 +84,10 @@ function runTest(test) {
   if (test.v8_encode) {
     print("    V8 encode");
     var buffer = wasm_backend_v8.generate(ast);
-
     if (test.v8_run) {
       print("    V8 run");
       WASM.verifyModule(buffer);
-      var instanceV8 = WASM.instantiateModule(buffer);
+      var instanceV8 = WASM.instantiateModule(buffer, externs);
       var assert = makeAssert();
       test.verify(instanceV8, assert);
       if (assert.num_errors > 0) {

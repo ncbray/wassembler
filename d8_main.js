@@ -28,7 +28,7 @@ function compile(filename) {
   // Instantiate
   var foreign = {};
   var instanceJS = compiled(foreign);
-  var instanceV8 = WASM.instantiateModule(buffer);
+  var instanceV8 = WASM.instantiateModule(buffer, foreign);
 
   print("JS result:", instanceJS.main());
   print("V8 result:", instanceV8.main());

@@ -965,7 +965,6 @@ define(["astutil"], function(astutil) {
     verify: function(m, assert) {
       assert.equal(m.main(), -36);
     },
-    v8_run: false, // No imports, yet.
   });
 
   test({

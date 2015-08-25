@@ -522,7 +522,7 @@ define(["astutil", "compilerutil", "wasm/ast", "wasm/opinfo"], function(astutil,
     this.writer.u8(num_address_space_bits);
     this.writer.u8(0);  // Don't export memory.
     this.writer.u16(0); // No globals.
-    this.writer.u16(module.funcs.length);
+    this.writer.u16(module.funcs.length + module.externs.length);
     this.writer.u16(module.memory.length);
 
     var funcBegin = {};
