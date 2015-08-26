@@ -810,6 +810,8 @@ define(["astutil"], function(astutil) {
     source: "memory {align 1; temp: zero 1;} export func main(n i8) i8 {storeI32(temp, n); return loadI8(temp);}",
     verify: function(m, assert) {
       assert.equal(m.main(7), 7);
+      assert.equal(m.main(-1), -1);
+      assert.equal(m.main(0x12345678), 0x78);
     },
   });
 
@@ -845,6 +847,8 @@ define(["astutil"], function(astutil) {
     source: "memory {align 2; temp: zero 2;} export func main(n i16) i16 {storeI16(temp, n); return loadI16(temp);}",
     verify: function(m, assert) {
       assert.equal(m.main(7), 7);
+      assert.equal(m.main(-1), -1);
+      assert.equal(m.main(0x12345678), 0x5678);
     },
   });
 
@@ -853,6 +857,8 @@ define(["astutil"], function(astutil) {
     source: "memory {align 4; temp: zero 4;} export func main(n i32) i32 {storeI32(temp, n); return loadI32(temp);}",
     verify: function(m, assert) {
       assert.equal(m.main(7), 7);
+      assert.equal(m.main(-1), -1);
+      assert.equal(m.main(0x12345678), 0x12345678);
     },
   });
 

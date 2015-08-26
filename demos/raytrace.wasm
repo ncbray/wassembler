@@ -1,4 +1,8 @@
-import func flipBuffer(i32) void;
+// TODO return type of "void", once d8 can cope with it.
+import func flipBuffer(i32) i32;
+
+// Debugging hack.
+import func printI32(i32) i32;
 
 memory {
   width: zero 4;
@@ -193,12 +197,32 @@ func renderFrame() i32 {
   return buffer;
 }
 
+export func checksum(ptr i32, size i32) i32 {
+  printI32(ptr);
+  printI32(size);
+  var sum i32 = 0;
+  var current i32 = ptr;
+  while (current < ptr + size) {
+    //printI32(sum); // TODO why does this cause a crash?
+    sum = sum + loadI32(current);
+    current = current + 4;
+  }
+  return sum;
+}
+
 export func frame(dt f32) void {
   storeF32(phase, loadF32(phase) + dt);
   flipBuffer(renderFrame());
 }
 
 export func init(w i32, h i32) void {
+  // Print initialized memory.
+  var i i32 = 0;
+  while (i < _end) {
+    printI32(loadI32(i));
+    i = i + 4;
+  }
+
   storeI32(width, w);
   storeI32(height, h);
   storeI32(frame_buffer, sbrk(w * h * 4));
@@ -207,4 +231,6 @@ export func init(w i32, h i32) void {
 export func main() void {
   init(256, 256);
   flipBuffer(renderFrame());
+  // Print the checksum.
+  printI32(checksum(loadI32(frame_buffer), loadI32(width) * loadI32(height) * 4));
 }

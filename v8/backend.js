@@ -213,13 +213,15 @@ define(["astutil", "compilerutil", "wasm/ast", "wasm/opinfo"], function(astutil,
   BinaryGenerator.prototype.generateExpr = function(expr) {
     switch (expr.type) {
     case "ConstI32":
-      if (-128 <= expr.value && expr.value <= 127) {
+      // Coerce because the value could have been specified as a big unsigned number.
+      var value = expr.value | 0;
+      if (-128 <= value && value <= 127) {
 	// A more compact encoding for smaller numbers.
         this.writer.u8(ops.i8const.bytecode);
-        this.writer.u8(expr.value);
+        this.writer.u8(value);
       } else {
         this.writer.u8(ops.i32const.bytecode);
-        this.writer.i32(expr.value);
+        this.writer.i32(value);
       }
       break;
     case "ConstI64":
