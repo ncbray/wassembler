@@ -1,8 +1,7 @@
-// TODO return type of "void", once d8 can cope with it.
-import func flipBuffer(i32) i32;
+import func flipBuffer(i32) void;
 
 // Debugging hack.
-import func printI32(i32) i32;
+import func printI32(i32) void;
 
 memory {
   width: zero 4;

@@ -32,11 +32,9 @@ function compile(filename) {
     },
     printI32: function(value) {
       print("print", value);
-      return 0;
     },
     flipBuffer: function(ptr) {
       print("flip", ptr);
-      return 0;
     },
   };
   var instanceJS = compiled(foreign);
