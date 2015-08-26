@@ -216,13 +216,6 @@ export func frame(dt f32) void {
 }
 
 export func init(w i32, h i32) void {
-  // Print initialized memory.
-  var i i32 = 0;
-  while (i < _end) {
-    printI32(loadI32(i));
-    i = i + 4;
-  }
-
   storeI32(width, w);
   storeI32(height, h);
   storeI32(frame_buffer, sbrk(w * h * 4));

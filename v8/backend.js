@@ -7,17 +7,18 @@ define(["astutil", "compilerutil", "wasm/ast", "wasm/opinfo"], function(astutil,
     "f64": 4,
   };
 
+  // log2(num_bytes) | sgn << 2
   var mem_types = {
-    "i8": 0,
-    "u8": 1,
-    "i16": 2,
-    "u16": 3,
-    "i32": 4,
-    "u32": 5,
-    "i64": 6,
-    "u64": 7,
-    "f32": 8,
-    "f64": 9,
+    "u8": 0,
+    "u16": 1,
+    "u32": 2,
+    "u64": 3,
+    "i8": 4,
+    "i16": 5,
+    "i32": 6,
+    "i64": 7,
+    "f32": 0, // Ignored
+    "f64": 0, // Ignored
   };
 
   var localTypeForMemType = {
