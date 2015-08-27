@@ -523,7 +523,7 @@ define(["astutil", "compilerutil", "wasm/ast", "wasm/opinfo"], function(astutil,
     // Header
     var num_address_space_bits = Math.ceil(Math.log2(module.config.memory.fixed));
     this.writer.u8(num_address_space_bits);
-    this.writer.u8(0);  // Don't export memory.
+    this.writer.u8(1);  // Export memory to polyfill _copyOut.
     this.writer.u16(0); // No globals.
     this.writer.u16(module.funcs.length + module.externs.length);
     this.writer.u16(module.memory.length);

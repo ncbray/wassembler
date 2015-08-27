@@ -45,8 +45,10 @@ define(
     document.getElementById("animate").onclick = pumpAnimation;
     document.getElementById("eval").onclick = reeval;
     document.getElementById("show").onclick = updateVisibility;
+    document.getElementById("native").onclick = reeval;
     document.getElementById("shared_memory").onclick = reeval;
 
+    document.getElementById("native").disabled = window.WASM === undefined;
     document.getElementById("shared_memory").disabled = window.SharedArrayBuffer === undefined;
 
     updateVisibility();
@@ -100,10 +102,10 @@ define(
     var ctx = c.getContext("2d");
     var imageData = ctx.getImageData(0, 0, c.width, c.height);
 
-    return {
+    var externs = {
       flipBuffer: function(ptr) {
 	var out = imageData.data.buffer;
-	this._copyOut(ptr, out.byteLength, out, 0);
+	externs._instance._copyOut(ptr, out.byteLength, out, 0);
 	ctx.putImageData(imageData, 0, 0);
       },
       printI32: function(value) {
@@ -115,7 +117,27 @@ define(
       printF64: function(value) {
 	appendText("terminal", "printF64: " + value + "\n");
       },
+
+      powF32: function(base, exponent) {
+	return Math.fround(Math.pow(base, exponent));
+      },
+      sinF32: function(value) {
+	return Math.fround(Math.sin(value));
+      },
+      cosF32: function(value) {
+	return Math.fround(Math.cos(value));
+      },
+      powF64: function(base, exponent) {
+	return Math.pow(base, exponent);
+      },
+      sinF64: function(value) {
+	return Math.sin(value);
+      },
+      cosF64: function(value) {
+	return Math.cos(value);
+      },
     };
+    return externs;
   };
 
   var exampleFile = null;
@@ -158,6 +180,7 @@ define(
     module = desugar.process(module);
 
     var config = {
+      use_native: document.getElementById("native").checked,
       use_shared_memory: document.getElementById("shared_memory").checked,
     };
 
@@ -170,17 +193,37 @@ define(
       return null;
     }
 
-    if (config.use_shared_memory) {
-      srcURL = URL.createObjectURL(new Blob([src], {type: 'text/javascript'}));
-    }
+    // Generate binary encoding
+    var buffer = wasm_backend_v8.generate(module);
+    //console.log(new Uint8Array(buffer));
+    //console.log(buffer.byteLength);
 
-    // Bind the module.
-    try {
-      instance = compiled(makeExterns(), srcURL);
-    } catch (e) {
-      appendText("terminal", "binding failed - " + e.message);
-      return;
+    var externs = makeExterns();
+
+    if (config.use_native) {
+      instance = WASM.instantiateModule(buffer, externs);
+      instance._copyOut = function(srcOff, size, dst, dstOff) {
+	var buffer = instance.memory;
+	var end = srcOff + size;
+	if (end < srcOff || srcOff > buffer.byteLength || srcOff < 0 || end > buffer.byteLength || end < 0) {
+	  throw Error("Range [" + srcOff + ", " + end + ") is out of bounds. [0, " + buffer.byteLength + ")");
+	}
+	new Uint8Array(dst, dstOff, size).set(new Uint8Array(buffer, srcOff, size));
+      };
+    } else {
+      if (config.use_shared_memory) {
+	srcURL = URL.createObjectURL(new Blob([src], {type: 'text/javascript'}));
+      }
+
+      // Bind the module.
+      try {
+	instance = compiled(externs, srcURL);
+      } catch (e) {
+	appendText("terminal", "binding failed - " + e.message);
+	return;
+      }
     }
+    externs._instance = instance;
 
     // Run main.
     appendText("terminal", "running main...\n\n");
@@ -193,11 +236,6 @@ define(
     appendText("terminal", "\nresult: " + result);
 
     pumpAnimation();
-
-    // Generate binary encoding
-    var buffer = wasm_backend_v8.generate(module);
-    console.log(new Uint8Array(buffer));
-    console.log(buffer.byteLength);
   };
 
   var run = function() {
