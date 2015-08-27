@@ -57,8 +57,13 @@ define(
 
   var last = 0;
 
+  var pumpPending = false;
+  var pumpAnimationWrapper = function() {
+    pumpPending = false;
+    pumpAnimation();
+  }
   var pumpAnimation = function() {
-    if (document.getElementById("animate").checked && instance && instance.frame !== undefined) {
+    if (!pumpPending && document.getElementById("animate").checked && instance && instance.frame !== undefined) {
       if (last == 0) {
 	last = Date.now();
       }
@@ -66,7 +71,8 @@ define(
       var dt = (current - last) / 1000;
       last = current;
       instance.frame(dt);
-      requestAnimationFrame(pumpAnimation);
+      pumpPending = true;
+      requestAnimationFrame(pumpAnimationWrapper);
     } else {
       last = 0;
     }
@@ -149,6 +155,8 @@ define(
   });
 
   var reevaluate = function(text) {
+    console.log("Re-evaluating.");
+    var start = performance.now();
     // Clear the outputs.
     setText("ast", "");
     setText("generated", "");
@@ -165,43 +173,58 @@ define(
     });
 
     var reportAST = function(ast) {
-      setText("ast", JSON.stringify(ast, null, "  "));
+      //setText("ast", JSON.stringify(ast, null, "  "));
     };
 
     var reportSrc = function(src) {
       setText("generated", src);
     };
 
+    var substart = performance.now();
     var module = base.frontend(systemWASMSrc, exampleFile, text, parser, status, reportAST);
     if (status.num_errors > 0) {
       return null;
     }
 
     module = desugar.process(module);
+    console.log("front end", performance.now() - substart);
+
 
     var config = {
+      //use_native: false,
       use_native: document.getElementById("native").checked,
       use_shared_memory: document.getElementById("shared_memory").checked,
     };
 
+    var substart = performance.now();
     var src = base.astToJSSrc(module, systemJSSrc, config);
+    console.log("gen JS", performance.now() - substart);
 
     if (reportSrc) reportSrc(src);
 
+    var substart = performance.now();
     var compiled = base.evalJSSrc(src, status);
     if (status.num_errors > 0) {
       return null;
     }
+    console.log("eval JS", performance.now() - substart);
 
     // Generate binary encoding
+    var substart = performance.now();
     var buffer = wasm_backend_v8.generate(module);
     //console.log(new Uint8Array(buffer));
     //console.log(buffer.byteLength);
+    console.log("gen v8", performance.now() - substart);
 
     var externs = makeExterns();
 
+    console.log("total compile time", performance.now() - start);
+
     if (config.use_native) {
+      var start = performance.now();
       instance = WASM.instantiateModule(buffer, externs);
+      console.log("instantiate time", performance.now() - start);
+
       instance._copyOut = function(srcOff, size, dst, dstOff) {
 	var buffer = instance.memory;
 	var end = srcOff + size;
@@ -217,7 +240,9 @@ define(
 
       // Bind the module.
       try {
+	var start = performance.now();
 	instance = compiled(externs, srcURL);
+        console.log("instantiate time", performance.now() - start);
       } catch (e) {
 	appendText("terminal", "binding failed - " + e.message);
 	return;
@@ -228,7 +253,9 @@ define(
     // Run main.
     appendText("terminal", "running main...\n\n");
     try {
+      var start = performance.now();
       var result = instance.main();
+      console.log("main time", performance.now() - start);
     } catch (e) {
       appendText("terminal", "\nruntime error: " + e.message);
       return;
