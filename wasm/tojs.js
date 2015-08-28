@@ -541,6 +541,10 @@ define(["js/ast", "wasm/traverse", "wasm/typeinfo", "wasm/opinfo", "astutil"], f
   JSTranslator.prototype.systemWrapper = function(module, system_pre, system_post, use_shared_memory, generated) {
     var body = [];
 
+    body.push(jast.VarDecl({
+      name: "threading_supported",
+      expr: jast.ConstNum({value: use_shared_memory | 0}),
+    }));
     body.push(jast.InjectSource({
       source: system_pre,
     }));
@@ -642,10 +646,6 @@ define(["js/ast", "wasm/traverse", "wasm/typeinfo", "wasm/opinfo", "astutil"], f
     }));
 
     // JS System functions.
-    body.push(jast.VarDecl({
-      name: "threading_supported",
-      expr: jast.ConstNum({value: use_shared_memory | 0}),
-    }));
     body.push(jast.InjectSource({
       source: system_post,
     }));
