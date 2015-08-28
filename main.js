@@ -65,7 +65,7 @@ define(
   var pumpAnimation = function() {
     if (!pumpPending && document.getElementById("animate").checked && instance && instance.frame !== undefined) {
       if (last == 0) {
-	last = Date.now();
+        last = Date.now();
       }
       var current = Date.now();
       var dt = (current - last) / 1000;
@@ -110,37 +110,37 @@ define(
 
     var externs = {
       flipBuffer: function(ptr) {
-	var out = imageData.data.buffer;
-	externs._instance._copyOut(ptr, out.byteLength, out, 0);
-	ctx.putImageData(imageData, 0, 0);
+        var out = imageData.data.buffer;
+        externs._instance._copyOut(ptr, out.byteLength, out, 0);
+        ctx.putImageData(imageData, 0, 0);
       },
       printI32: function(value) {
-	appendText("terminal", "printI32: " + value + "\n");
+        appendText("terminal", "printI32: " + value + "\n");
       },
       printF32: function(value) {
-	appendText("terminal", "printF32: " + value + "\n");
+        appendText("terminal", "printF32: " + value + "\n");
       },
       printF64: function(value) {
-	appendText("terminal", "printF64: " + value + "\n");
+        appendText("terminal", "printF64: " + value + "\n");
       },
 
       powF32: function(base, exponent) {
-	return Math.fround(Math.pow(base, exponent));
+        return Math.fround(Math.pow(base, exponent));
       },
       sinF32: function(value) {
-	return Math.fround(Math.sin(value));
+        return Math.fround(Math.sin(value));
       },
       cosF32: function(value) {
-	return Math.fround(Math.cos(value));
+        return Math.fround(Math.cos(value));
       },
       powF64: function(base, exponent) {
-	return Math.pow(base, exponent);
+        return Math.pow(base, exponent);
       },
       sinF64: function(value) {
-	return Math.sin(value);
+        return Math.sin(value);
       },
       cosF64: function(value) {
-	return Math.cos(value);
+        return Math.cos(value);
       },
     };
     return externs;
@@ -226,26 +226,26 @@ define(
       console.log("instantiate time", performance.now() - start);
 
       instance._copyOut = function(srcOff, size, dst, dstOff) {
-	var buffer = instance.memory;
-	var end = srcOff + size;
-	if (end < srcOff || srcOff > buffer.byteLength || srcOff < 0 || end > buffer.byteLength || end < 0) {
-	  throw Error("Range [" + srcOff + ", " + end + ") is out of bounds. [0, " + buffer.byteLength + ")");
-	}
-	new Uint8Array(dst, dstOff, size).set(new Uint8Array(buffer, srcOff, size));
+        var buffer = instance.memory;
+        var end = srcOff + size;
+        if (end < srcOff || srcOff > buffer.byteLength || srcOff < 0 || end > buffer.byteLength || end < 0) {
+          throw Error("Range [" + srcOff + ", " + end + ") is out of bounds. [0, " + buffer.byteLength + ")");
+        }
+        new Uint8Array(dst, dstOff, size).set(new Uint8Array(buffer, srcOff, size));
       };
     } else {
       if (config.use_shared_memory) {
-	srcURL = URL.createObjectURL(new Blob([src], {type: 'text/javascript'}));
+        srcURL = URL.createObjectURL(new Blob([src], {type: 'text/javascript'}));
       }
 
       // Bind the module.
       try {
-	var start = performance.now();
-	instance = compiled(externs, srcURL);
+        var start = performance.now();
+        instance = compiled(externs, srcURL);
         console.log("instantiate time", performance.now() - start);
       } catch (e) {
-	appendText("terminal", "binding failed - " + e.message);
-	return;
+        appendText("terminal", "binding failed - " + e.message);
+        return;
       }
     }
     externs._instance = instance;
@@ -279,7 +279,7 @@ define(
       parser = base.createParser(values[0], status);
       status.setFilename("");
       if (status.num_errors > 0) {
-	return;
+        return;
       }
 
       var code = values[1];

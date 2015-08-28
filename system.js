@@ -36,17 +36,17 @@ var createSystem = function(buffer, srcURL) {
     // Polyfill
     var a = {
       load: function(view, addr) {
-	return view[addr];
+        return view[addr];
       },
       store: function(view, addr, value) {
-	view[addr] = value;
+        view[addr] = value;
       },
       compareExchange: function(view, addr, expected, value) {
-	var actual = view[addr];
-	if (actual === expected) {
-	  view[addr] = value;
-	}
-	return actual;
+        var actual = view[addr];
+        if (actual === expected) {
+          view[addr] = value;
+        }
+        return actual;
       },
     };
   }
@@ -102,7 +102,7 @@ var augmentInstance = function(instance, buffer) {
     instance._copyOut = function(srcOff, size, dst, dstOff) {
       var end = srcOff + size;
       if (end < srcOff || srcOff > buffer.byteLength || srcOff < 0 || end > buffer.byteLength || end < 0) {
-	throw Error("Range [" + srcOff + ", " + end + ") is out of bounds. [0, " + buffer.byteLength + ")");
+        throw Error("Range [" + srcOff + ", " + end + ") is out of bounds. [0, " + buffer.byteLength + ")");
       }
       new Uint8Array(dst, dstOff, size).set(new SharedUint8Array(buffer, srcOff, size));
     };
@@ -110,7 +110,7 @@ var augmentInstance = function(instance, buffer) {
     instance._copyOut = function(srcOff, size, dst, dstOff) {
       var end = srcOff + size;
       if (end < srcOff || srcOff > buffer.byteLength || srcOff < 0 || end > buffer.byteLength || end < 0) {
-	throw Error("Range [" + srcOff + ", " + end + ") is out of bounds. [0, " + buffer.byteLength + ")");
+        throw Error("Range [" + srcOff + ", " + end + ") is out of bounds. [0, " + buffer.byteLength + ")");
       }
       new Uint8Array(dst, dstOff, size).set(new Uint8Array(buffer, srcOff, size));
     };

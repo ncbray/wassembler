@@ -7,14 +7,14 @@ define(
     return new Promise(function(resolve, reject) {
       var req = new XMLHttpRequest();
       req.onload = function() {
-	if (req.status == 200) {
-	  resolve(req.response);
-	} else {
-	  reject(Error("getURL " + url + " - reponse " + req.status));
-	}
+        if (req.status == 200) {
+          resolve(req.response);
+        } else {
+          reject(Error("getURL " + url + " - reponse " + req.status));
+        }
       };
       req.onerror = function() {
-	reject(Error("getURL " + url + " - network error"));
+        reject(Error("getURL " + url + " - network error"));
       };
       req.open("get", url);
       req.send();
@@ -38,7 +38,7 @@ define(
     for (var i = 0; i < module.decls.length; i++) {
       var decl = module.decls[i];
       if (decl.type == "Extern") {
-	names.push(decl.name.text);
+        names.push(decl.name.text);
       }
     }
     return names;

@@ -12,7 +12,7 @@
       e = wast.InfixOp({
         left: e,
         op: rest[i][1],
-	right: rest[i][3],
+        right: rest[i][3],
       });
     }
     return e;
@@ -23,7 +23,7 @@
     for (var i in rest) {
       e = wast.Call({
         expr: e,
-	args: rest[i],
+        args: rest[i],
       });
     }
     return e;
@@ -228,8 +228,8 @@ stmt
       return wast.If({
         cond:cond,
         t: t,
-	f: f,
-	pos: getPos(),
+        f: f,
+        pos: getPos(),
       });
     })
     /("while" EOT S "(" S cond:expr S ")"
@@ -237,7 +237,7 @@ stmt
       return wast.While({
         cond:cond,
         body: b,
-	pos: getPos(),
+        pos: getPos(),
       });
     })
     /("loop" EOT
@@ -249,7 +249,7 @@ stmt
     /("return" EOT S e:(expr/{return null}) S ";" {
       return wast.Return({
         expr: e,
-	pos: getPos(),
+        pos: getPos(),
       });
     })
     / ("var" EOT S name:ident S type:typeRef
@@ -258,7 +258,7 @@ stmt
         name: name,
         vtype: type,
         value: value,
-	pos: getPos(),
+        pos: getPos(),
       });
     })
     / ("break" EOT S name:ident S ";" {
@@ -275,7 +275,7 @@ stmt
     / (name:ident S "=" S value:expr S ";" {
       return wast.SetName({
         name: name,
-	value: value,
+        value: value,
       });
     })
     / e:expr S ";" {return e;}

@@ -44,13 +44,13 @@ define([], function() {
     case "CallDirect":
     case "CallExternal":
       for (var i = 0; i < node.args.length; i++) {
-	node.args[i] = this.processExpr(node.args[i]);
+        node.args[i] = this.processExpr(node.args[i]);
       }
       break;
     case "CallIndirect":
       node.expr = this.processExpr(node.expr);
       for (var i = 0; i < node.args.length; i++) {
-	node.args[i] = this.processExpr(node.args[i]);
+        node.args[i] = this.processExpr(node.args[i]);
       }
       break;
     default:
@@ -76,36 +76,36 @@ define([], function() {
       switch (node.type) {
       case "SetLocal":
       case "SetTls":
-	node.value = this.processExpr(node.value);
-	break;
+        node.value = this.processExpr(node.value);
+        break;
       case "Return":
-	if (node.expr) {
-	  node.expr = this.processExpr(node.expr);
-	}
-	break;
+        if (node.expr) {
+          node.expr = this.processExpr(node.expr);
+        }
+        break;
       case "Break":
-	break;
+        break;
       case "If":
-	node.cond = this.processExpr(node.cond);
-	node.t = this.processBlock(node.t);
-	if (node.f) {
-	  node.f = this.processBlock(node.f);
-	}
-	break;
+        node.cond = this.processExpr(node.cond);
+        node.t = this.processBlock(node.t);
+        if (node.f) {
+          node.f = this.processBlock(node.f);
+        }
+        break;
       case "While":
-	node.cond = this.processExpr(node.cond);
-	node.body = this.processBlock(node.body);
-	break;
+        node.cond = this.processExpr(node.cond);
+        node.body = this.processBlock(node.body);
+        break;
       case "Loop":
-	node.body = this.processBlock(node.body);
-	break;
+        node.body = this.processBlock(node.body);
+        break;
       default:
-	node = this.processExpr(node);
+        node = this.processExpr(node);
       }
       if (this.visitor.processStmtPost) {
-	this.visitor.processStmtPost(node, out);
+        this.visitor.processStmtPost(node, out);
       } else {
-	out.push(node);
+        out.push(node);
       }
     }
   };
@@ -132,7 +132,7 @@ define([], function() {
     for (var i = 0; i < module.externs.length; i++) {
       var extern = module.externs[i];
       if (this.visitor.processExtern) {
-	this.visitor.processExtern(extern);
+        this.visitor.processExtern(extern);
       }
     }
     for (var i = 0; i < module.funcs.length; i++) {

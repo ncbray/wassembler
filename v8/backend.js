@@ -217,7 +217,7 @@ define(["astutil", "compilerutil", "wasm/ast", "wasm/opinfo"], function(astutil,
       // Coerce because the value could have been specified as a big unsigned number.
       var value = expr.value | 0;
       if (-128 <= value && value <= 127) {
-	// A more compact encoding for smaller numbers.
+        // A more compact encoding for smaller numbers.
         this.writer.u8(ops.i8const.bytecode);
         this.writer.u8(value);
       } else {
@@ -265,97 +265,97 @@ define(["astutil", "compilerutil", "wasm/ast", "wasm/opinfo"], function(astutil,
       var dst = expr.mtype;
       switch (dst) {
       case "i8":
-	switch (src) {
-	case "i32":
-	  this.generateExpr(expr.expr); // HACK
-	  break;
-	default:
-	  throw Error(dst + "<=" + src);
-	}
-	break;
+        switch (src) {
+        case "i32":
+          this.generateExpr(expr.expr); // HACK
+          break;
+        default:
+          throw Error(dst + "<=" + src);
+        }
+        break;
       case "i16":
-	switch (src) {
-	case "i32":
-	  this.generateExpr(expr.expr); // HACK
-	  break;
-	default:
-	  throw Error(dst + "<=" + src);
-	}
-	break;
+        switch (src) {
+        case "i32":
+          this.generateExpr(expr.expr); // HACK
+          break;
+        default:
+          throw Error(dst + "<=" + src);
+        }
+        break;
       case "i32":
-	switch (src) {
-	case "i64":
-	  this.writer.u8(ops.i32fromi64.bytecode);
-	  this.generateExpr(expr.expr);
-	  break;
-	case "f32":
-	  this.writer.u8(ops.i32fromf32.bytecode);
-	  this.generateExpr(expr.expr);
-	  break;
-	case "f64":
-	  this.writer.u8(ops.i32fromf64.bytecode);
-	  this.generateExpr(expr.expr);
-	  break;
-	default:
-	  throw Error(dst + "<=" + src);
-	}
-	break;
+        switch (src) {
+        case "i64":
+          this.writer.u8(ops.i32fromi64.bytecode);
+          this.generateExpr(expr.expr);
+          break;
+        case "f32":
+          this.writer.u8(ops.i32fromf32.bytecode);
+          this.generateExpr(expr.expr);
+          break;
+        case "f64":
+          this.writer.u8(ops.i32fromf64.bytecode);
+          this.generateExpr(expr.expr);
+          break;
+        default:
+          throw Error(dst + "<=" + src);
+        }
+        break;
       case "i64":
-	switch (src) {
-	case "i32":
-	  this.writer.u8(ops.i64fromi32.bytecode);
-	  this.generateExpr(expr.expr);
-	  break;
-	case "f32":
-	  this.writer.u8(ops.i64fromf32.bytecode);
-	  this.generateExpr(expr.expr);
-	  break;
-	case "f64":
-	  this.writer.u8(ops.i64fromf64.bytecode);
-	  this.generateExpr(expr.expr);
-	  break;
-	default:
-	  throw Error(dst + "<=" + src);
-	}
-	break;
+        switch (src) {
+        case "i32":
+          this.writer.u8(ops.i64fromi32.bytecode);
+          this.generateExpr(expr.expr);
+          break;
+        case "f32":
+          this.writer.u8(ops.i64fromf32.bytecode);
+          this.generateExpr(expr.expr);
+          break;
+        case "f64":
+          this.writer.u8(ops.i64fromf64.bytecode);
+          this.generateExpr(expr.expr);
+          break;
+        default:
+          throw Error(dst + "<=" + src);
+        }
+        break;
       case "f32":
-	switch (src) {
-	case "i32":
-	  this.writer.u8(ops.f32fromi32.bytecode);
-	  this.generateExpr(expr.expr);
-	  break;
-	case "i64":
-	  this.writer.u8(ops.f32fromi64.bytecode);
-	  this.generateExpr(expr.expr);
-	  break;
-	case "f64":
-	  this.writer.u8(ops.f32fromf64.bytecode);
-	  this.generateExpr(expr.expr);
-	  break;
-	default:
-	  throw Error(dst + "<=" + src);
-	}
-	break;
+        switch (src) {
+        case "i32":
+          this.writer.u8(ops.f32fromi32.bytecode);
+          this.generateExpr(expr.expr);
+          break;
+        case "i64":
+          this.writer.u8(ops.f32fromi64.bytecode);
+          this.generateExpr(expr.expr);
+          break;
+        case "f64":
+          this.writer.u8(ops.f32fromf64.bytecode);
+          this.generateExpr(expr.expr);
+          break;
+        default:
+          throw Error(dst + "<=" + src);
+        }
+        break;
       case "f64":
-	switch (src) {
-	case "i32":
-	  this.writer.u8(ops.f64fromi32.bytecode);
-	  this.generateExpr(expr.expr);
-	  break;
-	case "i64":
-	  this.writer.u8(ops.f64fromi64.bytecode);
-	  this.generateExpr(expr.expr);
-	  break;
-	case "f32":
-	  this.writer.u8(ops.f64fromf32.bytecode);
-	  this.generateExpr(expr.expr);
-	  break;
-	default:
-	  throw Error(dst + "<=" + src);
-	}
-	break;
+        switch (src) {
+        case "i32":
+          this.writer.u8(ops.f64fromi32.bytecode);
+          this.generateExpr(expr.expr);
+          break;
+        case "i64":
+          this.writer.u8(ops.f64fromi64.bytecode);
+          this.generateExpr(expr.expr);
+          break;
+        case "f32":
+          this.writer.u8(ops.f64fromf32.bytecode);
+          this.generateExpr(expr.expr);
+          break;
+        default:
+          throw Error(dst + "<=" + src);
+        }
+        break;
       default:
-	throw Error(dst + "<=" + src);
+        throw Error(dst + "<=" + src);
       }
       break;
     case "UnaryOp":
@@ -381,7 +381,7 @@ define(["astutil", "compilerutil", "wasm/ast", "wasm/opinfo"], function(astutil,
       this.generateExternRef(expr.func);
       // Number of arguments infered from target signature.
       for (var i in expr.args) {
-	this.generateExpr(expr.args[i]);
+        this.generateExpr(expr.args[i]);
       }
       break;
     case "CallDirect":
@@ -389,7 +389,7 @@ define(["astutil", "compilerutil", "wasm/ast", "wasm/opinfo"], function(astutil,
       this.generateFuncRef(expr.func);
       // Number of arguments infered from target signature.
       for (var i in expr.args) {
-	this.generateExpr(expr.args[i]);
+        this.generateExpr(expr.args[i]);
       }
       break;
     case "CallIndirect":
@@ -400,14 +400,14 @@ define(["astutil", "compilerutil", "wasm/ast", "wasm/opinfo"], function(astutil,
       this.generateExpr(expr.expr);
       // Number of arguments infered from target signature.
       for (var i in expr.args) {
-	this.generateExpr(expr.args[i]);
+        this.generateExpr(expr.args[i]);
       }
       break;
     case "Return":
       // Count infered from the function signature.
       this.writer.u8(ops.return_.bytecode);
       if (expr.expr) {
-	this.generateExpr(expr.expr);
+        this.generateExpr(expr.expr);
       }
       break;
     case "Break":
@@ -423,14 +423,14 @@ define(["astutil", "compilerutil", "wasm/ast", "wasm/opinfo"], function(astutil,
     switch (expr.type) {
     case "If":
       if (expr.f) {
-	this.writer.u8(ops.if2.bytecode);
-	this.generateExpr(expr.cond);
-	this.generateBlock(expr.t);
-	this.generateBlock(expr.f);
+        this.writer.u8(ops.if2.bytecode);
+        this.generateExpr(expr.cond);
+        this.generateBlock(expr.t);
+        this.generateBlock(expr.f);
       } else {
-	this.writer.u8(ops.if1.bytecode);
-	this.generateExpr(expr.cond);
-	this.generateBlock(expr.t);
+        this.writer.u8(ops.if1.bytecode);
+        this.generateExpr(expr.cond);
+        this.generateBlock(expr.t);
       }
       break;
     case "Loop":
@@ -508,7 +508,7 @@ define(["astutil", "compilerutil", "wasm/ast", "wasm/opinfo"], function(astutil,
     for (var s in this.strings) {
       var refs = this.strings[s];
       for (var i = 0; i < refs.length; i++) {
-	this.writer.patchU32(refs[i], this.writer.pos);
+        this.writer.patchU32(refs[i], this.writer.pos);
       }
       var size = this.writer.utf8(s);
       this.writer.u8(0); // Null terminate strings.
@@ -565,11 +565,11 @@ define(["astutil", "compilerutil", "wasm/ast", "wasm/opinfo"], function(astutil,
 
       // Parameters are assigned the first indexes.
       for(var p = 0; p < func.params.length; p++) {
-	var param = func.params[p];
-	var l = param.local;
-	l.param = true;
-	l.remappedIndex = localIndex;
-	localIndex += 1;
+        var param = func.params[p];
+        var l = param.local;
+        l.param = true;
+        l.remappedIndex = localIndex;
+        localIndex += 1;
       }
 
       // Bucket locals by type.
@@ -578,44 +578,44 @@ define(["astutil", "compilerutil", "wasm/ast", "wasm/opinfo"], function(astutil,
       var f32Locals = [];
       var f64Locals = [];
       for (var i in func.locals) {
-	var l = func.locals[i];
-	// Parameters are not considered locals.
-	if (l.param) continue;
+        var l = func.locals[i];
+        // Parameters are not considered locals.
+        if (l.param) continue;
 
-	switch (l.ltype) {
-	case "i32":
-	  i32Locals.push(l);
-	  break;
-	case "i64":
-	  i64Locals.push(l);
-	  break;
-	case "f32":
-	  f32Locals.push(l);
-	  break;
-	case "f64":
-	  f64Locals.push(l);
-	  break;
-	default:
-	  throw Error(l.ltype);
-	}
+        switch (l.ltype) {
+        case "i32":
+          i32Locals.push(l);
+          break;
+        case "i64":
+          i64Locals.push(l);
+          break;
+        case "f32":
+          f32Locals.push(l);
+          break;
+        case "f64":
+          f64Locals.push(l);
+          break;
+        default:
+          throw Error(l.ltype);
+        }
       }
 
       // Recalculate index, when bucked by types.
       for (var i in i32Locals) {
-	i32Locals[i].remappedIndex = localIndex;
-	localIndex += 1;
+        i32Locals[i].remappedIndex = localIndex;
+        localIndex += 1;
       }
       for (var i in i64Locals) {
-	i64Locals[i].remappedIndex = localIndex;
-	localIndex += 1;
+        i64Locals[i].remappedIndex = localIndex;
+        localIndex += 1;
       }
       for (var i in f32Locals) {
-	f32Locals[i].remappedIndex = localIndex;
-	localIndex += 1;
+        f32Locals[i].remappedIndex = localIndex;
+        localIndex += 1;
       }
       for (var i in f64Locals) {
-	f64Locals[i].remappedIndex = localIndex;
-	localIndex += 1;
+        f64Locals[i].remappedIndex = localIndex;
+        localIndex += 1;
       }
 
       this.funcID[f] = uid;
@@ -623,7 +623,7 @@ define(["astutil", "compilerutil", "wasm/ast", "wasm/opinfo"], function(astutil,
 
       var argTypes = [];
       for(var j in func.params) {
-	argTypes.push(func.params[j].ptype);
+        argTypes.push(func.params[j].ptype);
       }
       this.generateSignature(argTypes, func.returnType);
 

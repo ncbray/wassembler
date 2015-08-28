@@ -33,13 +33,13 @@ define(["base", "wasm/desugar", "v8/backend", "compiletests"], function(base, de
       var module = compiletests.testDefinitions[m];
       QUnit.module(mode_name + " " + module.name);
       for (var t = 0; t < module.tests.length; t++) {
-	var test = module.tests[t];
-	(function(test) {
-	  QUnit.test(test.name, function(assert) {
-	    var m = create(test.source, assert, !test.v8);
-	    test.verify(m, assert);
-	  });
-	})(test);
+        var test = module.tests[t];
+        (function(test) {
+          QUnit.test(test.name, function(assert) {
+            var m = create(test.source, assert, !test.v8);
+            test.verify(m, assert);
+          });
+        })(test);
       }
     }
   }

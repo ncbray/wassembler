@@ -29,20 +29,20 @@ function makeAssert() {
   var assert = {
     equal: function(a, b) {
       if (a != b) {
-	print ("        " + a + " != " + b);
-	assert.num_errors += 1;
+        print ("        " + a + " != " + b);
+        assert.num_errors += 1;
       }
     },
     ok: function(value) {
       if (!value) {
-	print ("        " + "not ok");
-	assert.num_errors += 1;
+        print ("        " + "not ok");
+        assert.num_errors += 1;
       }
     },
     notOk: function(value) {
       if (value) {
-	print ("        " + "ok");
-	assert.num_errors += 1;
+        print ("        " + "ok");
+        assert.num_errors += 1;
       }
     },
     num_errors: 0,
@@ -91,9 +91,9 @@ function runTest(test) {
       var assert = makeAssert();
       test.verify(instanceV8, assert);
       if (assert.num_errors > 0) {
-	v8TestFail += 1;
+        v8TestFail += 1;
       } else {
-	v8TestPass += 1;
+        v8TestPass += 1;
       }
     }
   }

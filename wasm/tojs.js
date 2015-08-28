@@ -15,8 +15,8 @@ define(["js/ast", "wasm/traverse", "wasm/typeinfo", "wasm/opinfo", "astutil"], f
       // Figure out what statement this break targets, and generate a label if it doesn't already exist.
       var target = this.breakStack[this.breakStack.length - stmt.depth - 1];
       if (!target.generatedLabel) {
-	target.generatedLabel = "label" + this.labelUID;
-	this.labelUID += 1;
+        target.generatedLabel = "label" + this.labelUID;
+        this.labelUID += 1;
       }
       stmt.generatedLabel = target.generatedLabel;
     }
@@ -181,15 +181,15 @@ define(["js/ast", "wasm/traverse", "wasm/typeinfo", "wasm/opinfo", "astutil"], f
     case "BinaryOp":
       var result = binOpResult[expr.op];
       if (result === undefined) {
-	throw Error(expr.op);
+        throw Error(expr.op);
       }
       return result;
     case "PrefixOp":
       switch (expr.op) {
       case "!":
-	return "bool";
+        return "bool";
       default:
-	throw Error(expr.op);
+        throw Error(expr.op);
       }
     default:
       throw Error(expr.type);
@@ -208,35 +208,35 @@ define(["js/ast", "wasm/traverse", "wasm/typeinfo", "wasm/opinfo", "astutil"], f
     switch (desiredType) {
     case "i32":
       return jast.BinaryOp({
-	left: expr,
-	op: "|",
-	right: jast.ConstNum({
-	  value: 0
-	}),
+        left: expr,
+        op: "|",
+        right: jast.ConstNum({
+          value: 0
+        }),
       });
     case "i64":
       // HACK i64 operations are just double operations that are truncated.
       return jast.Call({
-	expr: jast.GetName({
-	  name: "trunc",
-	}),
-	args: [
-	  expr,
-	],
+        expr: jast.GetName({
+          name: "trunc",
+        }),
+        args: [
+          expr,
+        ],
       });
     case "f32":
       return jast.Call({
-	expr: jast.GetName({
-	  name: "fround",
-	}),
-	args: [
-	  expr,
-	],
+        expr: jast.GetName({
+          name: "fround",
+        }),
+        args: [
+          expr,
+        ],
       });
     case "f64":
       return jast.PrefixOp({
-	op: "+",
-	expr: expr,
+        op: "+",
+        expr: expr,
       });
     default:
       throw Error(type);
@@ -247,32 +247,32 @@ define(["js/ast", "wasm/traverse", "wasm/typeinfo", "wasm/opinfo", "astutil"], f
     switch(expr.type) {
     case "ConstI32":
       return jast.ConstNum({
-	value: expr.value,
+        value: expr.value,
       });
     case "ConstI64":
       // HACK this is imprecise.
       return jast.ConstNum({
-	value: expr.value,
+        value: expr.value,
       });
     case "ConstF32":
       return jast.ConstNum({
-	value: expr.value,
+        value: expr.value,
       });
     case "ConstF64":
       return jast.ConstNum({
-	value: expr.value,
+        value: expr.value,
       });
     case "GetLocal":
       return jast.GetName({
-	name: this.localName(expr.local),
+        name: this.localName(expr.local),
       });
     case "GetTls":
       return jast.GetName({
-	name: this.tlsName(expr.tls),
+        name: this.tlsName(expr.tls),
       });
     case "GetFunction":
       return jast.ConstNum({
-	value: expr.func.funcPtr,
+        value: expr.func.funcPtr,
       });
     case "Load":
       if (!(expr.mtype in typeToArrayName)) throw Error(expr.mtype);
@@ -280,14 +280,14 @@ define(["js/ast", "wasm/traverse", "wasm/typeinfo", "wasm/opinfo", "astutil"], f
       var shift = Math.log2(typeinfo.sizeOf(expr.mtype));
 
       return jast.GetIndex({
-	expr: jast.GetName({
-	  name: typeToArrayName[expr.mtype],
-	}),
-	index: jast.BinaryOp({
-	  left: this.processExpr(expr.address),
-	  op: ">>",
-	  right: jast.ConstNum({value: shift}),
-	}),
+        expr: jast.GetName({
+          name: typeToArrayName[expr.mtype],
+        }),
+        index: jast.BinaryOp({
+          left: this.processExpr(expr.address),
+          op: ">>",
+          right: jast.ConstNum({value: shift}),
+        }),
       });
     case "Store":
       if (!(expr.mtype in typeToArrayName)) throw Error(expr.mtype);
@@ -295,41 +295,41 @@ define(["js/ast", "wasm/traverse", "wasm/typeinfo", "wasm/opinfo", "astutil"], f
       var shift = Math.log2(typeinfo.sizeOf(expr.mtype));
 
       return jast.Assign({
-	target: jast.GetIndex({
-	  expr: jast.GetName({
-	    name: typeToArrayName[expr.mtype],
-	  }),
-	  index: jast.BinaryOp({
-	    left: this.processExpr(expr.address),
-	    op: ">>",
-	    right: jast.ConstNum({value: shift}),
-	  }),
-	}),
-	value: this.processExpr(expr.value),
+        target: jast.GetIndex({
+          expr: jast.GetName({
+            name: typeToArrayName[expr.mtype],
+          }),
+          index: jast.BinaryOp({
+            left: this.processExpr(expr.address),
+            op: ">>",
+            right: jast.ConstNum({value: shift}),
+          }),
+        }),
+        value: this.processExpr(expr.value),
       });
     case "UnaryOp":
       var child = this.processExpr(expr.expr);
       switch (expr.op) {
       case "sqrt":
-	var actualType = "f64";
-	var resultType = expr.etype;
-	var out = jast.Call({
-	  expr: jast.GetName({
-	    name: "sqrt",
-	  }),
-	  args: [
-	    child,
-	  ],
-	});
-	break;
+        var actualType = "f64";
+        var resultType = expr.etype;
+        var out = jast.Call({
+          expr: jast.GetName({
+            name: "sqrt",
+          }),
+          args: [
+            child,
+          ],
+        });
+        break;
       default:
-	var jsOp = wasmToJSPrefixOp[expr.op].jsop;
-	var actualType = binOpResult[jsOp];
-	var resultType = expr.etype;
-	var out = jast.PrefixOp({
-	  op: jsOp,
-	  expr: child,
-	});
+        var jsOp = wasmToJSPrefixOp[expr.op].jsop;
+        var actualType = binOpResult[jsOp];
+        var resultType = expr.etype;
+        var out = jast.PrefixOp({
+          op: jsOp,
+          expr: child,
+        });
       }
       return this.coerce(out, actualType, resultType);
     case "Coerce":
@@ -341,51 +341,51 @@ define(["js/ast", "wasm/traverse", "wasm/typeinfo", "wasm/opinfo", "astutil"], f
       // Special cases
       switch (expr.op) {
       case "mul":
-	switch (expr.optype) {
-	case "i32":
-	  return jast.Call({
-	    expr: jast.GetName({
-	      name: "imul",
-	    }),
-	    args: [
-	      left,
-	      right,
-	    ],
-	  });
-	}
-	break;
+        switch (expr.optype) {
+        case "i32":
+          return jast.Call({
+            expr: jast.GetName({
+              name: "imul",
+            }),
+            args: [
+              left,
+              right,
+            ],
+          });
+        }
+        break;
       case "min":
-	return this.coerce(jast.Call({
-	  expr: jast.GetName({
-	    name: "min",
-	  }),
-	  args: [
-	    left,
-	    right,
-	  ],
-	}), "f64", expr.etype);
+        return this.coerce(jast.Call({
+          expr: jast.GetName({
+            name: "min",
+          }),
+          args: [
+            left,
+            right,
+          ],
+        }), "f64", expr.etype);
       case "max":
-	return this.coerce(jast.Call({
-	  expr: jast.GetName({
-	    name: "max",
-	  }),
-	  args: [
-	    left,
-	    right,
-	  ],
-	}), "f64", expr.etype);
+        return this.coerce(jast.Call({
+          expr: jast.GetName({
+            name: "max",
+          }),
+          args: [
+            left,
+            right,
+          ],
+        }), "f64", expr.etype);
       case ">>":
       case ">>>":
       case "<<":
       case "|":
       case "&":
       case "^":
-	switch (expr.optype) {
-	case "i64":
-	  throw Error(expr.op + " not yet supported for i64");
+        switch (expr.optype) {
+        case "i64":
+          throw Error(expr.op + " not yet supported for i64");
 
-	}
-	break;
+        }
+        break;
       }
 
       // The default
@@ -393,33 +393,33 @@ define(["js/ast", "wasm/traverse", "wasm/typeinfo", "wasm/opinfo", "astutil"], f
     case "CallDirect":
       var args = [];
       for (var i = 0; i < expr.args.length; i++) {
-	args.push(this.processExpr(expr.args[i]));
+        args.push(this.processExpr(expr.args[i]));
       }
       return jast.Call({
-	expr: jast.GetName({name: this.funcName(expr.func)}),
-	args: args,
+        expr: jast.GetName({name: this.funcName(expr.func)}),
+        args: args,
       });
     case "CallExternal":
       var args = [];
       for (var i = 0; i < expr.args.length; i++) {
-	args.push(this.processExpr(expr.args[i]));
+        args.push(this.processExpr(expr.args[i]));
       }
       return jast.Call({
-	expr: jast.GetName({name: this.externName(expr.func)}),
-	args: args,
+        expr: jast.GetName({name: this.externName(expr.func)}),
+        args: args,
       });
     case "CallIndirect":
       var index = this.processExpr(expr.expr);
       var args = [];
       for (var i = 0; i < expr.args.length; i++) {
-	args.push(this.processExpr(expr.args[i]));
+        args.push(this.processExpr(expr.args[i]));
       }
       return jast.Call({
-	expr:  jast.GetIndex({
-	  expr: jast.GetName({name: "ftable"}),
-	  index: index,
-	}),
-	args: args,
+        expr:  jast.GetIndex({
+          expr: jast.GetName({name: "ftable"}),
+          index: index,
+        }),
+        args: args,
       });
     default:
       console.log(expr);
@@ -438,36 +438,36 @@ define(["js/ast", "wasm/traverse", "wasm/typeinfo", "wasm/opinfo", "astutil"], f
     switch(stmt.type) {
     case "If":
       result.push(this.addLabel(stmt, jast.If({
-	cond: this.processExpr(stmt.cond),
-	t: this.processBlock(stmt.t, []),
-	f: stmt.f ? this.processBlock(stmt.f, []) : null,
+        cond: this.processExpr(stmt.cond),
+        t: this.processBlock(stmt.t, []),
+        f: stmt.f ? this.processBlock(stmt.f, []) : null,
       })));
       break;
     case "Loop":
       result.push(this.addLabel(stmt, jast.While({
-	cond: jast.GetName({name: "true"}),
-	body: this.processBlock(stmt.body, []),
+        cond: jast.GetName({name: "true"}),
+        body: this.processBlock(stmt.body, []),
       })));
       break;
     case "SetLocal":
       result.push(jast.Assign({
-	target: jast.GetName({
-	  name: this.localName(stmt.local),
-	}),
-	value: this.processExpr(stmt.value),
+        target: jast.GetName({
+          name: this.localName(stmt.local),
+        }),
+        value: this.processExpr(stmt.value),
       }));
       break;
     case "SetTls":
       result.push(jast.Assign({
-	target: jast.GetName({
-	  name: this.tlsName(stmt.tls),
-	}),
-	value: this.processExpr(stmt.value),
+        target: jast.GetName({
+          name: this.tlsName(stmt.tls),
+        }),
+        value: this.processExpr(stmt.value),
       }));
       break;
     case "Return":
       result.push(jast.Return({
-	expr: stmt.expr ? this.processExpr(stmt.expr) : null,
+        expr: stmt.expr ? this.processExpr(stmt.expr) : null,
       }));
       break;
     case "Break":
@@ -513,8 +513,8 @@ define(["js/ast", "wasm/traverse", "wasm/typeinfo", "wasm/opinfo", "astutil"], f
       var name = this.localName(p.local);
       params.push(name);
       body.push(jast.VarDecl({
-	name: name,
-	expr: this.coerce(jast.GetName({name: name}), "?", p.ptype),
+        name: name,
+        expr: this.coerce(jast.GetName({name: name}), "?", p.ptype),
       }));
     }
 
@@ -522,8 +522,8 @@ define(["js/ast", "wasm/traverse", "wasm/typeinfo", "wasm/opinfo", "astutil"], f
     for (var i = func.params.length; i < func.locals.length; i++) {
       var lcl = func.locals[i];
       body.push(jast.VarDecl({
-	name: this.localName(lcl),
-	expr: this.zeroValue(lcl.ltype),
+        name: this.localName(lcl),
+        expr: this.zeroValue(lcl.ltype),
       }));
     }
 
@@ -532,8 +532,8 @@ define(["js/ast", "wasm/traverse", "wasm/typeinfo", "wasm/opinfo", "astutil"], f
     return jast.VarDecl({
       name: this.funcName(func),
       expr: jast.FunctionExpr({
-	params: params,
-	body: body,
+        params: params,
+        body: body,
       }),
     });
   }
@@ -560,14 +560,14 @@ define(["js/ast", "wasm/traverse", "wasm/typeinfo", "wasm/opinfo", "astutil"], f
     for (var i = 0; i < stdlibNames.length; i++) {
       var name = stdlibNames[i];
       stdlib.push(jast.KeyValue({
-	key: name,
-	value: jast.GetName({name: name}),
+        key: name,
+        value: jast.GetName({name: name}),
       }));
     }
     body.push(jast.VarDecl({
       name: "stdlib",
       expr: jast.CreateObject({
-	args: stdlib
+        args: stdlib
       }),
     }));
 
@@ -587,53 +587,53 @@ define(["js/ast", "wasm/traverse", "wasm/typeinfo", "wasm/opinfo", "astutil"], f
       var wrapper;
 
       if (extern.name.text in system_externs) {
-	wrapper = jast.GetAttr({
-	  expr: jast.GetName({
-	    name: "system",
-	  }),
-	  attr: extern.name.text,
-	});
+        wrapper = jast.GetAttr({
+          expr: jast.GetName({
+            name: "system",
+          }),
+          attr: extern.name.text,
+        });
       } else {
-	wrapper = jast.FunctionExpr({
-	  params: [],
-	  body: [
-	    jast.Return({
-	      expr: jast.Call({
-		expr: jast.GetAttr({
-		  expr: jast.GetAttr({
-		    expr: jast.GetName({
-		      name: "foreign",
-		    }),
-		    attr: extern.name.text,
-		  }),
-		  attr: "apply",
-		}),
-		args: [
-		  jast.GetName({name: "instance"}),
-		  jast.GetName({name: "arguments"}),
-		],
-	      }),
-	    }),
-	  ],
-	});
+        wrapper = jast.FunctionExpr({
+          params: [],
+          body: [
+            jast.Return({
+              expr: jast.Call({
+                expr: jast.GetAttr({
+                  expr: jast.GetAttr({
+                    expr: jast.GetName({
+                      name: "foreign",
+                    }),
+                    attr: extern.name.text,
+                  }),
+                  attr: "apply",
+                }),
+                args: [
+                  jast.GetName({name: "instance"}),
+                  jast.GetName({name: "arguments"}),
+                ],
+              }),
+            }),
+          ],
+        });
       }
 
       wrapped_foreign.push(jast.KeyValue({
-	key: extern.name.text,
-	value: wrapper,
+        key: extern.name.text,
+        value: wrapper,
       }));
     }
     body.push(jast.VarDecl({
       name: "wrap_foreign",
       expr: jast.FunctionExpr({
-	params: ["system", "foreign"],
-	body: [
-	  jast.Return({
-	    expr: jast.CreateObject({
-	      args: wrapped_foreign,
-	    }),
-	  }),
-	],
+        params: ["system", "foreign"],
+        body: [
+          jast.Return({
+            expr: jast.CreateObject({
+              args: wrapped_foreign,
+            }),
+          }),
+        ],
       }),
     }));
 
@@ -659,12 +659,12 @@ define(["js/ast", "wasm/traverse", "wasm/typeinfo", "wasm/opinfo", "astutil"], f
     body.push(jast.VarDecl({
       name: "buffer",
       expr: jast.New({
-	expr: jast.GetName({
-	  name: this.arrayViewName("ArrayBuffer"),
-	}),
-	args: [
-	  jast.ConstNum({value: module.config.memory.fixed}),
-	],
+        expr: jast.GetName({
+          name: this.arrayViewName("ArrayBuffer"),
+        }),
+        args: [
+          jast.ConstNum({value: module.config.memory.fixed}),
+        ],
       }),
     }));
 
@@ -672,12 +672,12 @@ define(["js/ast", "wasm/traverse", "wasm/typeinfo", "wasm/opinfo", "astutil"], f
     body.push(jast.VarDecl({
       name: "U8",
       expr: jast.New({
-	expr: jast.GetName({
-	  name: this.arrayViewName("Uint8Array"),
-	}),
-	args: [
-	  jast.GetName({name: "buffer"}),
-	],
+        expr: jast.GetName({
+          name: this.arrayViewName("Uint8Array"),
+        }),
+        args: [
+          jast.GetName({name: "buffer"}),
+        ],
       }),
     }));
 
@@ -686,34 +686,34 @@ define(["js/ast", "wasm/traverse", "wasm/typeinfo", "wasm/opinfo", "astutil"], f
       var memory = module.memory[i];
       var u8 = new Uint8Array(memory.buffer);
       for(var o = 0; o < u8.byteLength; o++) {
-	if (u8[o] == 0) continue;
+        if (u8[o] == 0) continue;
 
-	body.push(jast.Assign({
-	  target: jast.GetIndex({
-	    expr: jast.GetName({
-	      name: "U8",
-	    }),
-	    index: jast.ConstNum({value: memory.ptr + o}),
-	  }),
-	  value: jast.ConstNum({value: u8[o]}),
-	}));
+        body.push(jast.Assign({
+          target: jast.GetIndex({
+            expr: jast.GetName({
+              name: "U8",
+            }),
+            index: jast.ConstNum({value: memory.ptr + o}),
+          }),
+          value: jast.ConstNum({value: u8[o]}),
+        }));
       }
     }
 
     body.push(jast.Return({
       expr: jast.GetName({
-	name: "buffer",
+        name: "buffer",
       }),
     }));
 
 
     return [
       jast.VarDecl({
-	name: "createMemory",
-	expr: jast.FunctionExpr({
-	  params: [],
-	  body: body,
-	}),
+        name: "createMemory",
+        expr: jast.FunctionExpr({
+          params: [],
+          body: body,
+        }),
       }),
     ];
   };
@@ -728,7 +728,7 @@ define(["js/ast", "wasm/traverse", "wasm/typeinfo", "wasm/opinfo", "astutil"], f
       funcPtr += 1;
 
       funcTable.push(jast.GetName({
-	name: this.externName(extern),
+        name: this.externName(extern),
       }));
     }
 
@@ -738,7 +738,7 @@ define(["js/ast", "wasm/traverse", "wasm/typeinfo", "wasm/opinfo", "astutil"], f
       funcPtr += 1;
 
       funcTable.push(jast.GetName({
-	name: this.funcName(func),
+        name: this.funcName(func),
       }));
     }
 
@@ -753,18 +753,18 @@ define(["js/ast", "wasm/traverse", "wasm/typeinfo", "wasm/opinfo", "astutil"], f
     for (var i = 0; i < views.length; i++) {
       var view = views[i];
       body.push(jast.VarDecl({
-	name: view.array_name,
-	expr: jast.New({
-	  expr: jast.GetAttr({
-	    expr: jast.GetName({
-	      name: "stdlib",
-	    }),
-	    attr: this.arrayViewName(view.array_type),
-	  }),
-	  args: [
-	    jast.GetName({name: "buffer"}),
-	  ],
-	}),
+        name: view.array_name,
+        expr: jast.New({
+          expr: jast.GetAttr({
+            expr: jast.GetName({
+              name: "stdlib",
+            }),
+            attr: this.arrayViewName(view.array_type),
+          }),
+          args: [
+            jast.GetName({name: "buffer"}),
+          ],
+        }),
       }));
     }
 
@@ -773,16 +773,16 @@ define(["js/ast", "wasm/traverse", "wasm/typeinfo", "wasm/opinfo", "astutil"], f
     for (var i = 0; i < mathImports.length; i++) {
       var name = mathImports[i];
       body.push(jast.VarDecl({
-	name: name,
-	expr: jast.GetAttr({
-	  expr: jast.GetAttr({
-	    expr: jast.GetName({
-	      name: "stdlib",
-	    }),
-	    attr: "Math",
-	  }),
-	  attr: name,
-	}),
+        name: name,
+        expr: jast.GetAttr({
+          expr: jast.GetAttr({
+            expr: jast.GetName({
+              name: "stdlib",
+            }),
+            attr: "Math",
+          }),
+          attr: name,
+        }),
       }));
     }
 
@@ -790,13 +790,13 @@ define(["js/ast", "wasm/traverse", "wasm/typeinfo", "wasm/opinfo", "astutil"], f
     for (var i = 0; i < module.externs.length; i++) {
       var extern = module.externs[i];
       body.push(jast.VarDecl({
-	name: this.externName(extern),
-	expr: jast.GetAttr({
-	  expr: jast.GetName({
-	    name: "foreign",
-	  }),
-	  attr: extern.name.text,
-	}),
+        name: this.externName(extern),
+        expr: jast.GetAttr({
+          expr: jast.GetName({
+            name: "foreign",
+          }),
+          attr: extern.name.text,
+        }),
       }));
     }
 
@@ -804,8 +804,8 @@ define(["js/ast", "wasm/traverse", "wasm/typeinfo", "wasm/opinfo", "astutil"], f
     for (var i = 0; i < module.tls.length; i++) {
       var v = module.tls[i];
       body.push(jast.VarDecl({
-	name: this.tlsName(v),
-	expr: jast.ConstNum({value: 0}), // TODO type coercion.
+        name: this.tlsName(v),
+        expr: jast.ConstNum({value: 0}), // TODO type coercion.
       }));
     }
 
@@ -815,12 +815,12 @@ define(["js/ast", "wasm/traverse", "wasm/typeinfo", "wasm/opinfo", "astutil"], f
       var func = module.funcs[i];
       body.push(this.processFunc(func));
       if (func.exportFunc) {
-	exports.push(jast.KeyValue({
-	  key: func.name.text,
-	  value: jast.GetName({
-	    name: this.funcName(func),
-	  }),
-	}));
+        exports.push(jast.KeyValue({
+          key: func.name.text,
+          value: jast.GetName({
+            name: this.funcName(func),
+          }),
+        }));
       }
     }
 
@@ -828,13 +828,13 @@ define(["js/ast", "wasm/traverse", "wasm/typeinfo", "wasm/opinfo", "astutil"], f
     body.push(jast.VarDecl({
       name: "ftable",
       expr: jast.CreateArray({
-	args: this.funcTable,
+        args: this.funcTable,
       }),
     }));
 
     body.push(jast.Return({
       expr: jast.CreateObject({
-	args: exports,
+        args: exports,
       }),
     }));
 

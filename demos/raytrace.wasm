@@ -169,7 +169,7 @@ func renderFrame() i32 {
 
         var diffuse f32 = vecNLDot(intersection + 12, light);
         var specular f32 = vecNLDot(intersection + 12, half);
-	// Take it to the 64th power, manually.
+        // Take it to the 64th power, manually.
         specular = specular * specular;
         specular = specular * specular;
         specular = specular * specular;
@@ -180,8 +180,8 @@ func renderFrame() i32 {
         specular = specular * 0.6f;
 
         r = r + dr * diffuse + specular;
-	g = g + dg * diffuse + specular;
-	b = b + db * diffuse + specular;
+        g = g + dg * diffuse + specular;
+        b = b + db * diffuse + specular;
       } else {
         sampleEnv(dir, color);
         r = loadF32(color);

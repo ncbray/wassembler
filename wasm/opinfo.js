@@ -46,12 +46,12 @@ define(["astutil"], function(astutil) {
     {
       name: "binary",
       fields: [
-	{name: "optype"},
-	{name: "op"},
-	{name: "right"},
-	{name: "result"},
-	{name: "text", defaultValue: null},
-	{name: "intrinsicName", defaultValue: null},
+        {name: "optype"},
+        {name: "op"},
+        {name: "right"},
+        {name: "result"},
+        {name: "text", defaultValue: null},
+        {name: "intrinsicName", defaultValue: null},
       ],
     },
   ]).binary;
@@ -65,8 +65,8 @@ define(["astutil"], function(astutil) {
     for (var i = 0; i < table.length; i++) {
       var decl = table[i];
       for (var j = 0; j < types.length; j++) {
-	var t = types[j];
-	classify(decl, t, t, t);
+        var t = types[j];
+        classify(decl, t, t, t);
       }
     }
   };
@@ -75,8 +75,8 @@ define(["astutil"], function(astutil) {
     for (var i = 0; i < table.length; i++) {
       var decl = table[i];
       for (var j = 0; j < types.length; j++) {
-	var t = types[j];
-	classify(decl, t, t, result);
+        var t = types[j];
+        classify(decl, t, t, result);
       }
     }
   };
@@ -184,11 +184,11 @@ define(["astutil"], function(astutil) {
     {
       name: "unary",
       fields: [
-	{name: "optype"},
-	{name: "op"},
-	{name: "result"},
-	{name: "prefix", defaultValue: null},
-	{name: "intrinsicName", defaultValue: null},
+        {name: "optype"},
+        {name: "op"},
+        {name: "result"},
+        {name: "prefix", defaultValue: null},
+        {name: "intrinsicName", defaultValue: null},
       ],
     },
   ]).unary;

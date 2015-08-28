@@ -161,8 +161,8 @@ define([], function() {
     for (var i = 0; i < s.length; i++) {
       var c = s.charCodeAt(i);
       if (c > 127) {
-	// HACK real no unicode support, yet.
-	throw c;
+        // HACK real no unicode support, yet.
+        throw c;
       }
       this.u8(c);
       size += 1;

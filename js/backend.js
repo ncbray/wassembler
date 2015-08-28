@@ -83,10 +83,10 @@ define(["compilerutil"], function(compilerutil) {
       this.generateExpr(expr.expr, prec);
       this.writer.out("(");
       for (var i = 0; i < expr.args.length; i++) {
-	if (i != 0) {
-	  this.writer.out(", ");
-	}
-	this.generateExpr(expr.args[i], 0);
+        if (i != 0) {
+          this.writer.out(", ");
+        }
+        this.generateExpr(expr.args[i], 0);
       }
       this.writer.out(")");
       break;
@@ -95,10 +95,10 @@ define(["compilerutil"], function(compilerutil) {
       this.generateExpr(expr.expr, prec);
       this.writer.out("(");
       for (var i = 0; i < expr.args.length; i++) {
-	if (i != 0) {
-	  this.writer.out(", ");
-	}
-	this.generateExpr(expr.args[i], 0);
+        if (i != 0) {
+          this.writer.out(", ");
+        }
+        this.generateExpr(expr.args[i], 0);
       }
       this.writer.out(")");
       break;
@@ -117,10 +117,10 @@ define(["compilerutil"], function(compilerutil) {
     case "FunctionExpr":
       this.writer.out("function(");
       for (var i = 0; i < expr.params.length; i++) {
-	if (i != 0) {
-	  this.writer.out(", ");
-	}
-	this.writer.out(expr.params[i]);
+        if (i != 0) {
+          this.writer.out(", ");
+        }
+        this.writer.out(expr.params[i]);
       }
       this.writer.out(") {").eol().indent();
       this.generateBlock(expr.body);
@@ -129,11 +129,11 @@ define(["compilerutil"], function(compilerutil) {
     case "CreateArray":
       this.writer.out("[").eol().indent();
       for (var i = 0; i < expr.args.length; i++) {
-	if (i != 0) {
-	  this.writer.out(",").eol();
-	}
-	var arg = expr.args[i];
-	this.generateExpr(arg, 0);
+        if (i != 0) {
+          this.writer.out(",").eol();
+        }
+        var arg = expr.args[i];
+        this.generateExpr(arg, 0);
       }
       this.writer.eol();
       this.writer.dedent().out("]");
@@ -141,12 +141,12 @@ define(["compilerutil"], function(compilerutil) {
     case "CreateObject":
       this.writer.out("{").eol().indent();
       for (var i = 0; i < expr.args.length; i++) {
-	if (i != 0) {
-	  this.writer.out(",").eol();
-	}
-	var arg = expr.args[i];
-	this.writer.out(arg.key).out(": ");
-	this.generateExpr(arg.value, 0);
+        if (i != 0) {
+          this.writer.out(",").eol();
+        }
+        var arg = expr.args[i];
+        this.writer.out(arg.key).out(": ");
+        this.generateExpr(arg.value, 0);
       }
       this.writer.eol();
       this.writer.dedent().out("}");
@@ -166,16 +166,16 @@ define(["compilerutil"], function(compilerutil) {
     case "VarDecl":
       this.writer.out("var ").out(stmt.name);
       if (stmt.expr) {
-	this.writer.out(" = ");
-	this.generateExpr(stmt.expr, 0);
+        this.writer.out(" = ");
+        this.generateExpr(stmt.expr, 0);
       }
       this.writer.out(";").eol();
       break;
     case "Return":
       this.writer.out("return");
       if (stmt.expr) {
-	this.writer.out(" ");
-	this.generateExpr(stmt.expr, 0);
+        this.writer.out(" ");
+        this.generateExpr(stmt.expr, 0);
       }
       this.writer.out(";").eol();
       break;
@@ -195,10 +195,10 @@ define(["compilerutil"], function(compilerutil) {
       this.generateBlock(stmt.t);
       this.writer.dedent();
       if (stmt.f) {
-	this.writer.out("} else {").eol();
-	this.writer.indent();
-	this.generateBlock(stmt.f);
-	this.writer.dedent();
+        this.writer.out("} else {").eol();
+        this.writer.indent();
+        this.generateBlock(stmt.f);
+        this.writer.dedent();
       }
       this.writer.out("}").eol();
       break;
@@ -214,10 +214,10 @@ define(["compilerutil"], function(compilerutil) {
     case "InjectSource":
       var lines = stmt.source.split("\n");
       while (lines.length && lines[lines.length - 1] == "") {
-	lines.pop();
+        lines.pop();
       }
       for (var i = 0; i < lines.length; i++) {
-	if (lines[i]) {
+        if (lines[i]) {
           this.writer.out(lines[i]);
         }
         this.writer.eol();
@@ -231,7 +231,7 @@ define(["compilerutil"], function(compilerutil) {
 
   JSGenerator.prototype.generateBlock = function(block) {
       for (var i = 0; i < block.length; i++) {
-	this.generateStmt(block[i]);
+        this.generateStmt(block[i]);
       }
   };
 

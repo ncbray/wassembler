@@ -6,12 +6,12 @@ define(["astutil"], function(astutil) {
     {
       name: "compiletest",
       fields: [
-	{name: "name"},
-	{name: "source"},
-	{name: "verify"},
-	{name: "js", defaultValue: true},
-	{name: "v8_encode", defaultValue: true},
-	{name: "v8_run", defaultValue: true},
+        {name: "name"},
+        {name: "source"},
+        {name: "verify"},
+        {name: "js", defaultValue: true},
+        {name: "v8_encode", defaultValue: true},
+        {name: "v8_run", defaultValue: true},
       ],
     },
   ]).compiletest;

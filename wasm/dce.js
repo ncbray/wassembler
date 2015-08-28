@@ -67,7 +67,7 @@ define(["wasm/traverse"], function(traverse) {
     for (var i = 0; i < module.funcs.length; i++) {
       if (this.liveFunc[i]) {
         var func = module.funcs[i];
-	func.index = culledFuncs.length;
+        func.index = culledFuncs.length;
         culledFuncs.push(func);
       }
     }
@@ -78,7 +78,7 @@ define(["wasm/traverse"], function(traverse) {
     for (var i = 0; i < module.externs.length; i++) {
       if (this.liveExtern[i]) {
         var func = module.externs[i];
-	func.index = culledExterns.length;
+        func.index = culledExterns.length;
         culledExterns.push(func);
       }
     }

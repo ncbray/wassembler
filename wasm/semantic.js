@@ -9,14 +9,14 @@ define(["compilerutil", "wasm/ast", "wasm/typeinfo", "wasm/opinfo"], function(co
   var setConfigDefaults = function(config, defaults) {
     for (var name in defaults) {
       if (typeof defaults[name] === "object") {
-	if (!(name in config)) {
+        if (!(name in config)) {
           config[name] = {};
-	}
-	setConfigDefaults(config[name], defaults[name]);
+        }
+        setConfigDefaults(config[name], defaults[name]);
       } else {
-	if (!(name in config)) {
+        if (!(name in config)) {
           config[name] = defaults[name];
-	}
+        }
       }
     }
   };
@@ -33,7 +33,7 @@ define(["compilerutil", "wasm/ast", "wasm/typeinfo", "wasm/opinfo"], function(co
       return node.name.pos;
     default:
       if (node.pos) {
-	return node.pos;
+        return node.pos;
       }
       throw Error(node.type);
     }
@@ -65,11 +65,11 @@ define(["compilerutil", "wasm/ast", "wasm/typeinfo", "wasm/opinfo"], function(co
       this.error("argument count mismatch - got " + expr.args.length + ", but expected " + ft.paramTypes.length, getPos(expr));
     } else {
       for (var i = 0; i < expr.args.length; i++) {
-	var arg = expr.args[i];
-	var expected = ft.paramTypes[i];
-	if (arg.etype != expected) {
-	  this.error("arg " + i + " - got " + arg.etype + ", but expected " + expected, getPos(arg));
-	}
+        var arg = expr.args[i];
+        var expected = ft.paramTypes[i];
+        if (arg.etype != expected) {
+          this.error("arg " + i + " - got " + arg.etype + ", but expected " + expected, getPos(arg));
+        }
       }
     }
   };
@@ -93,41 +93,41 @@ define(["compilerutil", "wasm/ast", "wasm/typeinfo", "wasm/opinfo"], function(co
       var name = expr.name.text;
       var ref = this.localScope[name];
       if (ref !== undefined) {
-	var expr = wast.GetLocal({local: ref, pos: getPos(expr)});
-	this.setExprType(expr, ref.ltype);
-	break;
+        var expr = wast.GetLocal({local: ref, pos: getPos(expr)});
+        this.setExprType(expr, ref.ltype);
+        break;
       }
 
       var ref = this.moduleScope[name];
       if (ref !== undefined) {
-	switch(ref.type) {
-	case "Function":
-	  expr = wast.GetFunction({func: ref, pos: getPos(expr)});
-	  this.setExprType(expr, "i32");
-	  break;
+        switch(ref.type) {
+        case "Function":
+          expr = wast.GetFunction({func: ref, pos: getPos(expr)});
+          this.setExprType(expr, "i32");
+          break;
         case "Extern":
-	  expr = wast.GetExtern({func: ref, pos: getPos(expr)});
-	  this.setExprType(expr, "i32");
-	  break;
-	case "Intrinsic":
-	  expr = wast.GetIntrinsic({func: ref, pos: getPos(expr)});
-	  this.setExprType(expr, "i32");
-	  break;
+          expr = wast.GetExtern({func: ref, pos: getPos(expr)});
+          this.setExprType(expr, "i32");
+          break;
+        case "Intrinsic":
+          expr = wast.GetIntrinsic({func: ref, pos: getPos(expr)});
+          this.setExprType(expr, "i32");
+          break;
         case "TlsDecl":
-	  expr = wast.GetTls({tls: ref, pos: getPos(expr)});
-	  this.setExprType(expr, ref.mtype);
-	  break;
+          expr = wast.GetTls({tls: ref, pos: getPos(expr)});
+          this.setExprType(expr, ref.mtype);
+          break;
         case "MemoryLabel":
-	  expr = wast.ConstI32({
-	    value: ref.ptr,
-	    pos: getPos(expr),
-	  });
-	  this.setExprType(expr, "i32");
-	  break;
-	default:
-	  throw Error(ref.type);
-	}
-	break;
+          expr = wast.ConstI32({
+            value: ref.ptr,
+            pos: getPos(expr),
+          });
+          this.setExprType(expr, "i32");
+          break;
+        default:
+          throw Error(ref.type);
+        }
+        break;
       }
       this.error("cannot resolve name - " + name, expr.name.pos);
       break;
@@ -135,28 +135,28 @@ define(["compilerutil", "wasm/ast", "wasm/typeinfo", "wasm/opinfo"], function(co
       var name = expr.name.text;
       var ref = this.localScope[name];
       if (ref !== undefined) {
-	expr = wast.SetLocal({
-	  local: ref,
-	  value: this.processExpr(expr.value),
-	  pos: getPos(expr),
-	});
-	this.setExprType(expr, "void");
-	break;
+        expr = wast.SetLocal({
+          local: ref,
+          value: this.processExpr(expr.value),
+          pos: getPos(expr),
+        });
+        this.setExprType(expr, "void");
+        break;
       }
       var ref = this.moduleScope[name];
       if (ref !== undefined) {
-	switch(ref.type) {
-	case "TlsDecl":
-	  expr = wast.SetTls({
-	    tls: ref,
-	    value: this.processExpr(expr.value),
-	    pos: getPos(expr),
-	  });
-	  this.setExprType(expr, "void");
-	  break;
-	default:
-	  this.error("cannot assign to name - " + name, expr.name.pos);
-	}
+        switch(ref.type) {
+        case "TlsDecl":
+          expr = wast.SetTls({
+            tls: ref,
+            value: this.processExpr(expr.value),
+            pos: getPos(expr),
+          });
+          this.setExprType(expr, "void");
+          break;
+        default:
+          this.error("cannot assign to name - " + name, expr.name.pos);
+        }
         break;
       }
       this.error("assigning to unknown name - " + name, expr.name.pos);
@@ -182,23 +182,23 @@ define(["compilerutil", "wasm/ast", "wasm/typeinfo", "wasm/opinfo"], function(co
       var opText = expr.op;
       var types = opinfo.classifyPrefixOp[opText];
       if (types === undefined) {
-	this.error("unknown prefix operator " + opText, expr.pos);
+        this.error("unknown prefix operator " + opText, expr.pos);
       }
       if (this.dead) {
-	break;
+        break;
       }
       var t = expr.expr.etype;
       var decl = types[t];
       if (decl === undefined) {
-	this.error("prefix operator " + opText + " does not support type " + t, expr.pos);
+        this.error("prefix operator " + opText + " does not support type " + t, expr.pos);
       }
       if (this.dead) {
-	break;
+        break;
       }
       expr = wast.UnaryOp({
-	optype: t,
-	op: decl.op,
-	expr: expr.expr,
+        optype: t,
+        op: decl.op,
+        expr: expr.expr,
       })
       this.setExprType(expr, decl.result);
       break;
@@ -208,30 +208,30 @@ define(["compilerutil", "wasm/ast", "wasm/typeinfo", "wasm/opinfo"], function(co
       var opText = expr.op.text;
       var types = opinfo.classifyBinaryOp[opText];
       if (types === undefined) {
-	this.error("unknown binary operator " + opText, expr.op.pos);
+        this.error("unknown binary operator " + opText, expr.op.pos);
       }
       if (this.dead) {
-	break;
+        break;
       }
       var t = expr.left.etype;
       var decl = types[t];
       if (decl === undefined) {
-	this.error("binary operator " + opText + " does not support type " + t, expr.op.pos);
+        this.error("binary operator " + opText + " does not support type " + t, expr.op.pos);
       }
       if (this.dead) {
-	break;
+        break;
       }
       if (t != expr.right.etype) {
-	this.error("binary op type error " + t + opText + expr.right.etype + " = ???", expr.op.pos);
+        this.error("binary op type error " + t + opText + expr.right.etype + " = ???", expr.op.pos);
       }
       if (this.dead) {
-	break;
+        break;
       }
       expr = wast.BinaryOp({
-	optype: t,
-	op: decl.op,
-	left: expr.left,
-	right: expr.right,
+        optype: t,
+        op: decl.op,
+        left: expr.left,
+        right: expr.right,
       })
       this.setExprType(expr, decl.result);
       break;
@@ -239,71 +239,71 @@ define(["compilerutil", "wasm/ast", "wasm/typeinfo", "wasm/opinfo"], function(co
       // Process children
       expr.expr = this.processExpr(expr.expr);
       for (var i = 0; i < expr.args.length; i++) {
-	expr.args[i] = this.processExpr(expr.args[i]);
+        expr.args[i] = this.processExpr(expr.args[i]);
       }
 
       var args = expr.args;
       var ft = null;
 
       if (!this.dead) {
-	switch (expr.expr.type) {
-	case "GetFunction":
-	  var func = expr.expr.func;
-	  ft = func.funcType;
-	  this.checkCall(expr, ft);
-	  if (!this.dead) {
-	    expr = wast.CallDirect({
-	      func: func,
-	      args: expr.args,
-	      pos: getPos(expr),
-	    });
-	    this.setExprType(expr, ft.returnType);
-	  }
-	  break;
-	case "GetExtern":
-	  var func = expr.expr.func;
-	  ft = func.ftype;
-	  this.checkCall(expr, ft);
-	  if (!this.dead) {
-	    expr = wast.CallExternal({
-	      func: func,
-	      args: expr.args,
-	      pos: getPos(expr),
-	    });
-	    this.setExprType(expr, ft.returnType);
-	  }
-	  break;
-	case "GetIntrinsic":
-	  var func = expr.expr.func;
-	  ft = func.funcType;
-	  this.checkCall(expr, ft);
-	  if (!this.dead) {
-	    var op = func.op;
-	    switch (op.type) {
-	    case "unary":
-	      expr = wast.UnaryOp({
-		optype: op.optype,
-		op: op.op,
-		expr: expr.args[0],
-	      });
-	      break;
-	    case "binary":
-	      expr = wast.BinaryOp({
-		optype: op.optype,
-		op: op.op,
-		left: expr.args[0],
-		right: expr.args[1],
-	      });
-	      break;
-	    default:
-	      throw Error(op.type);
-	    }
-	    this.setExprType(expr, ft.returnType);
-	  }
-	  break;
-	default:
-	  throw Error(expr.expr.type);
-	}
+        switch (expr.expr.type) {
+        case "GetFunction":
+          var func = expr.expr.func;
+          ft = func.funcType;
+          this.checkCall(expr, ft);
+          if (!this.dead) {
+            expr = wast.CallDirect({
+              func: func,
+              args: expr.args,
+              pos: getPos(expr),
+            });
+            this.setExprType(expr, ft.returnType);
+          }
+          break;
+        case "GetExtern":
+          var func = expr.expr.func;
+          ft = func.ftype;
+          this.checkCall(expr, ft);
+          if (!this.dead) {
+            expr = wast.CallExternal({
+              func: func,
+              args: expr.args,
+              pos: getPos(expr),
+            });
+            this.setExprType(expr, ft.returnType);
+          }
+          break;
+        case "GetIntrinsic":
+          var func = expr.expr.func;
+          ft = func.funcType;
+          this.checkCall(expr, ft);
+          if (!this.dead) {
+            var op = func.op;
+            switch (op.type) {
+            case "unary":
+              expr = wast.UnaryOp({
+                optype: op.optype,
+                op: op.op,
+                expr: expr.args[0],
+              });
+              break;
+            case "binary":
+              expr = wast.BinaryOp({
+                optype: op.optype,
+                op: op.op,
+                left: expr.args[0],
+                right: expr.args[1],
+              });
+              break;
+            default:
+              throw Error(op.type);
+            }
+            this.setExprType(expr, ft.returnType);
+          }
+          break;
+        default:
+          throw Error(expr.expr.type);
+        }
       }
       break;
 
@@ -311,10 +311,10 @@ define(["compilerutil", "wasm/ast", "wasm/typeinfo", "wasm/opinfo"], function(co
       expr.ftype = this.processFunctionType(expr.ftype);
       expr.expr = this.processExpr(expr.expr);
       if (!this.dead && expr.expr.etype != "i32") {
-	this.error("type mismatch - " + expr.expr.etype + ", expected i32", getPos(expr.expr));
+        this.error("type mismatch - " + expr.expr.etype + ", expected i32", getPos(expr.expr));
       }
       for (var i = 0; i < expr.args.length; i++) {
-	expr.args[i] = this.processExpr(expr.args[i]);
+        expr.args[i] = this.processExpr(expr.args[i]);
       }
       this.setExprType(expr, expr.ftype.returnType);
       this.checkCall(expr, expr.ftype);
@@ -323,30 +323,30 @@ define(["compilerutil", "wasm/ast", "wasm/typeinfo", "wasm/opinfo"], function(co
     case "Return":
       var actual = "void";
       if (expr.expr) {
-	expr.expr = this.processExpr(expr.expr);
-	actual = expr.expr.etype;
+        expr.expr = this.processExpr(expr.expr);
+        actual = expr.expr.etype;
       }
       if (!this.dead && actual != this.func.returnType) {
-	this.error("return type mismatch - " + actual + " vs. " + this.func.returnType, getPos(expr));
+        this.error("return type mismatch - " + actual + " vs. " + this.func.returnType, getPos(expr));
       }
       this.setExprType(expr, "void");
       break;
     case "If":
       expr.cond = this.processExpr(expr.cond);
       if (!this.dead && expr.cond.etype != "i32") {
-	this.error("condition type mismatch - " + expr.cond.etype + ", expected i32", getPos(expr));
+        this.error("condition type mismatch - " + expr.cond.etype + ", expected i32", getPos(expr));
       }
 
       expr.t = this.processBlock(expr.t);
       if (expr.f != null) {
-	expr.f = this.processBlock(expr.f);
+        expr.f = this.processBlock(expr.f);
       }
       this.setExprType(expr, "void");
       break;
     case "While":
       expr.cond = this.processExpr(expr.cond);
       if (!this.dead && expr.cond.etype != "i32") {
-	this.error("condition type mismatch - " + expr.cond.etype + ", expected i32", getPos(expr));
+        this.error("condition type mismatch - " + expr.cond.etype + ", expected i32", getPos(expr));
       }
       expr.body = this.processBlock(expr.body);
       this.setExprType(expr, "void");
@@ -375,9 +375,9 @@ define(["compilerutil", "wasm/ast", "wasm/typeinfo", "wasm/opinfo"], function(co
       case "f32":
       case "f64":
       case "void":
-	break;
+        break;
       default:
-	this.error("unknown type name - " + type.text, type.pos);
+        this.error("unknown type name - " + type.text, type.pos);
       }
       return t;
     default:
@@ -417,20 +417,20 @@ define(["compilerutil", "wasm/ast", "wasm/typeinfo", "wasm/opinfo"], function(co
       var t = this.processType(node.vtype);
       var lcl = this.createLocal(node.name.text, t);
       if (node.value) {
-	var pos = getPos(node);
-	var value = this.processExpr(node.value);
-	if (!this.dead) {
-	  if (t != value.etype) {
+        var pos = getPos(node);
+        var value = this.processExpr(node.value);
+        if (!this.dead) {
+          if (t != value.etype) {
             this.error("expected " + t + ", got " + value.etype, pos);
-	  }
-	  node = wast.SetLocal({
-	    local: lcl,
-	    value: value,
-	    pos: pos,
-	  });
-	}
-	this.setExprType(node, "void");
-	block.push(node);
+          }
+          node = wast.SetLocal({
+            local: lcl,
+            value: value,
+            pos: pos,
+          });
+        }
+        this.setExprType(node, "void");
+        block.push(node);
       }
       break;
     case "BreakToLabel":
@@ -441,23 +441,23 @@ define(["compilerutil", "wasm/ast", "wasm/typeinfo", "wasm/opinfo"], function(co
         // errors.
         this.dead = true;
       } else {
-	if (labelInfo) {
-	  if (labelInfo.live) {
+        if (labelInfo) {
+          if (labelInfo.live) {
             var diff = this.depth - labelInfo.depth;
             // Break 0 breaks out of the current block. This difference in depth
             // between a break statement and the enclosing block will be 1, so
             // subtract 1 from the depth difference to get the correct encoding.
             node = wast.Break({depth: diff - 1});
-	  } else {
+          } else {
             // "live" is true only while processing the subtree contained by the
             // label.  If live is false, this means the break statement is
             // trying to transfer control to a label that is not a ancestor of
             // the break statement, and this is illegal.
             this.error("label " + name + " does not contain break statement", node.name.pos);
-	  }
-	} else {
+          }
+        } else {
           this.error("unknown label " + name, node.name.pos);
-	}
+        }
       }
       block.push(node);
       break;
@@ -466,14 +466,14 @@ define(["compilerutil", "wasm/ast", "wasm/typeinfo", "wasm/opinfo"], function(co
       var labelInfo = this.labelScope[name];
       if (labelInfo) {
         this.error("attempted to redeclare " + name, node.name.pos);
-	labelInfo.poisoned = true;
+        labelInfo.poisoned = true;
       } else {
-	labelInfo = {name: name, depth: this.depth, live: true, poisoned: false, loop: isLoop(node.stmt)};
-	this.labelScope[name] = labelInfo;
+        labelInfo = {name: name, depth: this.depth, live: true, poisoned: false, loop: isLoop(node.stmt)};
+        this.labelScope[name] = labelInfo;
       }
       this.processStmt(node.stmt, block);
       if (labelInfo) {
-	labelInfo.live = false;
+        labelInfo.live = false;
       }
       break;
     default:
@@ -556,26 +556,26 @@ define(["compilerutil", "wasm/ast", "wasm/typeinfo", "wasm/opinfo"], function(co
       m.ptr = base + writer.pos;
       switch(m.type) {
       case "MemoryAlign":
-	var offset = this.ptr % m.size;
-	if (offset != 0) {
-	  var padding = m.size - offset;
-	  writer.zeros(padding);
-	}
-	break;
+        var offset = this.ptr % m.size;
+        if (offset != 0) {
+          var padding = m.size - offset;
+          writer.zeros(padding);
+        }
+        break;
       case "MemoryLabel":
-	this.registerInModule(m.name, m);
-	break;
+        this.registerInModule(m.name, m);
+        break;
       case "MemoryZero":
-	writer.zeros(m.size);
-	break;
+        writer.zeros(m.size);
+        break;
       case "MemoryHex":
-	writer.expect(m.data.length);
-	for (var i = 0; i < m.data.length; i++) {
-	  writer.u8(m.data[i]);
-	}
-	break;
+        writer.expect(m.data.length);
+        for (var i = 0; i < m.data.length; i++) {
+          writer.u8(m.data[i]);
+        }
+        break;
       default:
-	throw Error(m.type);
+        throw Error(m.type);
       }
     }
     this.ptr = base + writer.pos;
@@ -586,24 +586,24 @@ define(["compilerutil", "wasm/ast", "wasm/typeinfo", "wasm/opinfo"], function(co
     for (var name in opinfo.classifyUnaryIntrinsic) {
       var op = opinfo.classifyUnaryIntrinsic[name];
       var decl = {
-	type: "Intrinsic",
-	op: op,
-	funcType: wast.FuncType({
-	  paramTypes: [op.optype],
-	  returnType: op.result,
-	}),
+        type: "Intrinsic",
+        op: op,
+        funcType: wast.FuncType({
+          paramTypes: [op.optype],
+          returnType: op.result,
+        }),
       };
       this.registerInModule({text: op.intrinsicName, pos: null}, decl);
     }
     for (var name in opinfo.classifyBinaryIntrinsic) {
       var op = opinfo.classifyBinaryIntrinsic[name];
       var decl = {
-	type: "Intrinsic",
-	op: op,
-	funcType: wast.FuncType({
-	  paramTypes: [op.optype, op.right],
-	  returnType: op.result,
-	}),
+        type: "Intrinsic",
+        op: op,
+        funcType: wast.FuncType({
+          paramTypes: [op.optype, op.right],
+          returnType: op.result,
+        }),
       };
       this.registerInModule({text: op.intrinsicName, pos: null}, decl);
     }
@@ -632,8 +632,8 @@ define(["compilerutil", "wasm/ast", "wasm/typeinfo", "wasm/opinfo"], function(co
     // Create label for the end of pre-reserved memory.
     var m = wast.MemoryLabel({
       name: wast.Identifier({
-	text: "_end",
-	pos: null,
+        text: "_end",
+        pos: null,
       })
     });
     m.ptr = this.ptr;
@@ -674,34 +674,34 @@ define(["compilerutil", "wasm/ast", "wasm/typeinfo", "wasm/opinfo"], function(co
       var decl = module.decls[i];
       switch (decl.type) {
       case "Function":
-	funcs.push(decl);
-	break;
+        funcs.push(decl);
+        break;
       case "Extern":
-	externs.push(decl);
-	break;
+        externs.push(decl);
+        break;
       case "MemoryDecl":
-	memory.push(decl);
-	break;
+        memory.push(decl);
+        break;
       case "ConfigDecl":
-	for (var i = 0; i < decl.items.length; i++) {
-	  var item = decl.items[i];
+        for (var i = 0; i < decl.items.length; i++) {
+          var item = decl.items[i];
           var current = config;
           for (var p = 0; p < item.path.length - 1; p++) {
-	    var name = item.path[p];
+            var name = item.path[p];
             if (!(name in current)) {
               current[name] = {};
             }
-	    current = current[name];
-	  }
+            current = current[name];
+          }
           current[item.path[item.path.length - 1]] = this.evalConstExpr(item.value);
-	}
-	break;
+        }
+        break;
       case "TlsDecl":
-	tls.push(decl);
-	break;
+        tls.push(decl);
+        break;
       default:
-	console.log(decl);
-	throw decl.type;
+        console.log(decl);
+        throw decl.type;
       }
     }
 
@@ -722,7 +722,7 @@ define(["compilerutil", "wasm/ast", "wasm/typeinfo", "wasm/opinfo"], function(co
     this.indexModule(module);
     if (!this.dead) {
       for (var i in module.funcs) {
-	this.processFunction(module.funcs[i]);
+        this.processFunction(module.funcs[i]);
       }
     }
     module.top = this.ptr;

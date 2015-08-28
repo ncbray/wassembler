@@ -33,18 +33,18 @@ define(["wasm/ast", "wasm/traverse", "wasm/opinfo"], function(wast, traverse, op
     switch(expr.etype) {
     case "i32":
       expr = wast.UnaryOp({
-	optype: "i32",
-	op: "boolnot",
-	expr: expr,
+        optype: "i32",
+        op: "boolnot",
+        expr: expr,
       });
       expr.etype = "i32";
       return peelBoolNot(expr);
     case "i64":
       node = wast.BinaryOp({
-	optype: "i64",
-	op: opinfo.binaryOps.eq,
-	left: expr,
-	right: this.constI64(0),
+        optype: "i64",
+        op: opinfo.binaryOps.eq,
+        left: expr,
+        right: this.constI64(0),
       });
       node.etype = "i64";
       return node;
@@ -94,74 +94,74 @@ define(["wasm/ast", "wasm/traverse", "wasm/opinfo"], function(wast, traverse, op
     case "Coerce":
       var simplified = this.simplifyType(node.mtype);
       if (simplified == node.expr.etype) {
-	node.expr.etype = node.mtype;
-	node = node.expr;
+        node.expr.etype = node.mtype;
+        node = node.expr;
       } else {
-	node.mtype = simplified;
+        node.mtype = simplified;
       }
       break;
     case "UnaryOp":
       switch(node.op) {
       case "boolnot":
-	// Missing most "not" operations, lower into a compare.
+        // Missing most "not" operations, lower into a compare.
         // Turn !v into v==0.
-	switch (node.optype) {
-	case "i64":
-	  node = wast.BinaryOp({
-	    optype: node.optype,
-	    op: opinfo.binaryOps.eq,
-	    left: node.expr,
-	    right: this.constI64(0),
-	  });
-	  node.etype = "i64";
-	  break;
+        switch (node.optype) {
+        case "i64":
+          node = wast.BinaryOp({
+            optype: node.optype,
+            op: opinfo.binaryOps.eq,
+            left: node.expr,
+            right: this.constI64(0),
+          });
+          node.etype = "i64";
+          break;
 
-	case "f32":
-	  node = wast.BinaryOp({
-	    optype: node.optype,
-	    op: opinfo.binaryOps.eq,
-	    left: node.expr,
-	    right: this.constF32(0.0),
-	  });
-	  node.etype = "i32";
-	  break;
-	case "f64":
-	  node = wast.BinaryOp({
-	    optype: node.optype,
-	    op: opinfo.binaryOps.eq,
-	    left: node.expr,
-	    right: this.constF64(0.0),
-	  });
-	  node.etype = "i32";
-	  break;
-	default:
+        case "f32":
+          node = wast.BinaryOp({
+            optype: node.optype,
+            op: opinfo.binaryOps.eq,
+            left: node.expr,
+            right: this.constF32(0.0),
+          });
+          node.etype = "i32";
+          break;
+        case "f64":
+          node = wast.BinaryOp({
+            optype: node.optype,
+            op: opinfo.binaryOps.eq,
+            left: node.expr,
+            right: this.constF64(0.0),
+          });
+          node.etype = "i32";
+          break;
+        default:
           node = peelBoolNot(node);
         }
-	break;
+        break;
       case "neg":
-	// TODO support integer negation in the v8 backend.
-	// Turn -i into 0-i.
-	switch (node.optype) {
-	case "i32":
-	  node = wast.BinaryOp({
-	    optype: node.optype,
-	    op: opinfo.binaryOps.sub,
-	    left: this.constI32(0),
-	    right: node.expr,
-	  });
-	  node.etype = node.optype;
-	  break;
-	case "i64":
-	  node = wast.BinaryOp({
-	    optype: node.optype,
-	    op: opinfo.binaryOps.sub,
-	    left: this.constI64(0),
-	    right: node.expr,
-	  });
-	  node.etype = node.optype;
-	  break;
-	}
-	break;
+        // TODO support integer negation in the v8 backend.
+        // Turn -i into 0-i.
+        switch (node.optype) {
+        case "i32":
+          node = wast.BinaryOp({
+            optype: node.optype,
+            op: opinfo.binaryOps.sub,
+            left: this.constI32(0),
+            right: node.expr,
+          });
+          node.etype = node.optype;
+          break;
+        case "i64":
+          node = wast.BinaryOp({
+            optype: node.optype,
+            op: opinfo.binaryOps.sub,
+            left: this.constI64(0),
+            right: node.expr,
+          });
+          node.etype = node.optype;
+          break;
+        }
+        break;
       }
       break;
     }
@@ -170,15 +170,15 @@ define(["wasm/ast", "wasm/traverse", "wasm/opinfo"], function(wast, traverse, op
       node.optype = "i32";
       node.etype = "i32";
       node = wast.BinaryOp({
-	optype: "i32",
-	op: opinfo.binaryOps.sar,
-	left: wast.BinaryOp({
-	  optype: "i32",
-	  op: opinfo.binaryOps.shl,
-	  left: node,
-	  right: this.constI32(24),
-	}),
-	right: this.constI32(24),
+        optype: "i32",
+        op: opinfo.binaryOps.sar,
+        left: wast.BinaryOp({
+          optype: "i32",
+          op: opinfo.binaryOps.shl,
+          left: node,
+          right: this.constI32(24),
+        }),
+        right: this.constI32(24),
       });
       node.etype = "i32";
       node.left.etype = "i32";
@@ -187,15 +187,15 @@ define(["wasm/ast", "wasm/traverse", "wasm/opinfo"], function(wast, traverse, op
       node.optype = "i32";
       node.etype = "i32";
       node = wast.BinaryOp({
-	optype: "i32",
-	op: opinfo.binaryOps.sar,
-	left: wast.BinaryOp({
-	  optype: "i32",
-	  op: opinfo.binaryOps.shl,
-	  left: node,
-	  right: this.constI32(16),
-	}),
-	right: this.constI32(16),
+        optype: "i32",
+        op: opinfo.binaryOps.sar,
+        left: wast.BinaryOp({
+          optype: "i32",
+          op: opinfo.binaryOps.shl,
+          left: node,
+          right: this.constI32(16),
+        }),
+        right: this.constI32(16),
       });
       node.etype = "i32";
       node.left.etype = "i32";
@@ -208,14 +208,14 @@ define(["wasm/ast", "wasm/traverse", "wasm/opinfo"], function(wast, traverse, op
     switch (node.type) {
     case "While":
       var body = [wast.If({
-	cond: this.not(node.cond),
-	t: [wast.Break({depth: 1})],
-	f: null,
-	pos: null,
+        cond: this.not(node.cond),
+        t: [wast.Break({depth: 1})],
+        f: null,
+        pos: null,
       })];
       body = body.concat(node.body);
       node = wast.Loop({
-	body: body,
+        body: body,
       });
       break;
     }
