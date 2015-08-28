@@ -66,7 +66,7 @@ function runTest(test) {
   if (test.js) {
     print("    JS");
 
-    var moduleJS = base.astToCompiledJS(ast, sources.systemJS, {}, status);
+    var moduleJS = base.astToCompiledJS(ast, sources.systemPreJS, sources.systemPostJS, {}, status);
     if (status.num_errors > 0) {
       haltTest();
     }

@@ -15,7 +15,7 @@ function compile(filename) {
 
   module = desugar.process(module);
 
-  var compiled = base.astToCompiledJS(module, sources.systemJS, {}, status);
+  var compiled = base.astToCompiledJS(module, sources.systemPreJS, sources.systemPostJS, {}, status);
   if (status.num_errors > 0) {
     return null;
   }

@@ -36,5 +36,6 @@ var wasm_backend_v8 = resolve("v8/backend");
 var sources = {
   grammar: read("wasm.pegjs"),
   systemWASM: read("d8_system.wasm"),
-  systemJS: read("system.js"),
+  systemPreJS: read("system_pre.js"),
+  systemPostJS: read("system_post.js"),
 };

@@ -538,8 +538,16 @@ define(["js/ast", "wasm/traverse", "wasm/typeinfo", "wasm/opinfo", "astutil"], f
     });
   }
 
-  JSTranslator.prototype.systemWrapper = function(module, system, use_shared_memory, generated) {
+  JSTranslator.prototype.systemWrapper = function(module, system_pre, system_post, use_shared_memory, generated) {
     var body = [];
+
+    body.push(jast.VarDecl({
+      name: "threading_supported",
+      expr: jast.ConstNum({value: use_shared_memory | 0}),
+    }));
+    body.push(jast.InjectSource({
+      source: system_pre,
+    }));
 
     // The asm(ish) code.
     body.push(jast.VarDecl({
@@ -638,12 +646,8 @@ define(["js/ast", "wasm/traverse", "wasm/typeinfo", "wasm/opinfo", "astutil"], f
     }));
 
     // JS System functions.
-    body.push(jast.VarDecl({
-      name: "threading_supported",
-      expr: jast.ConstNum({value: use_shared_memory | 0}),
-    }));
     body.push(jast.InjectSource({
-      source: system,
+      source: system_post,
     }));
 
     return jast.FunctionExpr({
@@ -844,10 +848,10 @@ define(["js/ast", "wasm/traverse", "wasm/typeinfo", "wasm/opinfo", "astutil"], f
     });
   };
 
-  var translate = function(module, system, use_shared_memory) {
+  var translate = function(module, system_pre, system_post, use_shared_memory) {
     var translator = new JSTranslator(use_shared_memory);
     translator.calcFuncInfo(module);
-    return translator.systemWrapper(module, system, use_shared_memory, translator.processModule(module));
+    return translator.systemWrapper(module, system_pre, system_post, use_shared_memory, translator.processModule(module));
   };
 
   return {

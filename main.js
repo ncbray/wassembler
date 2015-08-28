@@ -98,7 +98,8 @@ define(
     document.getElementById(pane).value += text;
   };
 
-  var systemJSSrc;
+  var systemPreJSSrc;
+  var systemPostJSSrc;
   var systemWASMSrc;
   var instance = null;
   var srcURL = null;
@@ -197,7 +198,7 @@ define(
     };
 
     var substart = performance.now();
-    var src = base.astToJSSrc(module, systemJSSrc, config);
+    var src = base.astToJSSrc(module, systemPreJSSrc, systemPostJSSrc, config);
     console.log("gen JS", performance.now() - substart);
 
     if (reportSrc) reportSrc(src);
@@ -272,7 +273,8 @@ define(
     Promise.all([
       base.getURL("wasm.pegjs"),
       base.getURL(exampleFile),
-      base.getURL("system.js"),
+      base.getURL("system_pre.js"),
+      base.getURL("system_post.js"),
       base.getURL("system.wasm"),
     ]).then(function(values) {
       status.setFilename("wasm.pegjs");
@@ -283,8 +285,9 @@ define(
       }
 
       var code = values[1];
-      systemJSSrc = values[2];
-      systemWASMSrc = values[3];
+      systemPreJSSrc = values[2];
+      systemPostJSSrc = values[3];
+      systemWASMSrc = values[4];
       setupUI(code, reevaluate);
     }, function(err){
       setText("code", err);
