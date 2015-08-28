@@ -93,8 +93,8 @@ define(
     return module;
   };
 
-  var astToJSSrc = function(module, systemJSSrc, config) {
-    var translated = tojs.translate(module, systemJSSrc, config.use_shared_memory);
+  var astToJSSrc = function(module, systemPreJSSrc, systemPostJSSrc, config) {
+    var translated = tojs.translate(module, systemPreJSSrc, systemPostJSSrc, config.use_shared_memory);
     var src = js_backend.generateExpr(translated) + "()";
     return src;
   };
@@ -110,8 +110,8 @@ define(
     }
   };
 
-  var astToCompiledJS = function(module, systemJSSrc, config, status, reportSrc) {
-    var src = astToJSSrc(module, systemJSSrc, config);
+  var astToCompiledJS = function(module, systemPreJSSrc, systemPostJSSrc, config, status, reportSrc) {
+    var src = astToJSSrc(module, systemPreJSSrc, systemPostJSSrc, config);
     if (reportSrc) reportSrc(src);
     return evalJSSrc(src, status);
   }

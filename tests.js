@@ -1,6 +1,7 @@
 define(["base", "wasm/desugar", "v8/backend", "compiletests"], function(base, desugar, wasm_backend_v8, compiletests) {
   var parser = null;
-  var systemJSSrc = null;
+  var systemPreJSSrc = null;
+  var systemPostJSSrc = null;
   var systemWASMSrc = null;
 
   var externs = {
@@ -17,7 +18,7 @@ define(["base", "wasm/desugar", "v8/backend", "compiletests"], function(base, de
 
     ast = desugar.process(ast);
 
-    var module = base.astToCompiledJS(ast, systemJSSrc, {}, status);
+    var module = base.astToCompiledJS(ast, systemPreJSSrc, systemPostJSSrc, {}, status);
     assert.notEqual(module, null, "backend");
 
     if (!suppress_v8) {
@@ -49,13 +50,15 @@ define(["base", "wasm/desugar", "v8/backend", "compiletests"], function(base, de
   var run = function() {
     Promise.all([
       base.getURL("wasm.pegjs"),
-      base.getURL("system.js"),
+      base.getURL("system_pre.js"),
+      base.getURL("system_post.js"),
       base.getURL("system.wasm"),
     ]).then(function(values) {
       var status = new base.Status(function(message) { throw message; });
       parser = base.createParser(values[0], status);
-      systemJSSrc = values[1];
-      systemWASMSrc = values[2];
+      systemPreJSSrc = values[1];
+      systemPostJSSrc = values[2];
+      systemWASMSrc = values[3];
       QUnit.start();
     });
   };
