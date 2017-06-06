@@ -1,6 +1,7 @@
 # python
 *.pyc
 *.pyo
+node_modules
 
 # emacs
 *~
