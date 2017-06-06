@@ -1,0 +1,10 @@
+{
+  "name": "wassembler",
+  "version": "1.0.0",
+  "scripts": {
+    "demo": "node node_modules/http-server/bin/http-server -p 7777"
+  },
+  "dependencies": {
+    "http-server": "0.9.0"
+  }
+}
